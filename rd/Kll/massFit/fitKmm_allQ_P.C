@@ -3,7 +3,7 @@ void fitKmm_allQ_P(Int_t bin) {
 	gROOT->SetStyle("Plain");
 	gStyle->SetOptStat(1111);
 
-	TFile * file = TFile::Open("/Home/dcraik/Kll/tuples/fromPatrick/Kmm.root");
+	TFile * file = TFile::Open("/Home/dcraik/lhcb/rd/Kll/tuples/fromPatrick/Kmm.root");
 	TTree * DecayTree = dynamic_cast<TTree*>(file->Get("finalTree_KMuMu"));
 
 	TString binStr; binStr+=bin;
@@ -159,13 +159,41 @@ void fitKmm_allQ_P(Int_t bin) {
 	B_M_RF_Plot->Draw();
 	can->SaveAs("plots/fromPatrick/Kmm_Q"+binStr+"_log.pdf");
 
-      //// Try splot stuff
-      //// First set all parameters to constant except for yields
-      sigmean.setConstant();
-      sigsigma.setConstant();
-      p0.setConstant();
-      
-      RooStats::SPlot * sData = new RooStats::SPlot("sData","An SPlot",*data1, &full_RF_PDF, RooArgList(nsig,nbkg));
-      sData->GetSDataSet()->write("/Home/dcraik/Kll/tuples/fromPatrick/Kmm_Q"+binStr+"_sWeights.txt");
+	//Get integrals
+	double mBdm = sigmean.getVal() - 2.5*(sigsigma.getVal());
+	double mBdp = sigmean.getVal() + 2.5*(sigsigma.getVal());
+
+	B_M.setRange("signal",mBdm,mBdp);
+	B_M.setRange("sideband",5400,5970);
+	B_M.setRange("full",5170,5970);
+
+	double fsig1 = B0Sig.createIntegral(RooArgSet(B_M),RooFit::NormSet(B_M),RooFit::Range("signal"))->getVal();
+	double fsig2 = B0Sig.createIntegral(RooArgSet(B_M),RooFit::NormSet(B_M),RooFit::Range("sideband"))->getVal();
+	double fsig0 = B0Sig.createIntegral(RooArgSet(B_M),RooFit::NormSet(B_M),RooFit::Range("full"))->getVal();
+
+	double fbkg1 = comb_bkg.createIntegral(RooArgSet(B_M),RooFit::NormSet(B_M),RooFit::Range("signal"))->getVal();
+	double fbkg2 = comb_bkg.createIntegral(RooArgSet(B_M),RooFit::NormSet(B_M),RooFit::Range("sideband"))->getVal();
+	double fbkg0 = comb_bkg.createIntegral(RooArgSet(B_M),RooFit::NormSet(B_M),RooFit::Range("full"))->getVal();
+
+	std::cout << std::endl;
+	std::cout << sigmean.getVal() << "\t" << sigsigma.getVal() << std::endl << std::endl;
+	std::cout << "\t\tsig\tbkg" << std::endl;
+	std::cout << "window  \t" << nsig.getVal()*fsig1/fsig0 << "\t" << nbkg.getVal()*fbkg1/fbkg0 << std::endl;
+	std::cout << "sideband\t" << nsig.getVal()*fsig2/fsig0 << "\t" << nbkg.getVal()*fbkg2/fbkg0 << std::endl;
+	std::cout << std::endl;
+
+	std::ofstream fout;
+	fout.open("bkgParams/"+binStr+".dat");
+	fout << sigmean.getVal() - 2.5*sigsigma.getVal() << "\t" << sigmean.getVal() + 2.5*sigsigma.getVal() << "\t" << fbkg1/fbkg2 << std::endl;
+	fout.close();
+
+	//// Try splot stuff
+	//// First set all parameters to constant except for yields
+	sigmean.setConstant();
+	sigsigma.setConstant();
+	p0.setConstant();
+
+	RooStats::SPlot * sData = new RooStats::SPlot("sData","An SPlot",*data1, &full_RF_PDF, RooArgList(nsig,nbkg));
+	sData->GetSDataSet()->write("/Home/dcraik/Kll/tuples/fromPatrick/Kmm_Q"+binStr+"_sWeights.txt");
 
 }

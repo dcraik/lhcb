@@ -7,6 +7,7 @@
 #include <TRandom3.h>
 #include <TF1.h>
 #include <iostream>
+#include <fstream>
 
 using namespace std;
 
@@ -127,6 +128,16 @@ void get_moments_B2Kstll::GetMoments(bool bootstrap)
         D102_v = D102(phi, cosThetaK)/norm_p;
         D202_v = D202(phi, cosThetaK)/norm_p;
         if(!bootstrap) tup->Fill(cosThetaL, phi, cosThetaK, D000_v, D002_v, D102_v, D202_v);
+
+	if(!useSWeights_) {
+		if(B_M > sigMin_ && B_M < sigMax_) {
+			sWeight=sigWeight_;
+		} else if(B_M > bkgMin_ && B_M < bkgMax_) {
+			sWeight=-1.*bkgWeight_;
+		} else {
+			continue;
+		}
+	}
     
         //total moments
         double norm_t = 1./8./TMath::Pi();
@@ -261,6 +272,14 @@ int main( int argc, char * argv[] )
     Int_t effEntry(0);
     Double_t a(-0.5), b(0.0);
     TH1 *hDVeto(0), *hPsiVeto(0);
+    TString bkgFile("");
+    Bool_t useSWeights(true);
+    Double_t sigWeight(1.);
+    Double_t bkgWeight(-1.);
+    Double_t sigMin(5170.);
+    Double_t sigMax(5400.);
+    Double_t bkgMin(5400.);
+    Double_t bkgMax(5970.);
 	
     if(argc < 2 ) {
         std::cout << "Usage: " << argv[0] << " inputFile [outputFile = \"results.root\"] [inputTree = \"DecayTree\"]" << std::endl;
@@ -277,6 +296,9 @@ int main( int argc, char * argv[] )
             			if(argc > 7) {
 	    	    			dVetoFile = argv[6];
 	    	    			psiVetoFile = argv[7];
+            				if(argc > 8) {
+						bkgFile = argv[8];
+					}
 				}
 			}
 		}
@@ -287,11 +309,16 @@ int main( int argc, char * argv[] )
     TFile * f = TFile::Open(inputFile);
     TTree * tree = dynamic_cast<TTree*>(f->Get(treeName));
     if(effFile != "") {
-    	TFile * fEff = TFile::Open(effFile);
-    	TTree * tEff = dynamic_cast<TTree*>(fEff->Get("params"));
-	tEff->SetBranchAddress("A",&a);
-	tEff->SetBranchAddress("B",&b);
-	tEff->GetEntry(effEntry);
+        if(effFile=="NOEFF") {
+	    a=0.0;
+	    b=0.0;
+	} else {
+    	    TFile * fEff = TFile::Open(effFile);
+    	    TTree * tEff = dynamic_cast<TTree*>(fEff->Get("params"));
+	    tEff->SetBranchAddress("A",&a);
+	    tEff->SetBranchAddress("B",&b);
+	    tEff->GetEntry(effEntry);
+	}
     }
     if(dVetoFile != "") {
 	    TString dVetoHistName("efficiency_"); dVetoHistName+=effEntry;
@@ -303,7 +330,15 @@ int main( int argc, char * argv[] )
 	    TFile * fPsiVeto = TFile::Open(psiVetoFile);
 	    hPsiVeto = dynamic_cast<TH1*>(fPsiVeto->Get(psiVetoHistName));
     }
-    get_moments_B2Kstll t(tree,a,b,hDVeto,hPsiVeto);
+    if(bkgFile != "") {
+	    useSWeights=false;
+
+	    std::ifstream fin;
+	    fin.open(bkgFile);
+	    fin >> sigMin >> sigMax >> bkgWeight;
+	    fin.close();
+    }
+    get_moments_B2Kstll t(tree,a,b,hDVeto,hPsiVeto,useSWeights,sigWeight,bkgWeight,sigMin,sigMax,bkgMin,bkgMax);
     t.Loop(outputFile);
     return 1;
 }

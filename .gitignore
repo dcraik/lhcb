@@ -1,6 +1,8 @@
 *
 !/**/
 !*.C
+!*.cxx
+!*.cc
 !*.h
 !*.sh
 !Makefile

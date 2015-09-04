@@ -15,13 +15,14 @@ Double_t fcn(Double_t * abscissa, Double_t * parameter)
 
 
 
-void fitEfficiencies(Int_t weighting=0, Int_t nbins=50) {
+void fitEfficiencies(Int_t weighting=0, Int_t nbins=50, Bool_t fixB=false) {
 	gROOT->ProcessLine(".L lhcbStyle.C");
 	lhcbStyle();
 	gStyle->SetOptStat(0);
 
 	TString weightStr("");
 	TString binStr(""); binStr += nbins;
+	TString fixStr(""); if(fixB) fixStr+="_fixB";
 
 	switch(weighting) {
 		case 0:
@@ -49,7 +50,7 @@ void fitEfficiencies(Int_t weighting=0, Int_t nbins=50) {
 
 	std::cout << "Fitting efficiency histograms with " << nbins << " bins and " << weightStr << " weighting..." << std::endl;
 
-	TFile * paramsFile = new TFile("effParams_"+weightStr+"_"+binStr+".root","RECREATE");
+	TFile * paramsFile = new TFile("effParams_"+weightStr+fixStr+"_"+binStr+".root","RECREATE");
 	TTree * paramsTree = new TTree("params","params");
 
 	Double_t     N(0.),     A(0.),     B(0.);
@@ -77,7 +78,8 @@ void fitEfficiencies(Int_t weighting=0, Int_t nbins=50) {
 		func->SetParNames("N", "A", "B");
 		func->SetParameter(0, hist->GetMaximum());
 		func->SetParameter(1,-1.0);
-		func->SetParameter(2, 0.0);
+		if(fixB) func->FixParameter(2, 0.0);
+		else func->SetParameter(2, 0.0);
 
 		TFitResultPtr r = hist->Fit(func,"S");
 
@@ -85,8 +87,8 @@ void fitEfficiencies(Int_t weighting=0, Int_t nbins=50) {
 		hist->GetXaxis()->SetTitle("cos #theta_{l}");
 		hist->GetYaxis()->SetTitle("efficiency");
 		hist->Draw();
-		c.SaveAs("plots/fit/pdf/effFit"+weightStr+"_"+binStr+"_"+qStr+".pdf");
-		c.SaveAs("plots/fit/png/effFit"+weightStr+"_"+binStr+"_"+qStr+".png");
+		c.SaveAs("plots/fit/pdf/effFit"+weightStr+fixStr+"_"+binStr+"_"+qStr+".pdf");
+		c.SaveAs("plots/fit/png/effFit"+weightStr+fixStr+"_"+binStr+"_"+qStr+".png");
 
 		N = func->GetParameter(0);
 		A = func->GetParameter(1);
