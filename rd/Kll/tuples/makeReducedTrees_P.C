@@ -80,11 +80,19 @@ void makeReducedTrees_P(Int_t bin) {
 		minQ = TMath::Sqrt(15.e6);
 		maxQ = TMath::Sqrt(22.e6);
 		break;
+	case 19:
+		minQ = TMath::Sqrt( 8.e6);
+		maxQ = TMath::Sqrt(11.e6);
+		break;
+	case 20:
+		minQ = TMath::Sqrt(12.5e6);
+		maxQ = TMath::Sqrt(15.e6);
+		break;
 	default:
 		return;
 	}
 
-	TFile * f = TFile::Open("/Home/dcraik/Kll/tuples/fromPatrick/Kmm.root");
+	TFile * f = TFile::Open("/Home/dcraik/lhcb/rd/Kll/tuples/fromPatrick/Kmm.root");
 	TTree * tree = dynamic_cast<TTree*>(f->Get("finalTree_KMuMu"));
 
 	TFile* fs = TFile::Open("fromPatrick/Kmm_Q"+binStr+"_sWeights.root");

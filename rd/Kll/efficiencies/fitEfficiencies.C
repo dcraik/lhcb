@@ -15,7 +15,7 @@ Double_t fcn(Double_t * abscissa, Double_t * parameter)
 
 
 
-void fitEfficiencies(Int_t weighting=0, Int_t nbins=50, Bool_t fixB=false) {
+void fitEfficiencies(Int_t weighting=0, Int_t nbins=50, Bool_t fixB=true) {
 	gROOT->ProcessLine(".L lhcbStyle.C");
 	lhcbStyle();
 	gStyle->SetOptStat(0);
@@ -71,9 +71,10 @@ void fitEfficiencies(Int_t weighting=0, Int_t nbins=50, Bool_t fixB=false) {
 	TF1  * func = new TF1("func", fcn, -1.0, 1.0, 3);
 	TCanvas c;
 
+	std::ofstream fout("effParams_"+weightStr+fixStr+"_"+binStr+".old.txt");
 	for(i=0; i<19; ++i) {
 		TString qStr; qStr +=i;
-		TString nameE("efficiency_");  nameE+=i;
+		TString nameE("efficiencyHist_");  nameE+=i;
 		hist = dynamic_cast<TH1D*>(fHists->Get(nameE));
 		func->SetParNames("N", "A", "B");
 		func->SetParameter(0, hist->GetMaximum());
@@ -99,10 +100,21 @@ void fitEfficiencies(Int_t weighting=0, Int_t nbins=50, Bool_t fixB=false) {
 		err_A = TMath::Sqrt(cm(1,1));
 		err_B = TMath::Sqrt(cm(2,2));
 
+		fout << i << "\t" << func->GetParameter(0) << "\t" << func->GetParError(0)
+			  << "\t" << func->GetParameter(1) << "\t" << func->GetParError(1)
+			  << "\t" << func->GetParameter(2) << "\t" << func->GetParError(2)
+			  << std::endl;
+
+//		fout << i << "\t" << N << "\t" << err_N
+//			  << "\t" << A << "\t" << err_A
+//			  << "\t" << B << "\t" << err_B
+//			  << std::endl;
+
 		paramsTree->Fill();
 
 	}
 
+	fout.close();
 	paramsTree->AutoSave();
 	paramsFile->Close();
 }

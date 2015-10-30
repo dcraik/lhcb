@@ -1,4 +1,4 @@
-void fitKmm_allQ_P(Int_t bin) {
+void fitKmm_allQ_P_altShapes(Int_t bin) {
 	gSystem->Load("libRooFit");
 	gROOT->SetStyle("Plain");
 	gStyle->SetOptStat(1111);
@@ -124,15 +124,11 @@ void fitKmm_allQ_P(Int_t bin) {
 	// start, range to from. plus names and titles.
 	RooRealVar sigmean("M_{B}","B mass",5281.0,5250.0,5300.0,"MeV/c^{2}");
 	RooRealVar sigsigma("#sigma_{Lo}","B sigma",15.9,0.0,30.0,"MeV/c^{2}");
-	RooRealVar a1("a1","a1", 1.57752e+00);
-	RooRealVar n1("n1","n1", 4.79832e+00);
-	RooRealVar a2("a2","a2",-2.64268e+00);
-	RooRealVar n2("n2","n2", 1.08224e+00);
 	RooRealVar ratio("ratio","Ratio of widths",1.60407e+00);
 	RooProduct sigsigma2("#sigma_{B}2","B sigma2",RooArgSet(sigsigma,ratio));
 	RooRealVar frac("frac","fraction of events in each gaussian",6.78672e-01);
-	RooCBShape BSig_RF( "Bsig_RF", "Signal CB B RF Mass", B_M, sigmean, sigsigma, a1, n1 );
-	RooCBShape BSig_RF2( "Bsig_RF2", "Signal CB B RF Mass", B_M, sigmean, sigsigma2, a2, n2 );
+	RooGaussian BSig_RF( "Bsig_RF", "Signal CB B RF Mass", B_M, sigmean, sigsigma );
+	RooGaussian BSig_RF2( "Bsig_RF2", "Signal CB B RF Mass", B_M, sigmean, sigsigma2 );
 	RooAddPdf B0Sig("B0signal","signal pdf",RooArgList(BSig_RF,BSig_RF2),RooArgList(frac));
 
 	RooRealVar p0("p0","",-6.44379e-02,-0.1,0.1);
@@ -159,13 +155,13 @@ void fitKmm_allQ_P(Int_t bin) {
         full_RF_PDF.plotOn(B_M_RF_Plot, RooFit::Components("B0signal"), RooFit::LineStyle(kDashed));
 	B_M_RF_Plot->Draw();
 
-	can->SaveAs("plots/fromPatrick/Kmm_Q"+binStr+".pdf");
+	can->SaveAs("plots/fromPatrick/altShapes/Kmm_Q"+binStr+".pdf");
 
 	can->SetLogy();
         B_M_RF_Plot->SetMinimum(1.e-1);
         B_M_RF_Plot->SetMaximum(5.e+2);
 	B_M_RF_Plot->Draw();
-	can->SaveAs("plots/fromPatrick/Kmm_Q"+binStr+"_log.pdf");
+	can->SaveAs("plots/fromPatrick/altShapes/Kmm_Q"+binStr+"_log.pdf");
 
 	//Get integrals
 	double mBdm = sigmean.getVal() - 2.5*(sigsigma.getVal());
@@ -191,11 +187,11 @@ void fitKmm_allQ_P(Int_t bin) {
 	std::cout << std::endl;
 
 	std::ofstream fout;
-	fout.open("bkgParams/"+binStr+".dat");
+	fout.open("bkgParams/altShapes/"+binStr+".dat");
 	fout << sigmean.getVal() - 2.5*sigsigma.getVal() << "\t" << sigmean.getVal() + 2.5*sigsigma.getVal() << "\t" << fbkg1/fbkg2 << std::endl;
 	fout.close();
 
-	fout.open("yields/"+binStr+".dat");
+	fout.open("yields/altShapes/"+binStr+".dat");
 	fout << nsig.getVal()*fsig1/fsig0 << "\t" << nsig.getError()*fsig1/fsig0 << "\t" << nbkg.getVal()*fbkg1/fbkg0 << "\t" << nbkg.getError()*fbkg1/fbkg0 << "\t"
 	     << nsig.getVal()*fsig2/fsig0 << "\t" << nsig.getError()*fsig2/fsig0 << "\t" << nbkg.getVal()*fbkg2/fbkg0 << "\t" << nbkg.getError()*fbkg2/fbkg0 << std::endl;
 	fout.close();
@@ -206,7 +202,7 @@ void fitKmm_allQ_P(Int_t bin) {
 	sigsigma.setConstant();
 	p0.setConstant();
 
-	RooStats::SPlot * sData = new RooStats::SPlot("sData","An SPlot",*data1, &full_RF_PDF, RooArgList(nsig,nbkg));
-	sData->GetSDataSet()->write("/Home/dcraik/lhcb/rd/Kll/tuples/fromPatrick/Kmm_Q"+binStr+"_sWeights.txt");
+//	RooStats::SPlot * sData = new RooStats::SPlot("sData","An SPlot",*data1, &full_RF_PDF, RooArgList(nsig,nbkg));
+//	sData->GetSDataSet()->write("/Home/dcraik/Kll/tuples/fromPatrick/altShapes/Kmm_Q"+binStr+"_sWeights.txt");
 
 }

@@ -19,6 +19,7 @@ Double_t getMin(Int_t n, Double_t* vals) {
 }
 
 void makePlots() {
+	gROOT->ProcessLine(".x lhcbStyle.C");
 	gStyle->SetOptStat(0);
 
 	TFile* f[19];
@@ -40,7 +41,7 @@ void makePlots() {
 
 	Int_t nVars = t[0]->GetListOfBranches()->GetEntries();
 
-	for(Int_t i=0; i<=nVars; ++i) {
+	for(Int_t i=0; i<nVars+2; ++i) {
             TString varName("");
 	    
 	    if(i==nVars) {
@@ -52,11 +53,13 @@ void makePlots() {
 	        }
 		varName = "FH";
 	    } else {
-	        varName = t[0]->GetListOfBranches()->At(i)->GetName();
+	        if(i==nVars+1) varName = "G001";
+		else varName = t[0]->GetListOfBranches()->At(i)->GetName();
 	        for(Int_t j=0; j<19; ++j) {
 	        	ys[ j] = t[j]->GetMinimum(varName);
 	        	eys[j] = te[j]->GetMinimum(varName);
 	        }
+	        if(i==nVars+1) varName = "AFB";
 	    }
 
 	    Double_t yMin = getMin(19,ys)-getMax(19,eys);
@@ -72,6 +75,7 @@ void makePlots() {
 	    
 	    h.GetYaxis()->SetTitle(varName);
 	    if(i==nVars) h.GetYaxis()->SetTitle("F_{H}");
+	    if(i==nVars+1) h.GetYaxis()->SetTitle("A_{FB}");
 	    h.GetXaxis()->SetTitle("q^{2} [GeV^{2}/c^{4}]");
 
 	    TGraphErrors g1(17,xs,   ys,   exs,   eys   );

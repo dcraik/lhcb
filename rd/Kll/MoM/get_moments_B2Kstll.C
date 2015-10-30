@@ -13,9 +13,11 @@ using namespace std;
 
 double D000(double phi, double cosTheta) { return 1.; }
 double D001(double phi, double cosTheta) { return cosTheta; }
-double D002(double phi, double cosTheta) { return (3. *pow(cosTheta,2) - 1.)/2.; }
-double D003(double phi, double cosTheta) { return (5. *pow(cosTheta,3) - 3. *cosTheta)/2.; }
-double D004(double phi, double cosTheta) { return (35.*pow(cosTheta,4) - 30.*pow(cosTheta,2) + 3.)/8.; }
+double D002(double phi, double cosTheta) { return (3.  *pow(cosTheta,2) - 1.)/2.; }
+double D003(double phi, double cosTheta) { return (5.  *pow(cosTheta,3) - 3.  *cosTheta)/2.; }
+double D004(double phi, double cosTheta) { return (35. *pow(cosTheta,4) - 30. *pow(cosTheta,2) + 3.)/8.; }
+double D005(double phi, double cosTheta) { return (63. *pow(cosTheta,5) - 70. *pow(cosTheta,3) + 15. *cosTheta)/8.; }
+double D006(double phi, double cosTheta) { return (231.*pow(cosTheta,6) - 315.*pow(cosTheta,4) + 105.*pow(cosTheta,2) - 5.)/16.; }
 double D101(double phi, double cosTheta)
 {
     double sinTheta = sqrt(1.-pow(cosTheta,2));
@@ -39,6 +41,8 @@ double Omega001(double phi, double cosThetaK, double cosThetaL){ return D000(phi
 double Omega002(double phi, double cosThetaK, double cosThetaL){ return D000(phi, cosThetaK) * D002(0., cosThetaL); }
 double Omega003(double phi, double cosThetaK, double cosThetaL){ return D000(phi, cosThetaK) * D003(0., cosThetaL); }
 double Omega004(double phi, double cosThetaK, double cosThetaL){ return D000(phi, cosThetaK) * D004(0., cosThetaL); }
+double Omega005(double phi, double cosThetaK, double cosThetaL){ return D000(phi, cosThetaK) * D005(0., cosThetaL); }
+double Omega006(double phi, double cosThetaK, double cosThetaL){ return D000(phi, cosThetaK) * D006(0., cosThetaL); }
 double Omega020(double phi, double cosThetaK, double cosThetaL){ return D002(phi, cosThetaK) * D000(0., cosThetaL); }
 double Omega021(double phi, double cosThetaK, double cosThetaL){ return D002(phi, cosThetaK) * D001(0., cosThetaL); }
 double Omega121(double phi, double cosThetaK, double cosThetaL){ return D102(phi, cosThetaK) * D101(0., cosThetaL); }
@@ -54,19 +58,21 @@ void get_moments_B2Kstll::Loop(TString filename) {
 
     outFile = TFile::Open(filename, "RECREATE");
     tup = new TNtuple("partial", "coeffs", "cosThetaL:phi:cosThetaK:D000:D002:D102:D202");
-    tup_total = new TNtuple("total", "coeffs",               "G000:G001:G002:G003:G004:G020:G021:G121:G022:G122:G222");
-    tup_error = new TNtuple("error", "coeffs",               "G000:G001:G002:G003:G004:G020:G021:G121:G022:G122:G222");
-    tup_bootstrapped = new TNtuple("bootstrapped", "coeffs", "G000:G001:G002:G003:G004:G020:G021:G121:G022:G122:G222");
+    tup_total = new TNtuple("total", "coeffs",               "G000:G001:G002:G003:G004:G005:G006:G020:G021:G121:G022:G122:G222");
+    tup_error = new TNtuple("error", "coeffs",               "G000:G001:G002:G003:G004:G005:G006:G020:G021:G121:G022:G122:G222");
+    tup_bootstrapped = new TNtuple("bootstrapped", "coeffs", "G000:G001:G002:G003:G004:G005:G006:G020:G021:G121:G022:G122:G222");
 
     this->GetMoments();
 
-    for(Int_t i=0; i<1000; ++i) {
-        std::cout << "bootstrapped sample " << i << " of 1000..." << std::endl;
-        SetIndicesForBootstrapping(i+9000);
-        this->GetMoments(true);
-    }
+    if(calcErrors_) {
+    	for(Int_t i=0; i<1000; ++i) {
+    	    std::cout << "bootstrapped sample " << i << " of 1000..." << std::endl;
+    	    SetIndicesForBootstrapping(i+9000);
+    	    this->GetMoments(true);
+    	}
 
-    this->GetUncertainties();
+    	this->GetUncertainties();
+    }
 
     tup->Write();
     tup_total->Write();
@@ -92,6 +98,8 @@ void get_moments_B2Kstll::GetMoments(bool bootstrap)
     double G002(0.);
     double G003(0.);
     double G004(0.);
+    double G005(0.);
+    double G006(0.);
     double G020(0.);
     double G021(0.);
     double G121(0.);
@@ -146,6 +154,8 @@ void get_moments_B2Kstll::GetMoments(bool bootstrap)
         G002 += sWeight*Omega002(phi, cosThetaK, cosThetaL)/norm_t/eff;
         G003 += sWeight*Omega003(phi, cosThetaK, cosThetaL)/norm_t/eff;
         G004 += sWeight*Omega004(phi, cosThetaK, cosThetaL)/norm_t/eff;
+        G005 += sWeight*Omega005(phi, cosThetaK, cosThetaL)/norm_t/eff;
+        G006 += sWeight*Omega006(phi, cosThetaK, cosThetaL)/norm_t/eff;
         G020 += sWeight*Omega020(phi, cosThetaK, cosThetaL)/norm_t/eff;
         G021 += sWeight*Omega021(phi, cosThetaK, cosThetaL)/norm_t/eff;
         G121 += sWeight*Omega121(phi, cosThetaK, cosThetaL)/norm_t/eff;
@@ -160,6 +170,8 @@ void get_moments_B2Kstll::GetMoments(bool bootstrap)
     cout << "G002 \t " << G002/G000/2./coeff(0,0,2) << endl;
     cout << "G003 \t " << G003/G000/2./coeff(0,0,3) << endl;
     cout << "G004 \t " << G004/G000/2./coeff(0,0,4) << endl;
+    cout << "G005 \t " << G005/G000/2./coeff(0,0,5) << endl;
+    cout << "G006 \t " << G006/G000/2./coeff(0,0,6) << endl;
     cout << "G020 \t " << G020/G000/2./coeff(0,2,0) << endl;
     cout << "G021 \t " << G021/G000/2./coeff(0,2,1) << endl;
     cout << "G121 \t " << G121/G000/2./coeff(1,2,1) << endl;
@@ -173,6 +185,8 @@ void get_moments_B2Kstll::GetMoments(bool bootstrap)
                                G002/G000/2./coeff(0,0,2),
                                G003/G000/2./coeff(0,0,3),
                                G004/G000/2./coeff(0,0,4),
+                               G005/G000/2./coeff(0,0,5),
+                               G006/G000/2./coeff(0,0,6),
                                G020/G000/2./coeff(0,2,0),
                                G021/G000/2./coeff(0,2,1),
                                G121/G000/2./coeff(1,2,1),
@@ -186,6 +200,8 @@ void get_moments_B2Kstll::GetMoments(bool bootstrap)
                         G002/G000/2./coeff(0,0,2),
                         G003/G000/2./coeff(0,0,3),
                         G004/G000/2./coeff(0,0,4),
+                        G005/G000/2./coeff(0,0,5),
+                        G006/G000/2./coeff(0,0,6),
                         G020/G000/2./coeff(0,2,0),
                         G021/G000/2./coeff(0,2,1),
                         G121/G000/2./coeff(1,2,1),
@@ -199,9 +215,9 @@ void get_moments_B2Kstll::GetMoments(bool bootstrap)
 
 void get_moments_B2Kstll::GetUncertainties()
 {
-    double errors[11];
+    double errors[13];
 
-    Int_t nVars = 11;
+    Int_t nVars = 13;
 
     for(Int_t i=0; i<nVars; ++i) {
         TString varName = tup_total->GetListOfBranches()->At(i)->GetName();
@@ -258,7 +274,9 @@ void get_moments_B2Kstll::GetUncertainties()
                     errors[ 7],
                     errors[ 8],
                     errors[ 9],
-                    errors[10]
+                    errors[10],
+                    errors[11],
+                    errors[12]
                     );
     
 }
@@ -270,16 +288,19 @@ int main( int argc, char * argv[] )
     TString treeName("DecayTree");
     TString effFile(""), dVetoFile(""), psiVetoFile("");
     Int_t effEntry(0);
-    Double_t a(-0.5), b(0.0);
+    Double_t n, a(-0.5), b(0.0);
+    Double_t nErr, aErr(0.0), bErr(0.0);
     TH1 *hDVeto(0), *hPsiVeto(0);
     TString bkgFile("");
     Bool_t useSWeights(true);
     Double_t sigWeight(1.);
     Double_t bkgWeight(-1.);
-    Double_t sigMin(5170.);
-    Double_t sigMax(5400.);
+    Double_t sigMin(-1.);//5170.);
+    Double_t sigMax(9999.);//5400.);
     Double_t bkgMin(5400.);
     Double_t bkgMax(5970.);
+    Int_t fluctuateEff(0);
+    Bool_t calcErrors(true);
 	
     if(argc < 2 ) {
         std::cout << "Usage: " << argv[0] << " inputFile [outputFile = \"results.root\"] [inputTree = \"DecayTree\"]" << std::endl;
@@ -298,6 +319,12 @@ int main( int argc, char * argv[] )
 	    	    			psiVetoFile = argv[7];
             				if(argc > 8) {
 						bkgFile = argv[8];
+            					if(argc > 9) {
+							calcErrors = atoi( argv[9] );
+            						if(argc > 10) {
+								fluctuateEff = atoi( argv[10] );
+							}
+						}
 					}
 				}
 			}
@@ -313,20 +340,32 @@ int main( int argc, char * argv[] )
 	    a=0.0;
 	    b=0.0;
 	} else {
-    	    TFile * fEff = TFile::Open(effFile);
-    	    TTree * tEff = dynamic_cast<TTree*>(fEff->Get("params"));
-	    tEff->SetBranchAddress("A",&a);
-	    tEff->SetBranchAddress("B",&b);
-	    tEff->GetEntry(effEntry);
+    	    //TFile * fEff = TFile::Open(effFile);
+    	    //TTree * tEff = dynamic_cast<TTree*>(fEff->Get("params"));
+	    //tEff->SetBranchAddress("A",&a);
+	    //tEff->SetBranchAddress("B",&b);
+	    //tEff->GetEntry(effEntry);
+	    std::ifstream fin;
+	    fin.open(effFile);
+	    Int_t row(0);
+	    fin >> row;
+	    while(row!=effEntry) {
+		    fin.ignore(256,'\n');
+		    fin >> row;
+	    }
+	    fin >> n >> nErr >> a >> aErr >> b >> bErr;
+	    std::cout << a << "\t" << aErr << std::endl;
+
+	    fin.close();
 	}
     }
     if(dVetoFile != "") {
-	    TString dVetoHistName("efficiency_"); dVetoHistName+=effEntry;
+	    TString dVetoHistName("efficiencyHist_"); dVetoHistName+=effEntry;
 	    TFile * fDVeto = TFile::Open(dVetoFile);
 	    hDVeto = dynamic_cast<TH1*>(fDVeto->Get(dVetoHistName));
     }
     if(psiVetoFile != "") {
-	    TString psiVetoHistName("efficiency_"); psiVetoHistName+=effEntry;
+	    TString psiVetoHistName("efficiencyHist_"); psiVetoHistName+=effEntry;
 	    TFile * fPsiVeto = TFile::Open(psiVetoFile);
 	    hPsiVeto = dynamic_cast<TH1*>(fPsiVeto->Get(psiVetoHistName));
     }
@@ -338,7 +377,15 @@ int main( int argc, char * argv[] )
 	    fin >> sigMin >> sigMax >> bkgWeight;
 	    fin.close();
     }
-    get_moments_B2Kstll t(tree,a,b,hDVeto,hPsiVeto,useSWeights,sigWeight,bkgWeight,sigMin,sigMax,bkgMin,bkgMax);
+    if(fluctuateEff>0) {
+	    TRandom3 r(fluctuateEff);
+	    a = r.Gaus(a,aErr);
+	    b = r.Gaus(b,bErr);
+	    std::cout << a << "\t" << b << std::endl;
+
+	    calcErrors = false;
+    }
+    get_moments_B2Kstll t(tree,a,b,hDVeto,hPsiVeto,useSWeights,sigWeight,bkgWeight,sigMin,sigMax,bkgMin,bkgMax,calcErrors);
     t.Loop(outputFile);
     return 1;
 }

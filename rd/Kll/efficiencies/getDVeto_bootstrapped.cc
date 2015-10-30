@@ -1,22 +1,40 @@
-void getDVetoCorrections(Int_t nbins=200) {
+#include "TFile.h"
+#include "TTree.h"
+#include "TRandom3.h"
+#include "TH1D.h"
+#include "TEfficiency.h"
+#include "TString.h"
+
+#include <algorithm>
+#include <vector>
+#include <iostream>
+
+int main(int argc, char** argv) {
+
+	if(argc<2) return 0;
+
+	Int_t seed = atoi(argv[1]);
+	Int_t nbins=200;
+	if(argc>2) nbins = atoi(argv[2]);
 
 	TString binStr(""); binStr += nbins;
+	TString seedStr(""); seedStr += seed;
 
 	std::cout << "Generating D veto correction histograms with " << nbins << " bins..." << std::endl;
 
-	TH1D * passed[21];
-	TH1D * total[21];
-	TEfficiency * eff[21];
-	TH1D * eff2[21];
+	TH1D * passed[19];
+	TH1D * total[19];
+	TEfficiency * eff[19];
+	TH1D * eff2[19];
 
-	Int_t ngenInQ[21] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	Int_t ngenInQ[19] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
 		             0, 0, 0, 0, 0, 0, 0, 0, 0};
-	Int_t nselInQ[21] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	Int_t nselInQ[19] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
 		             0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 	Double_t qSq(0.), costhetal(0.), mKmu_D;
 
-	for(Int_t i=0; i<21; ++i) {
+	for(Int_t i=0; i<19; ++i) {
 		TString nameP("passed_");      nameP+=i;
 		TString nameT("total_");       nameT+=i;
 		TString nameE("efficiency_");  nameE+=i;
@@ -44,11 +62,22 @@ void getDVetoCorrections(Int_t nbins=200) {
 
 	Int_t infoGen = ngen/10;
 
+	std::vector<Long64_t> indices;
+	indices.reserve(ngen);
+
+	TRandom3 r(seed);
+	for(Int_t i=0; i<ngen; ++i) {
+	   indices[i] = (Int_t)(r.Rndm()*ngen);
+	}
+
+	std::sort(indices.begin(),indices.end());//begin()+1000075);//indices.end());
+
 	for(Int_t i=0; i<ngen; ++i) {
 		if(i%infoGen == 0) std::cout << "Processing entry " << i << " of " << ngen << " generated..." << std::endl;
 		Int_t binA(-1), binB(-1);
 
-		treegen->GetEntry(i);
+		std::cout << indices[i] << std::endl;
+		treegen->GetEntry(indices[i]);
 
 		if(       qSq >  0.10 && qSq <=  0.98) {	binA=0;
 		} else if(qSq >  1.10 && qSq <=  2.00) {	binA=1;
@@ -71,8 +100,6 @@ void getDVetoCorrections(Int_t nbins=200) {
 
 		if(       qSq >  1.10 && qSq <=  6.00) {	binB=17;
 		} else if(qSq > 15.00 && qSq <= 22.00) {	binB=18;
-		} else if(qSq >  8.00 && qSq <= 11.00) {	binB=19;
-		} else if(qSq > 12.50 && qSq <= 15.00) {	binB=20;
 		}
 
 		if(binA>=0) {
@@ -104,8 +131,8 @@ void getDVetoCorrections(Int_t nbins=200) {
 
 	printf("\nAverage efficiencies...\n");
 	printf("Total:\t%7d\t%7d\n",nsel,ngen);
-	TFile * out = new TFile("Dveto_"+binStr+".root","RECREATE");
-	for(Int_t i=0; i<21; ++i) {
+	TFile * out = new TFile("bootstrapped/"+seedStr+"/Dveto_"+binStr+".root","RECREATE");
+	for(Int_t i=0; i<19; ++i) {
 		TString qStr; qStr+=i;
 
 		eff2[i]->Add(passed[i]);
@@ -115,14 +142,16 @@ void getDVetoCorrections(Int_t nbins=200) {
 		passed[i]->Write();
 		total[i]->Write();
 
-		TCanvas c;
-		eff[i]->Draw();
-		c.SaveAs("plots/Dveto/Q"+qStr+"_"+binStr+".pdf");
-		c.SaveAs("plots/Dveto/Q"+qStr+"_"+binStr+".png");
-
-		printf("Bin %2d:\t%7d\t%7d\n",i,nselInQ[i],ngenInQ[i]);
+//		TCanvas c;
+//		eff[i]->Draw();
+//		c.SaveAs("plots/Dveto/Q"+qStr+"_"+binStr+".pdf");
+//		c.SaveAs("plots/Dveto/Q"+qStr+"_"+binStr+".png");
+//
+//		printf("Bin %2d:\t%7d\t%7d\n",i,nselInQ[i],ngenInQ[i]);
 	}
 
 	out->Close();
 	filegen->Close();
+
+	return 0;
 }

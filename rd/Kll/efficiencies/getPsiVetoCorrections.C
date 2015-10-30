@@ -4,29 +4,32 @@ void getPsiVetoCorrections(Int_t nbins=200) {
 
 	std::cout << "Generating J/Psi veto correction histograms with " << nbins << " bins..." << std::endl;
 
-	TH1D * passed[19];
-	TH1D * total[19];
-	TH1D * eff[19];
+	TH1D * passed[21];
+	TH1D * total[21];
+	TEfficiency * eff[21];
+	TH1D * eff2[21];
 
-	Int_t ngenInQ[19] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	Int_t ngenInQ[21] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
 		             0, 0, 0, 0, 0, 0, 0, 0, 0};
-	Int_t nselInQ[19] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	Int_t nselInQ[21] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
 		             0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 	Double_t qSq(0.), costhetal(0.), mKmu_Psi;
 
-	for(Int_t i=0; i<19; ++i) {
+	for(Int_t i=0; i<21; ++i) {
 		TString nameP("passed_");      nameP+=i;
 		TString nameT("total_");       nameT+=i;
 		TString nameE("efficiency_");  nameE+=i;
+		TString nameE2("efficiencyHist_");  nameE2+=i;
 
 		passed[i] = new TH1D(nameP, "", nbins, -1.0, 1.0);
 		total[i]  = new TH1D(nameT, "", nbins, -1.0, 1.0);
-		eff[i]    = new TH1D(nameE, "", nbins, -1.0, 1.0);
+		eff[i]    = new TEfficiency(nameE, "", nbins, -1.0, 1.0);
+		eff2[i]   = new TH1D(nameE2, "", nbins, -1.0, 1.0);
 
 		passed[i]->Sumw2();
 		total[i]->Sumw2();
-		eff[i]->Sumw2();
+		eff2[i]->Sumw2();
 	}
 
 	TFile * filegen = TFile::Open("/Disk/ecdf-nfs-ppe/lhcb/dcraik/kmumu_gen_addVars.root");
@@ -68,6 +71,8 @@ void getPsiVetoCorrections(Int_t nbins=200) {
 
 		if(       qSq >  1.10 && qSq <=  6.00) {	binB=17;
 		} else if(qSq > 15.00 && qSq <= 22.00) {	binB=18;
+		} else if(qSq >  8.00 && qSq <= 11.00) {	binB=19;
+		} else if(qSq > 12.50 && qSq <= 15.00) {	binB=20;
 		}
 
 		if(binA>=0) {
@@ -76,6 +81,9 @@ void getPsiVetoCorrections(Int_t nbins=200) {
 			if(mKmu_Psi < 3057. || mKmu_Psi > 3137.) {
 				passed[binA]->Fill(costhetal);
 				++nselInQ[binA];
+				eff[binA]->Fill(kTRUE,costhetal);
+			} else {
+				eff[binA]->Fill(kFALSE,costhetal);
 			}
 		}
 		if(binB>=0) {
@@ -84,6 +92,9 @@ void getPsiVetoCorrections(Int_t nbins=200) {
 			if(mKmu_Psi < 3057. || mKmu_Psi > 3137.) {
 				passed[binB]->Fill(costhetal);
 				++nselInQ[binB];
+				eff[binB]->Fill(kTRUE,costhetal);
+			} else {
+				eff[binB]->Fill(kFALSE,costhetal);
 			}
 		}
 		if(mKmu_Psi < 3057. || mKmu_Psi > 3137.) {
@@ -94,12 +105,13 @@ void getPsiVetoCorrections(Int_t nbins=200) {
 	printf("\nAverage efficiencies...\n");
 	printf("Total:\t%7d\t%7d\n",nsel,ngen);
 	TFile * out = new TFile("Psiveto_"+binStr+".root","RECREATE");
-	for(Int_t i=0; i<19; ++i) {
+	for(Int_t i=0; i<21; ++i) {
 		TString qStr; qStr+=i;
 
-		eff[i]->Add(passed[i]);
-		eff[i]->Divide(total[i]);
+		eff2[i]->Add(passed[i]);
+		eff2[i]->Divide(total[i]);
 		eff[i]->Write();
+		eff2[i]->Write();
 		passed[i]->Write();
 		total[i]->Write();
 

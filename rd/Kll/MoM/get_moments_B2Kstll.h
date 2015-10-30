@@ -38,7 +38,7 @@ public :
    TBranch        *b_B_M;   //!
 
    get_moments_B2Kstll(TTree *tree=0, Double_t effA=-0.5, Double_t effB=0.0, TH1* dVetoHist=0, TH1* psiVetoHist=0,
-		      Bool_t useSWeights=true, Double_t sigWeight=1.0, Double_t bkgWeight=-1.0, Double_t sigMin=5170., Double_t sigMax=5970., Double_t bkgMin=5170., Double_t bkgMax=5970.);
+		      Bool_t useSWeights=true, Double_t sigWeight=1.0, Double_t bkgWeight=-1.0, Double_t sigMin=5170., Double_t sigMax=5970., Double_t bkgMin=5170., Double_t bkgMax=5970., Bool_t calcErrors=true);
    virtual ~get_moments_B2Kstll();
    virtual Int_t    Cut(Long64_t entry);
    virtual Int_t    GetEntry(Long64_t entry);
@@ -76,14 +76,16 @@ private:
    Double_t sigMax_;
    Double_t bkgMin_;
    Double_t bkgMax_;
+
+   Bool_t calcErrors_;
 };
 
 #endif
 
 #ifdef get_moments_B2Kstll_cxx
 get_moments_B2Kstll::get_moments_B2Kstll(TTree *tree, Double_t effA, Double_t effB, TH1* dVetoHist, TH1* psiVetoHist, 
-		                         Bool_t useSWeights, Double_t sigWeight, Double_t bkgWeight, Double_t sigMin, Double_t sigMax, Double_t bkgMin, Double_t bkgMax) 
-    : fChain(0), cosThetaL(1.), cosThetaK(1.), phi(0.), sWeight(1.), a(effA), b(effB), dVeto(dVetoHist), psiVeto(psiVetoHist), useSWeights_(useSWeights), sigWeight_(sigWeight), bkgWeight_(bkgWeight), sigMin_(sigMin), sigMax_(sigMax), bkgMin_(bkgMin), bkgMax_(bkgMax)
+		                         Bool_t useSWeights, Double_t sigWeight, Double_t bkgWeight, Double_t sigMin, Double_t sigMax, Double_t bkgMin, Double_t bkgMax, Bool_t calcErrors) 
+    : fChain(0), cosThetaL(1.), cosThetaK(1.), phi(0.), sWeight(1.), a(effA), b(effB), dVeto(dVetoHist), psiVeto(psiVetoHist), useSWeights_(useSWeights), sigWeight_(sigWeight), bkgWeight_(bkgWeight), sigMin_(sigMin), sigMax_(sigMax), bkgMin_(bkgMin), bkgMax_(bkgMax), calcErrors_(calcErrors)
 {
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.

@@ -13,11 +13,10 @@ Double_t fcn(Double_t * abscissa, Double_t * parameter)
         return eff;
 }
 
-void getEffs(Int_t weighting=0, Int_t nbins=50, Bool_t fixB=true) {
+void getEffsNew(Int_t weighting=0, Int_t nbins=50) {
 
 	TString weightStr("");
 	TString binStr(""); binStr += nbins;
-	TString fixStr(""); if(fixB) fixStr+="_fixB";
 
 	switch(weighting) {
 		case 0:
@@ -45,34 +44,30 @@ void getEffs(Int_t weighting=0, Int_t nbins=50, Bool_t fixB=true) {
 
 	std::cout << "Generating efficiency histograms with " << nbins << " bins and " << weightStr << " weighting..." << std::endl;
 
-	TH1D * passed[21];
-	TH1D * total[21];
-	TEfficiency * eff[21];
-	TH1D * eff2[21];
+	TH2D * passed[19];
+	TH1D * total[19];
+	TEfficiency * eff[19];
 
-	Int_t ngenInQ[21] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	TH1D * tempPassed[50];
+	TEfficiency * tempEff[50];
+
+	Int_t ngenInQ[19] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
 		             0, 0, 0, 0, 0, 0, 0, 0, 0};
-	Int_t nselInQ[21] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+	Int_t nselInQ[19] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
 		             0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 	Double_t qSq(0.), costhetal(0.), q1k(0.);
 
 	Double_t ProbNNKweight(0.), ProbNNmuweight(0.), MuonPIDweight(0.), Bplus_P_weight(0.), Bplus_PT_weight(0.), Bplus_ENDVERTEX_CHI2_weight(0.), nTracks_weight(0.);
 
-	for(Int_t i=0; i<21; ++i) {
+	for(Int_t i=0; i<19; ++i) {
 		TString nameP("passed_");      nameP+=i;
 		TString nameT("total_");       nameT+=i;
 //		TString nameE("efficiency_");  nameE+=i;
-		TString nameE2("efficiencyHist_");  nameE2+=i;
 
-		passed[i] = new TH1D(nameP, "", nbins, -1.0, 1.0);
+		passed[i] = new TH2D(nameP, "", nbins, -1.0, 1.0, 50, 0., 1.);
 		total[i]  = new TH1D(nameT, "", nbins, -1.0, 1.0);
 //		eff[i]    = new TEfficiency(nameE, "", nbins, -1.0, 1.0);
-		eff2[i]   = new TH1D(nameE2, "", nbins, -1.0, 1.0);
-
-		passed[i]->Sumw2();
-		total[i]->Sumw2();
-		eff2[i]->Sumw2();
 	}
 
 	TFile * filegen = TFile::Open("/Disk/ecdf-nfs-ppe/lhcb/dcraik/kmumu_gen_addVars.root");
@@ -102,6 +97,43 @@ void getEffs(Int_t weighting=0, Int_t nbins=50, Bool_t fixB=true) {
 	Int_t infoGen = ngen/10;
 	Int_t infoSel = nsel/10;
 
+	Double_t weightMin( 9999.);
+	Double_t weightMax(-9999.);
+
+	for(Int_t i=0; i<nsel; ++i) {
+		if(i%infoSel == 0) std::cout << "Processing entry " << i << " of " << nsel << " selected..." << std::endl;
+
+		Int_t binA(-1), binB(-1);
+		Double_t weight(1.0);
+
+		treesel->GetEntry(i);
+
+		switch(weighting) {
+			case 0:
+				weight = ProbNNKweight*ProbNNmuweight*MuonPIDweight;
+				break;
+			case 1:
+				weight = ProbNNKweight*MuonPIDweight;
+				break;
+			case 2:
+				weight = ProbNNKweight*ProbNNmuweight;
+				break;
+			case 3:
+				weight = ProbNNKweight*ProbNNmuweight*MuonPIDweight*nTracks_weight;
+				break;
+			case 4:
+				weight = ProbNNKweight*ProbNNmuweight*MuonPIDweight*Bplus_P_weight*Bplus_PT_weight*Bplus_ENDVERTEX_CHI2_weight;
+				break;
+			case 5:
+				weight = ProbNNKweight*ProbNNmuweight*MuonPIDweight*Bplus_P_weight*Bplus_PT_weight*Bplus_ENDVERTEX_CHI2_weight*nTracks_weight;
+				break;
+		}
+		if(weight>weightMax) weightMax=weight;
+		if(weight<weightMin) weightMin=weight;
+	}
+
+	Double_t weightRange = weightMax - weightMin;
+
 	for(Int_t i=0; i<ngen; ++i) {
 		if(i%infoGen == 0) std::cout << "Processing entry " << i << " of " << ngen << " generated..." << std::endl;
 		Int_t binA(-1), binB(-1);
@@ -129,8 +161,6 @@ void getEffs(Int_t weighting=0, Int_t nbins=50, Bool_t fixB=true) {
 
 		if(       qSq >  1.10 && qSq <=  6.00) {	binB=17;
 		} else if(qSq > 15.00 && qSq <= 22.00) {	binB=18;
-		} else if(qSq >  8.00 && qSq <= 11.00) {	binB=19;
-		} else if(qSq > 12.50 && qSq <= 15.00) {	binB=20;
 		}
 
 		if(binA>=0) {
@@ -201,49 +231,38 @@ void getEffs(Int_t weighting=0, Int_t nbins=50, Bool_t fixB=true) {
 
 		if(       qSq >  1.10 && qSq <=  6.00) {	binB=17;
 		} else if(qSq > 15.00 && qSq <= 22.00) {	binB=18;
-		} else if(qSq >  8.00 && qSq <= 11.00) {	binB=19;
-		} else if(qSq > 12.50 && qSq <= 15.00) {	binB=20;
 		}
 
 		if(binA>=0) {
-			passed[binA]->Fill(costhetal,weight);
+			passed[binA]->Fill(costhetal,(weight-weightMin)/weightRange);
 			++nselInQ[binA];
 		}
 		if(binB>=0) {
-			passed[binB]->Fill(costhetal,weight);
+			passed[binB]->Fill(costhetal,(weight-weightMin)/weightRange);
 			++nselInQ[binB];
 		}
 	}
 
-	std::ofstream fout("effParams_"+weightStr+fixStr+"_"+binStr+".txt");
 	printf("\nAverage efficiencies...\n");
 	printf("Total:\t%7d\t%7d\n",nsel,ngen);
 	TFile * out = new TFile("efficiencies_"+weightStr+"_"+binStr+".root","RECREATE");
 	TF1  * func = new TF1("func", fcn, -1.0, 1.0, 3);
-	for(Int_t i=0; i<21; ++i) {
+	for(Int_t i=0; i<19; ++i) {
+
+		for(Int_t j=0; j<50; ++j) {
+			tempPassed[j] = passed[i]->ProjectionX(name,j+1,j+1);
+			tempEff[j] = new TEfficiency(*tempPassed[i], *total[i]);
+			tempEff[j].SetWeight(weightMin + (j+0.5)*weightRange);
+		}
+
 		TString nameE("efficiency_");  nameE+=i;
 		eff[i]    = new TEfficiency(*passed[i], *total[i]);
 		eff[i]->SetName(nameE);
-
 		func->SetParNames("N", "A", "B");
 		func->SetParameter(0, eff[i]->GetEfficiency(nbins/2));
 		func->SetParameter(1,-1.0);
-		if(fixB) func->FixParameter(2, 0.0);
-		else func->SetParameter(2, 0.0);
-
+		func->FixParameter(2, 0.0);
 		TFitResultPtr r = eff[i]->Fit(func,"S");
-//		std::cout << r << "\t" << func->GetParError(1) << std::endl;
-//		TBinomialEfficiencyFitter fitter(passed[i], total[i]);
-//		TFitResultPtr r = fitter->Fit(func,"S");
-//		std::cout << r << std::endl;
-//
-//		TMatrixDSym cm = r->GetCovarianceMatrix();
-
-		fout << i << "\t" << func->GetParameter(0) << "\t" << func->GetParError(0)
-			  << "\t" << func->GetParameter(1) << "\t" << func->GetParError(1)
-			  << "\t" << func->GetParameter(2) << "\t" << func->GetParError(2)
-			  << std::endl;
-
 		eff[i]->Write();
 		eff2[i]->Add(passed[i]);
 		eff2[i]->Divide(total[i]);
@@ -254,7 +273,6 @@ void getEffs(Int_t weighting=0, Int_t nbins=50, Bool_t fixB=true) {
 		printf("Bin %2d:\t%7d\t%7d\n",i,nselInQ[i],ngenInQ[i]);
 	}
 
-	fout.close();
 	out->Close();
 	filesel->Close();
 	filegen->Close();
