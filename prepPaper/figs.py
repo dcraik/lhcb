@@ -14,7 +14,7 @@ for line in lines:
         iFig+=1
         iSub=0
     else:
-        fig=line.split("includegraphics")[1].split("{")[1].split("}")[0].split(".")[0].split("/")[-1]
+        fig=line.split("includegraphics")[1].split("{")[1].split("}")[0].split(".")[0].split("/",1)[-1].replace("/","\\/")
         fbash.write("\t:g/includegraphic/s/{\(figs\/\)\=%s\(.pdf\)\=}/{fig%d%c}\n" % (fig, iFig, chr(iSub+ord('a'))))
         iSub+=1
 
@@ -30,7 +30,7 @@ for line in lines:
         iFig+=1
         iSub=0
     else:
-        fig=line.split("includegraphics")[1].split("{")[1].split("}")[0].split(".")[0].split("/")[-1]
+        fig=line.split("includegraphics")[1].split("{")[1].split("}")[0].split(".")[0].split("/",1)[-1].replace("/","\\/")
         fbash.write("mv figs/%s.pdf fig%d%c.pdf\n" % (fig, iFig, chr(iSub+ord('a'))))
         iSub+=1
 

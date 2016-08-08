@@ -1,10 +1,16 @@
 #!/bin/bash
 
+rm -rf build/
+mkdir -p build/
+cp -r ./* ./build
+cd build
+
 #make bbl file
 pdflatex main; bibtex main;
 
 #do inputs
 cp main.tex main.step0.tex
+
 while
 	cat main.tex | grep -E "\\input{" | grep -v "^\s*%" > inputs.txt
 	python inputs.py
@@ -55,10 +61,10 @@ chmod +x figs.sh
 # tar it up
 mkdir -p tar
 cp main.tex fig*.pdf lhcb-logo.pdf *.xml *.sty tar/
-tar -zcf PAPER.tar.gz tar/*
+tar -zcf ../PAPER.tar.gz tar/*
 
 # make the pdf
 cd tar
 pdflatex main
 pdflatex main
-cp main.pdf ../PAPER.pdf
+cp main.pdf ../../PAPER.pdf
