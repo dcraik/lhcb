@@ -311,18 +311,20 @@ void resampleTrackIPs::Loop()
 	TH1D hist22("hist22", "", 1000, -0.1, 0.1);
 	TH1D hist23("hist23", "", 1000, -0.1, 0.1);
 
-	//track separation x,y and z
+	//track separation x,y and angle
 	TH1D vhist0a("vhist0a","",20,0,5.);//40);
 	TH1D vhist0b("vhist0b","",20,0,5.);//40);
 	TH1D vhist1a("vhist1a","",20,0,5.);//40);
 	TH1D vhist1b("vhist1b","",20,0,5.);//40);
+	TH1D vhist2a("vhist2a","",40,0,.5);
+	TH1D vhist2b("vhist2b","",40,0,.5);
 
 	TH1D vhist0c("vhist0c","",20,0,5.);//40);
 	TH1D vhist0d("vhist0d","",20,0,5.);//40);
 	TH1D vhist1c("vhist1c","",20,0,5.);//40);
 	TH1D vhist1d("vhist1d","",20,0,5.);//40);
-	//TH1D vhist2c("vhist2c","",40,0,20.);//200);
-	//TH1D vhist2d("vhist2d","",40,0,20.);//200);
+	TH1D vhist2c("vhist2c","",40,0,.5);
+	TH1D vhist2d("vhist2d","",40,0,.5);
 
 	//Ntracks
 	TH1D vhist3a("vhist3a","",50,0,50);
@@ -376,8 +378,10 @@ void resampleTrackIPs::Loop()
 	}
 
 	//keep track of various stats
-	int countBefore(0), countAfter(0), total(0), nonPrompt(0);
+	int countBefore(0), countAfter(0), total(0), nonPrompt(0), noTruth(0), realTotal(0);
 	int svsBefore(0), svsAfter1(0), svsAfter2(0), svNsAfter1(0), svNsAfter2(0), sv2sAfter1(0), sv2sAfter2(0), sv3sAfter1(0), sv3sAfter2(0), sv4sAfter1(0), sv4sAfter2(0), svMoresAfter1(0), svMoresAfter2(0);
+	int noTrks1(0), noTrks2(0), oneTrk1(0), oneTrk2(0), twoTrks1(0), twoTrks2(0);
+	int nMatchGen1(0), nMatchGen2(0);
 
 	int seed(0);
 	if(_irep>=0) seed=1000+_irep;
@@ -386,7 +390,7 @@ void resampleTrackIPs::Loop()
 	int sumntrk1(0), sumncomb1(0);
 	int sumntrk2(0), sumncomb2(0);
 
-	int pvr_idx(0), binInvPt(0);
+	int tru_pvr_idx(0), pvr_idx(0), binInvPt(0);
 	double tx(0.), ty(0.), dx(0.), dy(0.), newDx(0.), newDy(0.), invpt(0.), sigma(0.), sigma2(0.);
 
 	int firstrep(0), endrep(101);
@@ -449,8 +453,11 @@ void resampleTrackIPs::Loop()
 			std::vector<TVector3> trkhit, trkdir;
 
 			for(uint idx=0; idx<trk_idx_gen->size(); ++idx) {
+				//only tracks that have defined reco pvr and gen pvr, the are prompt, and that pass PT and ghost prob cuts are resampled
+				//all others keep original (X,Y)
+				if(irep==0) ++realTotal;
 				int gen_idx = trk_idx_gen->at(idx);
-				if(gen_idx<0) continue;
+				if(gen_idx<0) { if(irep==0) ++noTruth; continue;}
 				if(trk_idx_pvr->at(idx)<0) continue;//TODO
 				pvr_idx = gen_idx_pvr->at(gen_idx);
 				if(pvr_idx<0) continue;
@@ -613,7 +620,16 @@ void resampleTrackIPs::Loop()
 			}
 
 			//check we have at least two tracks to vertex
-			if(ntrk>1) {
+			if(ntrk==0) {
+				if(irep==0) ++noTrks1;
+				else ++noTrks2;
+			} else if(ntrk==1) {
+				if(irep==0) ++oneTrk1;
+				else ++oneTrk2;
+			} else if(ntrk>1) {
+				if(irep==0) ++twoTrks1;
+				else ++twoTrks2;
+
 				//now make 2body SVs
 				std::vector<std::pair<int,int> > sv2ij;
 				std::vector<TVector3> sv2;
@@ -622,6 +638,11 @@ void resampleTrackIPs::Loop()
 					TLorentzVector p4i(trk_px->at(trks[itrk]), trk_py->at(trks[itrk]), trk_pz->at(trks[itrk]), 0);
 					p4i.SetE(TMath::Sqrt(p4i.P()*p4i.P() + 140*140));
 					for( int jtrk=itrk+1; jtrk<ntrk; ++jtrk) {
+						if(trk_idx_gen->at(trks[itrk]) == trk_idx_gen->at(trks[jtrk])) {
+							if(irep==0) ++nMatchGen1;
+							else ++nMatchGen2;
+						}
+						if(trk_vid->at(trks[itrk]) == trk_vid->at(trks[jtrk])) std::cout << "shared VELO track" << std::endl;
 						if(gen_idx_pvr->at(trk_idx_gen->at(trks[itrk])) != gen_idx_pvr->at(trk_idx_gen->at(trks[jtrk]))) continue;
 
 						TVector3 dxdyi = calcDxDy(trkhit[itrk], trkdir[itrk], TVector3(pvr_x->at(pvr_idx),pvr_y->at(pvr_idx),pvr_z->at(pvr_idx)));
@@ -644,6 +665,11 @@ void resampleTrackIPs::Loop()
 						//}
 						TLorentzVector p4j(trk_px->at(trks[jtrk]), trk_py->at(trks[jtrk]), trk_pz->at(trks[jtrk]), 0);
 						p4j.SetE(TMath::Sqrt(p4j.P()*p4j.P() + 140*140));
+						if(irep==0) {
+							vhist2a.Fill(p4i.Angle(p4j.Vect()));
+						} else {
+							vhist2b.Fill(p4i.Angle(p4j.Vect()));
+						}
 						TLorentzVector p4 = p4i+p4j;
 						double m = p4.M();
 						TVector3 sv;
@@ -651,8 +677,8 @@ void resampleTrackIPs::Loop()
 						pvr_idx = gen_idx_pvr->at(trk_idx_gen->at(trks[itrk]));
 						//pvr_idx = trk_idx_pvr->at(trks[itrk]);
 						TVector3 fv(sv.X() - pvr_x->at(pvr_idx),
-								sv.Y() - pvr_y->at(pvr_idx),
-								sv.Z() - pvr_z->at(pvr_idx));
+							    sv.Y() - pvr_y->at(pvr_idx),
+							    sv.Z() - pvr_z->at(pvr_idx));
 						double pt2 = p4.Vect().Cross(fv.Unit()).Mag2();
 						double mcor = TMath::Sqrt(m*m + pt2) + TMath::Sqrt(pt2);
 						double tz = fv.Z()*m/p4.Z()/(3e11)*(1e12);
@@ -683,7 +709,7 @@ void resampleTrackIPs::Loop()
 						if(irep==0) {
 							vhist0c.Fill(dxdyi.X() - dxdyj.X());//TMath::Abs(trkhit[itrk].X() - trkhit[jtrk].X()));
 							vhist1c.Fill(dxdyi.Y() - dxdyj.Y());//TMath::Abs(trkhit[itrk].Y() - trkhit[jtrk].Y()));
-							//vhist2c.Fill(TMath::Abs(trkhit[itrk].Z() - trkhit[jtrk].Z()));
+							vhist2c.Fill(p4i.Angle(p4j.Vect()));
 							vhist4c.Fill(tz);
 							vhist5c.Fill(fv.Z());
 							vhist6c.Fill(m);
@@ -693,7 +719,7 @@ void resampleTrackIPs::Loop()
 						} else {
 							vhist0d.Fill(dxdyi.X() - dxdyj.X());//TMath::Abs(trkhit[itrk].X() - trkhit[jtrk].X()));
 							vhist1d.Fill(dxdyi.Y() - dxdyj.Y());//TMath::Abs(trkhit[itrk].Y() - trkhit[jtrk].Y()));
-							//vhist2d.Fill(TMath::Abs(trkhit[itrk].Z() - trkhit[jtrk].Z()));
+							vhist2d.Fill(p4i.Angle(p4j.Vect()));
 							vhist4d.Fill(tz);
 							vhist5d.Fill(fv.Z());
 							vhist6d.Fill(m);
@@ -741,7 +767,7 @@ void resampleTrackIPs::Loop()
 
 						//iterate through each track we add and check for additional SVs
 						for(uint t=0; t<svTrks.size(); ++t) {
-							if(jet_idx==-1 && trk_idx_jet->at(svTrks[t])!=-1) jet_idx=trk_idx_jet->at(svTrks[t]);
+							//if(jet_idx==-1 && trk_idx_jet->at(svTrks[t])!=-1) jet_idx=trk_idx_jet->at(svTrks[t]);
 
 							//loop over remaining SVs
 							for(uint ss=s+1; ss<sv2.size(); ++ss) {
@@ -771,6 +797,56 @@ void resampleTrackIPs::Loop()
 						svTrks.erase(std::unique(svTrks.begin(),svTrks.end()),svTrks.end());
 						//normalise average vertex //TODO weight?
 						sv *= (1./nsvCombined);
+
+						TLorentzVector p4;
+
+						for(uint itrk=0; itrk<svTrks.size(); ++itrk) {
+							TLorentzVector p4i(trk_px->at(svTrks[itrk]), trk_py->at(svTrks[itrk]), trk_pz->at(svTrks[itrk]), 0);
+							p4i.SetE(TMath::Sqrt(p4i.P()*p4i.P() + 140*140));
+							p4 += p4i;
+						}
+
+						TLorentzVector p4jet;
+						//loop over jets to find a match
+						double minDeltaR=10.;
+						for(uint ijet=0; ijet<jet_pz->size(); ++ijet) {
+							p4jet.SetPxPyPzE(jet_px->at(ijet), jet_py->at(ijet), jet_pz->at(ijet), 0);
+							double deltaR = p4.DeltaR(p4jet);
+							if(deltaR<minDeltaR) {
+								minDeltaR = deltaR;
+								jet_idx = ijet;
+							}
+						}
+						//no matching jet
+						if(minDeltaR >= 0.5) continue;
+
+						//count tracks in jet
+						int nTrkInJet(0);
+						for(uint itrk=0; itrk<svTrks.size(); ++itrk) {
+							double deltaR = p4jet.DeltaR(TLorentzVector(trk_px->at(svTrks[itrk]), trk_py->at(svTrks[itrk]), trk_pz->at(svTrks[itrk]), 0));
+							if(deltaR<0.5) ++nTrkInJet;
+						}
+
+						double m = p4.M();
+						
+						TVector3 fv(sv.X() - pvr_x->at(pvr_idx),
+							    sv.Y() - pvr_y->at(pvr_idx),
+							    sv.Z() - pvr_z->at(pvr_idx));
+						double pt2 = p4.Vect().Cross(fv.Unit()).Mag2();//note this is transverse wrt fd NOT the z-axis
+						double mcor = TMath::Sqrt(m*m + pt2) + TMath::Sqrt(pt2);
+
+						//check if we pass n-body requirements
+						if(svTrks.size() == 2 && TMath::Abs(m - 500.) < 20.) continue;
+						if(fd_min > 15.) continue;
+						if(sv.Z() > 200.) continue;
+						if(mcor < 600.) continue;
+						if(nTrkInJet<2) continue;
+						if(p4.Perp() < 2000.) continue;
+						//else if (!(m_tau < 1.5))                  pass = false;
+						//else if (!(m_fdChi2 > 32))                pass = false;
+						//else if (!(m_drSvrJet <= m_parent->m_dr)) pass = false;
+						//if (m_parent->m_nbvSelect && !pass) return false;
+
 						//save vertex and list of tracks
 						svN.push_back(sv);
 						svNij.push_back(svTrks);
@@ -788,22 +864,6 @@ void resampleTrackIPs::Loop()
 							if(irep==0) ++svMoresAfter1;
 							else ++svMoresAfter2;
 						}
-
-						TLorentzVector p4;
-
-						for(uint itrk=0; itrk<svTrks.size(); ++itrk) {
-							TLorentzVector p4i(trk_px->at(svTrks[itrk]), trk_py->at(svTrks[itrk]), trk_pz->at(svTrks[itrk]), 0);
-							p4i.SetE(TMath::Sqrt(p4i.P()*p4i.P() + 140*140));
-							p4 += p4i;
-						}
-
-						double m = p4.M();
-						//pvr_idx = trk_idx_pvr->at(trks[itrk]);
-						TVector3 fv(sv.X() - pvr_x->at(pvr_idx),
-							    sv.Y() - pvr_y->at(pvr_idx),
-							    sv.Z() - pvr_z->at(pvr_idx));
-						double pt2 = p4.Vect().Cross(fv.Unit()).Mag2();
-						double mcor = TMath::Sqrt(m*m + pt2) + TMath::Sqrt(pt2);
 
 						//pad with -1 for filling tuple - size of svTrks no longer meaningful
 						while(svTrks.size()<10) {
@@ -879,8 +939,13 @@ void resampleTrackIPs::Loop()
 	std::cout << "NsvN\t" << svsBefore << "\t" << static_cast<double>(svNsAfter1)/1. << "\t" << static_cast<double>(svNsAfter2)/100. << std::endl;
 	std::cout << "Ntrk\t" << sumntrk1 << "\t" << static_cast<double>(sumntrk2)/100. << std::endl;
 	std::cout << "Ncomb\t" << sumncomb1 << "\t" << static_cast<double>(sumncomb2)/100. << std::endl;
+	std::cout << "N(same gen)\t" << nMatchGen1 << "\t" << static_cast<double>(nMatchGen2)/100. << std::endl;
+	std::cout << "N(0 trks)\t" << noTrks1 << "\t" << static_cast<double>(noTrks2)/100. << std::endl;
+	std::cout << "N(1 trk)\t" << oneTrk1 << "\t" << static_cast<double>(oneTrk2)/100. << std::endl;
+	std::cout << "N(>2 trks)\t" << twoTrks1 << "\t" << static_cast<double>(twoTrks2)/100. << std::endl;
 	std::cout << "Nisv/Ncomb\t" << static_cast<double>(svsAfter1)/sumncomb1 << " +/- " << TMath::Sqrt(svsAfter1)/sumncomb1 << "\t" << static_cast<double>(svsAfter2)/sumncomb2 << " +/- " << TMath::Sqrt(svsAfter2)/sumncomb2 << std::endl;
 	std::cout << "prompt:" << static_cast<double>(total)/(total+nonPrompt) << std::endl;
+	std::cout << "no truth:" << noTruth << "/" << realTotal << std::endl;
 
 	gStyle->SetOptStat(0);
 	TH1D* htmp(0);
@@ -1021,10 +1086,11 @@ void resampleTrackIPs::Loop()
 	htmp->SetLineColor(kMagenta); htmp->Draw("same");
 	c.SaveAs("ipOverSigma_bin3.pdf");
 
-	vhist0c.Scale(1./vhist0a.Integral());
-	vhist1c.Scale(1./vhist1a.Integral());
-	vhist0d.Scale(1./vhist0b.Integral());
-	vhist1d.Scale(1./vhist1b.Integral());
+	//vhist0c.Scale(1./vhist0a.Integral());
+	//vhist1c.Scale(1./vhist1a.Integral());
+	vhist0d.Scale(0.01);//1./vhist0b.Integral());
+	vhist1d.Scale(0.01);//1./vhist1b.Integral());
+	vhist2d.Scale(0.01);//1./vhist2b.Integral());
 	vhist4c.Scale(1./vhist4a.Integral());
 	vhist5c.Scale(1./vhist5a.Integral());
 	vhist4d.Scale(1./vhist4b.Integral());
@@ -1038,8 +1104,8 @@ void resampleTrackIPs::Loop()
 	vhist8d.Scale(1./vhist8b.Integral());
 	vhist9d.Scale(1./vhist9b.Integral());
 
-	vhist0a.Scale(1./vhist0a.Integral());
-	vhist1a.Scale(1./vhist1a.Integral());
+	//vhist0a.Scale(1./vhist0a.Integral());
+	//vhist1a.Scale(1./vhist1a.Integral());
 	vhist3a.Scale(1./vhist3a.Integral());
 	vhist4a.Scale(1./vhist4a.Integral());
 	vhist5z.Scale(1./vhist5z.Integral());
@@ -1049,8 +1115,9 @@ void resampleTrackIPs::Loop()
 	vhist8a.Scale(1./vhist8a.Integral());
 	vhist9a.Scale(1./vhist9a.Integral());
 
-	vhist0b.Scale(1./vhist0b.Integral());
-	vhist1b.Scale(1./vhist1b.Integral());
+	vhist0b.Scale(0.01);//1./vhist0b.Integral());
+	vhist1b.Scale(0.01);//1./vhist1b.Integral());
+	vhist2b.Scale(0.01);//1./vhist2b.Integral());
 	vhist3b.Scale(1./vhist3b.Integral());
 	vhist4b.Scale(1./vhist4b.Integral());
 	vhist5b.Scale(1./vhist5b.Integral());
@@ -1062,6 +1129,7 @@ void resampleTrackIPs::Loop()
 
 	vhist0a.GetXaxis()->SetTitle("#DeltaX");
 	vhist1a.GetXaxis()->SetTitle("#DeltaY");
+	vhist2a.GetXaxis()->SetTitle("angle");
 	vhist3a.GetXaxis()->SetTitle("N_{trk}");
 	vhist4a.GetXaxis()->SetTitle("t_{z}");
 	vhist5a.GetXaxis()->SetTitle("fv_{z}");
@@ -1084,6 +1152,7 @@ void resampleTrackIPs::Loop()
 	vhist0d.SetLineStyle(kDashed);
 	vhist0d.Draw("same");
 	c.SaveAs("deltaX.pdf");
+
 	vhist1a.SetLineColor(kRed);
 	vhist1a.Draw();
 	vhist1b.SetLineColor(kMagenta);
@@ -1095,6 +1164,18 @@ void resampleTrackIPs::Loop()
 	vhist1d.SetLineStyle(kDashed);
 	vhist1d.Draw("same");
 	c.SaveAs("deltaY.pdf");
+
+	vhist2a.SetLineColor(kRed);
+	vhist2a.Draw();
+	vhist2b.SetLineColor(kMagenta);
+	vhist2b.Draw("same");
+	vhist2c.SetLineColor(kRed);
+	vhist2c.SetLineStyle(kDashed);
+	vhist2c.Draw("same");
+	vhist2d.SetLineColor(kMagenta);
+	vhist2d.SetLineStyle(kDashed);
+	vhist2d.Draw("same");
+	c.SaveAs("angle.pdf");
 	
 	vhist3a.SetLineColor(kRed);
 	vhist3a.Draw();
