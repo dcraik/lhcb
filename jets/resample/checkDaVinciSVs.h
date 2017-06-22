@@ -5,17 +5,18 @@
 // found on file: lightjets.part.root
 //////////////////////////////////////////////////////////
 
-#ifndef makeIPMap_h
-#define makeIPMap_h
+#ifndef checkDaVinciSVs_h
+#define checkDaVinciSVs_h
 
 #include <TROOT.h>
 #include <TChain.h>
 #include <TFile.h>
+#include <TVector3.h>
 
 // Header file for the classes stored in the TTree if any.
 #include "vector"
 
-class makeIPMap {
+class checkDaVinciSVs {
 public :
    TTree          *fChain;   //!pointer to the analyzed TTree or TChain
    Int_t           fCurrent; //!current Tree number in a TChain
@@ -23,78 +24,132 @@ public :
 // Fixed size dimensions of array or collections stored in the TTree if any.
 
    // Declaration of leaf types
-   vector<double>  *gen_idx_pvr;
-   vector<double>  *gen_idx_jet;
-   vector<double>  *gen_pid;
-   vector<double>  *gen_q;
-   vector<double>  *gen_px;
-   vector<double>  *gen_py;
-   vector<double>  *gen_pz;
-   vector<double>  *gen_e;
-   vector<double>  *gen_x;
-   vector<double>  *gen_y;
-   vector<double>  *gen_z;
-   vector<double>  *pvr_x;
-   vector<double>  *pvr_y;
-   vector<double>  *pvr_z;
-   vector<double>  *pvr_dx;
-   vector<double>  *pvr_dy;
-   vector<double>  *pvr_dz;
-   vector<double>  *pvr_chi2;
-   vector<double>  *pvr_ndof;
-   vector<double>  *svr_idx_pvr;
-   vector<double>  *svr_idx_jet;
-   vector<double>  *svr_idx_trk0;
-   vector<double>  *svr_idx_trk1;
-   vector<double>  *svr_idx_trk2;
-   vector<double>  *svr_idx_trk3;
-   vector<double>  *svr_idx_trk4;
-   vector<double>  *svr_idx_trk5;
-   vector<double>  *svr_idx_trk6;
-   vector<double>  *svr_idx_trk7;
-   vector<double>  *svr_idx_trk8;
-   vector<double>  *svr_idx_trk9;
-   vector<double>  *svr_px;
-   vector<double>  *svr_py;
-   vector<double>  *svr_pz;
-   vector<double>  *svr_e;
-   vector<double>  *svr_x;
-   vector<double>  *svr_y;
-   vector<double>  *svr_z;
-   vector<double>  *svr_fd_min;
-   vector<double>  *svr_m_cor;
-   vector<double>  *jet_idx_pvr;
-   vector<double>  *jet_px;
-   vector<double>  *jet_py;
-   vector<double>  *jet_pz;
-   vector<double>  *jet_e;
-   vector<double>  *trk_idx_gen;
-   vector<double>  *trk_idx_pvr;
-   vector<double>  *trk_idx_jet;
-   vector<double>  *trk_p;
-   vector<double>  *trk_pt;
-   vector<double>  *trk_px;
-   vector<double>  *trk_py;
-   vector<double>  *trk_pz;
-   vector<double>  *trk_e;
-   vector<double>  *trk_pid;
-   vector<double>  *trk_q;
-   vector<double>  *trk_ip;
-   vector<double>  *trk_ip_chi2;
-   vector<double>  *trk_pnn_e;
-   vector<double>  *trk_pnn_mu;
-   vector<double>  *trk_pnn_pi;
-   vector<double>  *trk_pnn_k;
-   vector<double>  *trk_pnn_p;
-   vector<double>  *trk_ecal;
-   vector<double>  *trk_hcal;
-   vector<double>  *trk_prb_ghost;
-   vector<double>  *trk_type;
-   vector<double>  *trk_is_mu;
-   vector<double>  *trk_vid;
-   vector<double>  *trk_x;
-   vector<double>  *trk_y;
-   vector<double>  *trk_z;
+   std::vector<double>  *gen_idx_pvr;
+   std::vector<double>  *gen_idx_jet;
+   std::vector<double>  *gen_pid;
+   std::vector<double>  *gen_q;
+   std::vector<double>  *gen_px;
+   std::vector<double>  *gen_py;
+   std::vector<double>  *gen_pz;
+   std::vector<double>  *gen_e;
+   std::vector<double>  *gen_x;
+   std::vector<double>  *gen_y;
+   std::vector<double>  *gen_z;
+   std::vector<double>  *pvr_x;
+   std::vector<double>  *pvr_y;
+   std::vector<double>  *pvr_z;
+   std::vector<double>  *pvr_dx;
+   std::vector<double>  *pvr_dy;
+   std::vector<double>  *pvr_dz;
+   std::vector<double>  *pvr_chi2;
+   std::vector<double>  *pvr_ndof;
+   std::vector<double>  *svr_idx_pvr;
+   std::vector<double>  *svr_idx_jet;
+   std::vector<double>  *svr_idx_trk0;
+   std::vector<double>  *svr_idx_trk1;
+   std::vector<double>  *svr_idx_trk2;
+   std::vector<double>  *svr_idx_trk3;
+   std::vector<double>  *svr_idx_trk4;
+   std::vector<double>  *svr_idx_trk5;
+   std::vector<double>  *svr_idx_trk6;
+   std::vector<double>  *svr_idx_trk7;
+   std::vector<double>  *svr_idx_trk8;
+   std::vector<double>  *svr_idx_trk9;
+   std::vector<double>  *svr_px;
+   std::vector<double>  *svr_py;
+   std::vector<double>  *svr_pz;
+   std::vector<double>  *svr_e;
+   std::vector<double>  *svr_x;
+   std::vector<double>  *svr_y;
+   std::vector<double>  *svr_z;
+   std::vector<double>  *svr_m;
+   std::vector<double>  *svr_m_cor;
+   std::vector<double>  *svr_pt;
+   std::vector<double>  *svr_fd_min;
+   std::vector<double>  *svr_fd_chi2;
+   std::vector<double>  *svr_ip_chi2_sum;
+   std::vector<double>  *svr_abs_q_sum;
+   std::vector<double>  *svr_tau;
+   std::vector<double>  *svr_ntrk;
+   std::vector<double>  *svr_ntrk_jet;
+   std::vector<double>  *svr_jet_dr;
+   std::vector<double>  *svr_jet_pt;
+   std::vector<double>  *svr_pass;
+   std::vector<double>  *svr_bdt0;
+   std::vector<double>  *svr_bdt1;
+   std::vector<double>  *jet_idx_pvr;
+   std::vector<double>  *jet_ntrk;
+   std::vector<double>  *jet_px;
+   std::vector<double>  *jet_py;
+   std::vector<double>  *jet_pz;
+   std::vector<double>  *jet_e;
+   std::vector<double>  *jet_idx_trk0;
+   std::vector<double>  *jet_idx_trk1;
+   std::vector<double>  *jet_idx_trk2;
+   std::vector<double>  *jet_idx_trk3;
+   std::vector<double>  *jet_idx_trk4;
+   std::vector<double>  *jet_idx_trk5;
+   std::vector<double>  *jet_idx_trk6;
+   std::vector<double>  *jet_idx_trk7;
+   std::vector<double>  *jet_idx_trk8;
+   std::vector<double>  *jet_idx_trk9;
+   std::vector<double>  *jet_idx_trk10;
+   std::vector<double>  *jet_idx_trk11;
+   std::vector<double>  *jet_idx_trk12;
+   std::vector<double>  *jet_idx_trk13;
+   std::vector<double>  *jet_idx_trk14;
+   std::vector<double>  *jet_idx_trk15;
+   std::vector<double>  *jet_idx_trk16;
+   std::vector<double>  *jet_idx_trk17;
+   std::vector<double>  *jet_idx_trk18;
+   std::vector<double>  *jet_idx_trk19;
+   std::vector<double>  *jet_idx_trk20;
+   std::vector<double>  *jet_idx_trk21;
+   std::vector<double>  *jet_idx_trk22;
+   std::vector<double>  *jet_idx_trk23;
+   std::vector<double>  *jet_idx_trk24;
+   std::vector<double>  *jet_idx_trk25;
+   std::vector<double>  *jet_idx_trk26;
+   std::vector<double>  *jet_idx_trk27;
+   std::vector<double>  *jet_idx_trk28;
+   std::vector<double>  *jet_idx_trk29;
+   std::vector<double>  *jet_idx_trk30;
+   std::vector<double>  *jet_idx_trk31;
+   std::vector<double>  *jet_idx_trk32;
+   std::vector<double>  *jet_idx_trk33;
+   std::vector<double>  *jet_idx_trk34;
+   std::vector<double>  *jet_idx_trk35;
+   std::vector<double>  *jet_idx_trk36;
+   std::vector<double>  *jet_idx_trk37;
+   std::vector<double>  *jet_idx_trk38;
+   std::vector<double>  *jet_idx_trk39;
+   std::vector<double>  *trk_idx_gen;
+   std::vector<double>  *trk_idx_pvr;
+   std::vector<double>  *trk_idx_jet;
+   std::vector<double>  *trk_p;
+   std::vector<double>  *trk_pt;
+   std::vector<double>  *trk_px;
+   std::vector<double>  *trk_py;
+   std::vector<double>  *trk_pz;
+   std::vector<double>  *trk_e;
+   std::vector<double>  *trk_pid;
+   std::vector<double>  *trk_q;
+   std::vector<double>  *trk_ip;
+   std::vector<double>  *trk_ip_chi2;
+   std::vector<double>  *trk_pnn_e;
+   std::vector<double>  *trk_pnn_mu;
+   std::vector<double>  *trk_pnn_pi;
+   std::vector<double>  *trk_pnn_k;
+   std::vector<double>  *trk_pnn_p;
+   std::vector<double>  *trk_ecal;
+   std::vector<double>  *trk_hcal;
+   std::vector<double>  *trk_prb_ghost;
+   std::vector<double>  *trk_type;
+   std::vector<double>  *trk_is_mu;
+   std::vector<double>  *trk_vid;
+   std::vector<double>  *trk_x;
+   std::vector<double>  *trk_y;
+   std::vector<double>  *trk_z;
    std::vector<double>  *trk_vhit0;
    std::vector<double>  *trk_vhit1;
    std::vector<double>  *trk_vhit2;
@@ -156,13 +211,13 @@ public :
    std::vector<double>  *trk_vhit58;
    std::vector<double>  *trk_vhit59;
    std::vector<double>  *trk_vhit60;
-   vector<double>  *neu_idx_gen;
-   vector<double>  *neu_idx_jet;
-   vector<double>  *neu_px;
-   vector<double>  *neu_py;
-   vector<double>  *neu_pz;
-   vector<double>  *neu_e;
-   vector<double>  *neu_pid;
+   std::vector<double>  *neu_idx_gen;
+   std::vector<double>  *neu_idx_jet;
+   std::vector<double>  *neu_px;
+   std::vector<double>  *neu_py;
+   std::vector<double>  *neu_pz;
+   std::vector<double>  *neu_e;
+   std::vector<double>  *neu_pid;
    Double_t        evt_pvr_n;
 
    // List of branches
@@ -204,13 +259,67 @@ public :
    TBranch        *b_svr_x;   //!
    TBranch        *b_svr_y;   //!
    TBranch        *b_svr_z;   //!
-   TBranch        *b_svr_fd_min;   //!
+   TBranch        *b_svr_m;   //!
    TBranch        *b_svr_m_cor;   //!
+   TBranch        *b_svr_pt;   //!
+   TBranch        *b_svr_fd_min;   //!
+   TBranch        *b_svr_fd_chi2;   //!
+   TBranch        *b_svr_ip_chi2_sum;   //!
+   TBranch        *b_svr_abs_q_sum;   //!
+   TBranch        *b_svr_tau;   //!
+   TBranch        *b_svr_ntrk;   //!
+   TBranch        *b_svr_ntrk_jet;   //!
+   TBranch        *b_svr_jet_dr;   //!
+   TBranch        *b_svr_jet_pt;   //!
+   TBranch        *b_svr_pass;   //!
+   TBranch        *b_svr_bdt0;   //!
+   TBranch        *b_svr_bdt1;   //!
    TBranch        *b_jet_idx_pvr;   //!
+   TBranch        *b_jet_ntrk;   //!
    TBranch        *b_jet_px;   //!
    TBranch        *b_jet_py;   //!
    TBranch        *b_jet_pz;   //!
    TBranch        *b_jet_e;   //!
+   TBranch        *b_jet_idx_trk0;   //!
+   TBranch        *b_jet_idx_trk1;   //!
+   TBranch        *b_jet_idx_trk2;   //!
+   TBranch        *b_jet_idx_trk3;   //!
+   TBranch        *b_jet_idx_trk4;   //!
+   TBranch        *b_jet_idx_trk5;   //!
+   TBranch        *b_jet_idx_trk6;   //!
+   TBranch        *b_jet_idx_trk7;   //!
+   TBranch        *b_jet_idx_trk8;   //!
+   TBranch        *b_jet_idx_trk9;   //!
+   TBranch        *b_jet_idx_trk10;   //!
+   TBranch        *b_jet_idx_trk11;   //!
+   TBranch        *b_jet_idx_trk12;   //!
+   TBranch        *b_jet_idx_trk13;   //!
+   TBranch        *b_jet_idx_trk14;   //!
+   TBranch        *b_jet_idx_trk15;   //!
+   TBranch        *b_jet_idx_trk16;   //!
+   TBranch        *b_jet_idx_trk17;   //!
+   TBranch        *b_jet_idx_trk18;   //!
+   TBranch        *b_jet_idx_trk19;   //!
+   TBranch        *b_jet_idx_trk20;   //!
+   TBranch        *b_jet_idx_trk21;   //!
+   TBranch        *b_jet_idx_trk22;   //!
+   TBranch        *b_jet_idx_trk23;   //!
+   TBranch        *b_jet_idx_trk24;   //!
+   TBranch        *b_jet_idx_trk25;   //!
+   TBranch        *b_jet_idx_trk26;   //!
+   TBranch        *b_jet_idx_trk27;   //!
+   TBranch        *b_jet_idx_trk28;   //!
+   TBranch        *b_jet_idx_trk29;   //!
+   TBranch        *b_jet_idx_trk30;   //!
+   TBranch        *b_jet_idx_trk31;   //!
+   TBranch        *b_jet_idx_trk32;   //!
+   TBranch        *b_jet_idx_trk33;   //!
+   TBranch        *b_jet_idx_trk34;   //!
+   TBranch        *b_jet_idx_trk35;   //!
+   TBranch        *b_jet_idx_trk36;   //!
+   TBranch        *b_jet_idx_trk37;   //!
+   TBranch        *b_jet_idx_trk38;   //!
+   TBranch        *b_jet_idx_trk39;   //!
    TBranch        *b_trk_idx_gen;   //!
    TBranch        *b_trk_idx_pvr;   //!
    TBranch        *b_trk_idx_jet;   //!
@@ -308,8 +417,12 @@ public :
    TBranch        *b_neu_pid;   //!
    TBranch        *b_evt_pvr_n;   //!
 
-   makeIPMap(TTree *tree=0);
-   virtual ~makeIPMap();
+   int _irep;
+   TFile* newfile;
+   TTree* newtree;
+
+   checkDaVinciSVs(int irep=-1);
+   virtual ~checkDaVinciSVs();
    virtual Int_t    Cut(Long64_t entry);
    virtual Int_t    GetEntry(Long64_t entry);
    virtual Long64_t LoadTree(Long64_t entry);
@@ -317,41 +430,50 @@ public :
    virtual void     Loop();
    virtual Bool_t   Notify();
    virtual void     Show(Long64_t entry = -1);
-
-   int getNSharedVeloHits(int idx, int idxj);
+   int getNSharedVeloHits(int idxi, int idxj);
+   int getNSharedEarlyVeloHits(int idxi, int idxj);
+   int findBestGenPvrForTrk(int idx);
+   int findBestPvrForSvr(TVector3 x, TVector3 p, bool gen=true);
 };
 
 #endif
 
-#ifdef makeIPMap_cxx
-makeIPMap::makeIPMap(TTree *tree) : fChain(0) 
+#ifdef checkDaVinciSVs_cxx
+checkDaVinciSVs::checkDaVinciSVs(int irep) : fChain(0), _irep(irep), newfile(0), newtree(0)
 {
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
-   if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("lightjets_filtered_addVars.root");
-      if (!f || !f->IsOpen()) {
-         f = new TFile("lightjets_filtered_addVars.root");
-      }
-      f->GetObject("data",tree);
 
+   TTree* tree(0);
+   TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("lightjets_filtered_addVars.root");
+   if (!f || !f->IsOpen()) {
+      f = new TFile("lightjets_filtered_addVars.root");
    }
+   f->GetObject("data",tree);
+
    Init(tree);
+
+   //if(_irep>=0) {
+   	//TString fname("lightjets_filtered_addVars_resampled");
+   	//fname+=_irep; fname+=".root";
+   	//newfile = TFile::Open(fname, "RECREATE");
+   	//newtree = tree->CloneTree(0);
+   //}
 }
 
-makeIPMap::~makeIPMap()
+checkDaVinciSVs::~checkDaVinciSVs()
 {
    if (!fChain) return;
    delete fChain->GetCurrentFile();
 }
 
-Int_t makeIPMap::GetEntry(Long64_t entry)
+Int_t checkDaVinciSVs::GetEntry(Long64_t entry)
 {
 // Read contents of entry.
    if (!fChain) return 0;
    return fChain->GetEntry(entry);
 }
-Long64_t makeIPMap::LoadTree(Long64_t entry)
+Long64_t checkDaVinciSVs::LoadTree(Long64_t entry)
 {
 // Set the environment to read one entry
    if (!fChain) return -5;
@@ -364,7 +486,7 @@ Long64_t makeIPMap::LoadTree(Long64_t entry)
    return centry;
 }
 
-void makeIPMap::Init(TTree *tree)
+void checkDaVinciSVs::Init(TTree *tree)
 {
    // The Init() function is called when the selector needs to initialize
    // a new tree or chain. Typically here the branch addresses and branch
@@ -413,13 +535,67 @@ void makeIPMap::Init(TTree *tree)
    svr_x = 0;
    svr_y = 0;
    svr_z = 0;
-   svr_fd_min = 0;
+   svr_m = 0;
    svr_m_cor = 0;
+   svr_pt = 0;
+   svr_fd_min = 0;
+   svr_fd_chi2 = 0;
+   svr_ip_chi2_sum = 0;
+   svr_abs_q_sum = 0;
+   svr_tau = 0;
+   svr_ntrk = 0;
+   svr_ntrk_jet = 0;
+   svr_jet_dr = 0;
+   svr_jet_pt = 0;
+   svr_pass = 0;
+   svr_bdt0 = 0;
+   svr_bdt1 = 0;
    jet_idx_pvr = 0;
+   jet_ntrk = 0;
    jet_px = 0;
    jet_py = 0;
    jet_pz = 0;
    jet_e = 0;
+   jet_idx_trk0 = 0;
+   jet_idx_trk1 = 0;
+   jet_idx_trk2 = 0;
+   jet_idx_trk3 = 0;
+   jet_idx_trk4 = 0;
+   jet_idx_trk5 = 0;
+   jet_idx_trk6 = 0;
+   jet_idx_trk7 = 0;
+   jet_idx_trk8 = 0;
+   jet_idx_trk9 = 0;
+   jet_idx_trk10 = 0;
+   jet_idx_trk11 = 0;
+   jet_idx_trk12 = 0;
+   jet_idx_trk13 = 0;
+   jet_idx_trk14 = 0;
+   jet_idx_trk15 = 0;
+   jet_idx_trk16 = 0;
+   jet_idx_trk17 = 0;
+   jet_idx_trk18 = 0;
+   jet_idx_trk19 = 0;
+   jet_idx_trk20 = 0;
+   jet_idx_trk21 = 0;
+   jet_idx_trk22 = 0;
+   jet_idx_trk23 = 0;
+   jet_idx_trk24 = 0;
+   jet_idx_trk25 = 0;
+   jet_idx_trk26 = 0;
+   jet_idx_trk27 = 0;
+   jet_idx_trk28 = 0;
+   jet_idx_trk29 = 0;
+   jet_idx_trk30 = 0;
+   jet_idx_trk31 = 0;
+   jet_idx_trk32 = 0;
+   jet_idx_trk33 = 0;
+   jet_idx_trk34 = 0;
+   jet_idx_trk35 = 0;
+   jet_idx_trk36 = 0;
+   jet_idx_trk37 = 0;
+   jet_idx_trk38 = 0;
+   jet_idx_trk39 = 0;
    trk_idx_gen = 0;
    trk_idx_pvr = 0;
    trk_idx_jet = 0;
@@ -559,13 +735,67 @@ void makeIPMap::Init(TTree *tree)
    fChain->SetBranchAddress("svr_x", &svr_x, &b_svr_x);
    fChain->SetBranchAddress("svr_y", &svr_y, &b_svr_y);
    fChain->SetBranchAddress("svr_z", &svr_z, &b_svr_z);
-   fChain->SetBranchAddress("svr_fd_min", &svr_fd_min, &b_svr_fd_min);
+   fChain->SetBranchAddress("svr_m", &svr_m, &b_svr_m);
    fChain->SetBranchAddress("svr_m_cor", &svr_m_cor, &b_svr_m_cor);
+   fChain->SetBranchAddress("svr_pt", &svr_pt, &b_svr_pt);
+   fChain->SetBranchAddress("svr_fd_min", &svr_fd_min, &b_svr_fd_min);
+   fChain->SetBranchAddress("svr_fd_chi2", &svr_fd_chi2, &b_svr_fd_chi2);
+   fChain->SetBranchAddress("svr_ip_chi2_sum", &svr_ip_chi2_sum, &b_svr_ip_chi2_sum);
+   fChain->SetBranchAddress("svr_abs_q_sum", &svr_abs_q_sum, &b_svr_abs_q_sum);
+   fChain->SetBranchAddress("svr_tau", &svr_tau, &b_svr_tau);
+   fChain->SetBranchAddress("svr_ntrk", &svr_ntrk, &b_svr_ntrk);
+   fChain->SetBranchAddress("svr_ntrk_jet", &svr_ntrk_jet, &b_svr_ntrk_jet);
+   fChain->SetBranchAddress("svr_jet_dr", &svr_jet_dr, &b_svr_jet_dr);
+   fChain->SetBranchAddress("svr_jet_pt", &svr_jet_pt, &b_svr_jet_pt);
+   fChain->SetBranchAddress("svr_pass", &svr_pass, &b_svr_pass);
+   fChain->SetBranchAddress("svr_bdt0", &svr_bdt0, &b_svr_bdt0);
+   fChain->SetBranchAddress("svr_bdt1", &svr_bdt1, &b_svr_bdt1);
    fChain->SetBranchAddress("jet_idx_pvr", &jet_idx_pvr, &b_jet_idx_pvr);
+   fChain->SetBranchAddress("jet_ntrk", &jet_ntrk, &b_jet_ntrk);
    fChain->SetBranchAddress("jet_px", &jet_px, &b_jet_px);
    fChain->SetBranchAddress("jet_py", &jet_py, &b_jet_py);
    fChain->SetBranchAddress("jet_pz", &jet_pz, &b_jet_pz);
    fChain->SetBranchAddress("jet_e", &jet_e, &b_jet_e);
+   fChain->SetBranchAddress("jet_idx_trk0", &jet_idx_trk0, &b_jet_idx_trk0);
+   fChain->SetBranchAddress("jet_idx_trk1", &jet_idx_trk1, &b_jet_idx_trk1);
+   fChain->SetBranchAddress("jet_idx_trk2", &jet_idx_trk2, &b_jet_idx_trk2);
+   fChain->SetBranchAddress("jet_idx_trk3", &jet_idx_trk3, &b_jet_idx_trk3);
+   fChain->SetBranchAddress("jet_idx_trk4", &jet_idx_trk4, &b_jet_idx_trk4);
+   fChain->SetBranchAddress("jet_idx_trk5", &jet_idx_trk5, &b_jet_idx_trk5);
+   fChain->SetBranchAddress("jet_idx_trk6", &jet_idx_trk6, &b_jet_idx_trk6);
+   fChain->SetBranchAddress("jet_idx_trk7", &jet_idx_trk7, &b_jet_idx_trk7);
+   fChain->SetBranchAddress("jet_idx_trk8", &jet_idx_trk8, &b_jet_idx_trk8);
+   fChain->SetBranchAddress("jet_idx_trk9", &jet_idx_trk9, &b_jet_idx_trk9);
+   fChain->SetBranchAddress("jet_idx_trk10", &jet_idx_trk10, &b_jet_idx_trk10);
+   fChain->SetBranchAddress("jet_idx_trk11", &jet_idx_trk11, &b_jet_idx_trk11);
+   fChain->SetBranchAddress("jet_idx_trk12", &jet_idx_trk12, &b_jet_idx_trk12);
+   fChain->SetBranchAddress("jet_idx_trk13", &jet_idx_trk13, &b_jet_idx_trk13);
+   fChain->SetBranchAddress("jet_idx_trk14", &jet_idx_trk14, &b_jet_idx_trk14);
+   fChain->SetBranchAddress("jet_idx_trk15", &jet_idx_trk15, &b_jet_idx_trk15);
+   fChain->SetBranchAddress("jet_idx_trk16", &jet_idx_trk16, &b_jet_idx_trk16);
+   fChain->SetBranchAddress("jet_idx_trk17", &jet_idx_trk17, &b_jet_idx_trk17);
+   fChain->SetBranchAddress("jet_idx_trk18", &jet_idx_trk18, &b_jet_idx_trk18);
+   fChain->SetBranchAddress("jet_idx_trk19", &jet_idx_trk19, &b_jet_idx_trk19);
+   fChain->SetBranchAddress("jet_idx_trk20", &jet_idx_trk20, &b_jet_idx_trk20);
+   fChain->SetBranchAddress("jet_idx_trk21", &jet_idx_trk21, &b_jet_idx_trk21);
+   fChain->SetBranchAddress("jet_idx_trk22", &jet_idx_trk22, &b_jet_idx_trk22);
+   fChain->SetBranchAddress("jet_idx_trk23", &jet_idx_trk23, &b_jet_idx_trk23);
+   fChain->SetBranchAddress("jet_idx_trk24", &jet_idx_trk24, &b_jet_idx_trk24);
+   fChain->SetBranchAddress("jet_idx_trk25", &jet_idx_trk25, &b_jet_idx_trk25);
+   fChain->SetBranchAddress("jet_idx_trk26", &jet_idx_trk26, &b_jet_idx_trk26);
+   fChain->SetBranchAddress("jet_idx_trk27", &jet_idx_trk27, &b_jet_idx_trk27);
+   fChain->SetBranchAddress("jet_idx_trk28", &jet_idx_trk28, &b_jet_idx_trk28);
+   fChain->SetBranchAddress("jet_idx_trk29", &jet_idx_trk29, &b_jet_idx_trk29);
+   fChain->SetBranchAddress("jet_idx_trk30", &jet_idx_trk30, &b_jet_idx_trk30);
+   fChain->SetBranchAddress("jet_idx_trk31", &jet_idx_trk31, &b_jet_idx_trk31);
+   fChain->SetBranchAddress("jet_idx_trk32", &jet_idx_trk32, &b_jet_idx_trk32);
+   fChain->SetBranchAddress("jet_idx_trk33", &jet_idx_trk33, &b_jet_idx_trk33);
+   fChain->SetBranchAddress("jet_idx_trk34", &jet_idx_trk34, &b_jet_idx_trk34);
+   fChain->SetBranchAddress("jet_idx_trk35", &jet_idx_trk35, &b_jet_idx_trk35);
+   fChain->SetBranchAddress("jet_idx_trk36", &jet_idx_trk36, &b_jet_idx_trk36);
+   fChain->SetBranchAddress("jet_idx_trk37", &jet_idx_trk37, &b_jet_idx_trk37);
+   fChain->SetBranchAddress("jet_idx_trk38", &jet_idx_trk38, &b_jet_idx_trk38);
+   fChain->SetBranchAddress("jet_idx_trk39", &jet_idx_trk39, &b_jet_idx_trk39);
    fChain->SetBranchAddress("trk_idx_gen", &trk_idx_gen, &b_trk_idx_gen);
    fChain->SetBranchAddress("trk_idx_pvr", &trk_idx_pvr, &b_trk_idx_pvr);
    fChain->SetBranchAddress("trk_idx_jet", &trk_idx_jet, &b_trk_idx_jet);
@@ -665,7 +895,7 @@ void makeIPMap::Init(TTree *tree)
    Notify();
 }
 
-Bool_t makeIPMap::Notify()
+Bool_t checkDaVinciSVs::Notify()
 {
    // The Notify() function is called when a new file is opened. This
    // can be either for a new TTree in a TChain or when when a new TTree
@@ -676,18 +906,18 @@ Bool_t makeIPMap::Notify()
    return kTRUE;
 }
 
-void makeIPMap::Show(Long64_t entry)
+void checkDaVinciSVs::Show(Long64_t entry)
 {
 // Print contents of entry.
 // If entry is not specified, print current entry
    if (!fChain) return;
    fChain->Show(entry);
 }
-Int_t makeIPMap::Cut(Long64_t entry)
+Int_t checkDaVinciSVs::Cut(Long64_t entry)
 {
 // This function may be called from Loop.
 // returns  1 if entry is accepted.
 // returns -1 otherwise.
    return 1;
 }
-#endif // #ifdef makeIPMap_cxx
+#endif // #ifdef checkDaVinciSVs_cxx

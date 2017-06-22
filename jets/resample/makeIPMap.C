@@ -25,6 +25,72 @@ TVector3 calcDxDy(const TVector3 &pa, const TVector3 &da, const TVector3 &pb) {
 	return TVector3(dx,dy,0.);
 }
 
+int makeIPMap::getNSharedVeloHits(int idxi, int idxj) {
+	int nshared(0);
+	if(trk_vhit0->at(idxi) != -1 && trk_vhit0->at(idxi) == trk_vhit0->at(idxj)) ++nshared;
+	if(trk_vhit1->at(idxi) != -1 && trk_vhit1->at(idxi) == trk_vhit1->at(idxj)) ++nshared;
+	if(trk_vhit2->at(idxi) != -1 && trk_vhit2->at(idxi) == trk_vhit2->at(idxj)) ++nshared;
+	if(trk_vhit3->at(idxi) != -1 && trk_vhit3->at(idxi) == trk_vhit3->at(idxj)) ++nshared;
+	if(trk_vhit4->at(idxi) != -1 && trk_vhit4->at(idxi) == trk_vhit4->at(idxj)) ++nshared;
+	if(trk_vhit5->at(idxi) != -1 && trk_vhit5->at(idxi) == trk_vhit5->at(idxj)) ++nshared;
+	if(trk_vhit6->at(idxi) != -1 && trk_vhit6->at(idxi) == trk_vhit6->at(idxj)) ++nshared;
+	if(trk_vhit7->at(idxi) != -1 && trk_vhit7->at(idxi) == trk_vhit7->at(idxj)) ++nshared;
+	if(trk_vhit8->at(idxi) != -1 && trk_vhit8->at(idxi) == trk_vhit8->at(idxj)) ++nshared;
+	if(trk_vhit9->at(idxi) != -1 && trk_vhit9->at(idxi) == trk_vhit9->at(idxj)) ++nshared;
+	if(trk_vhit10->at(idxi) != -1 && trk_vhit10->at(idxi) == trk_vhit10->at(idxj)) ++nshared;
+	if(trk_vhit11->at(idxi) != -1 && trk_vhit11->at(idxi) == trk_vhit11->at(idxj)) ++nshared;
+	if(trk_vhit12->at(idxi) != -1 && trk_vhit12->at(idxi) == trk_vhit12->at(idxj)) ++nshared;
+	if(trk_vhit13->at(idxi) != -1 && trk_vhit13->at(idxi) == trk_vhit13->at(idxj)) ++nshared;
+	if(trk_vhit14->at(idxi) != -1 && trk_vhit14->at(idxi) == trk_vhit14->at(idxj)) ++nshared;
+	if(trk_vhit15->at(idxi) != -1 && trk_vhit15->at(idxi) == trk_vhit15->at(idxj)) ++nshared;
+	if(trk_vhit16->at(idxi) != -1 && trk_vhit16->at(idxi) == trk_vhit16->at(idxj)) ++nshared;
+	if(trk_vhit17->at(idxi) != -1 && trk_vhit17->at(idxi) == trk_vhit17->at(idxj)) ++nshared;
+	if(trk_vhit18->at(idxi) != -1 && trk_vhit18->at(idxi) == trk_vhit18->at(idxj)) ++nshared;
+	if(trk_vhit19->at(idxi) != -1 && trk_vhit19->at(idxi) == trk_vhit19->at(idxj)) ++nshared;
+	if(trk_vhit20->at(idxi) != -1 && trk_vhit20->at(idxi) == trk_vhit20->at(idxj)) ++nshared;
+	if(trk_vhit21->at(idxi) != -1 && trk_vhit21->at(idxi) == trk_vhit21->at(idxj)) ++nshared;
+	if(trk_vhit22->at(idxi) != -1 && trk_vhit22->at(idxi) == trk_vhit22->at(idxj)) ++nshared;
+	if(trk_vhit23->at(idxi) != -1 && trk_vhit23->at(idxi) == trk_vhit23->at(idxj)) ++nshared;
+	if(trk_vhit24->at(idxi) != -1 && trk_vhit24->at(idxi) == trk_vhit24->at(idxj)) ++nshared;
+	if(trk_vhit25->at(idxi) != -1 && trk_vhit25->at(idxi) == trk_vhit25->at(idxj)) ++nshared;
+	if(trk_vhit26->at(idxi) != -1 && trk_vhit26->at(idxi) == trk_vhit26->at(idxj)) ++nshared;
+	if(trk_vhit27->at(idxi) != -1 && trk_vhit27->at(idxi) == trk_vhit27->at(idxj)) ++nshared;
+	if(trk_vhit28->at(idxi) != -1 && trk_vhit28->at(idxi) == trk_vhit28->at(idxj)) ++nshared;
+	if(trk_vhit29->at(idxi) != -1 && trk_vhit29->at(idxi) == trk_vhit29->at(idxj)) ++nshared;
+	if(trk_vhit30->at(idxi) != -1 && trk_vhit30->at(idxi) == trk_vhit30->at(idxj)) ++nshared;
+	if(trk_vhit31->at(idxi) != -1 && trk_vhit31->at(idxi) == trk_vhit31->at(idxj)) ++nshared;
+	if(trk_vhit32->at(idxi) != -1 && trk_vhit32->at(idxi) == trk_vhit32->at(idxj)) ++nshared;
+	if(trk_vhit33->at(idxi) != -1 && trk_vhit33->at(idxi) == trk_vhit33->at(idxj)) ++nshared;
+	if(trk_vhit34->at(idxi) != -1 && trk_vhit34->at(idxi) == trk_vhit34->at(idxj)) ++nshared;
+	if(trk_vhit35->at(idxi) != -1 && trk_vhit35->at(idxi) == trk_vhit35->at(idxj)) ++nshared;
+	if(trk_vhit36->at(idxi) != -1 && trk_vhit36->at(idxi) == trk_vhit36->at(idxj)) ++nshared;
+	if(trk_vhit37->at(idxi) != -1 && trk_vhit37->at(idxi) == trk_vhit37->at(idxj)) ++nshared;
+	if(trk_vhit38->at(idxi) != -1 && trk_vhit38->at(idxi) == trk_vhit38->at(idxj)) ++nshared;
+	if(trk_vhit39->at(idxi) != -1 && trk_vhit39->at(idxi) == trk_vhit39->at(idxj)) ++nshared;
+	if(trk_vhit40->at(idxi) != -1 && trk_vhit40->at(idxi) == trk_vhit40->at(idxj)) ++nshared;
+	if(trk_vhit41->at(idxi) != -1 && trk_vhit41->at(idxi) == trk_vhit41->at(idxj)) ++nshared;
+	if(trk_vhit42->at(idxi) != -1 && trk_vhit42->at(idxi) == trk_vhit42->at(idxj)) ++nshared;
+	if(trk_vhit43->at(idxi) != -1 && trk_vhit43->at(idxi) == trk_vhit43->at(idxj)) ++nshared;
+	if(trk_vhit44->at(idxi) != -1 && trk_vhit44->at(idxi) == trk_vhit44->at(idxj)) ++nshared;
+	if(trk_vhit45->at(idxi) != -1 && trk_vhit45->at(idxi) == trk_vhit45->at(idxj)) ++nshared;
+	if(trk_vhit46->at(idxi) != -1 && trk_vhit46->at(idxi) == trk_vhit46->at(idxj)) ++nshared;
+	if(trk_vhit47->at(idxi) != -1 && trk_vhit47->at(idxi) == trk_vhit47->at(idxj)) ++nshared;
+	if(trk_vhit48->at(idxi) != -1 && trk_vhit48->at(idxi) == trk_vhit48->at(idxj)) ++nshared;
+	if(trk_vhit49->at(idxi) != -1 && trk_vhit49->at(idxi) == trk_vhit49->at(idxj)) ++nshared;
+	if(trk_vhit50->at(idxi) != -1 && trk_vhit50->at(idxi) == trk_vhit50->at(idxj)) ++nshared;
+	if(trk_vhit51->at(idxi) != -1 && trk_vhit51->at(idxi) == trk_vhit51->at(idxj)) ++nshared;
+	if(trk_vhit52->at(idxi) != -1 && trk_vhit52->at(idxi) == trk_vhit52->at(idxj)) ++nshared;
+	if(trk_vhit53->at(idxi) != -1 && trk_vhit53->at(idxi) == trk_vhit53->at(idxj)) ++nshared;
+	if(trk_vhit54->at(idxi) != -1 && trk_vhit54->at(idxi) == trk_vhit54->at(idxj)) ++nshared;
+	if(trk_vhit55->at(idxi) != -1 && trk_vhit55->at(idxi) == trk_vhit55->at(idxj)) ++nshared;
+	if(trk_vhit56->at(idxi) != -1 && trk_vhit56->at(idxi) == trk_vhit56->at(idxj)) ++nshared;
+	if(trk_vhit57->at(idxi) != -1 && trk_vhit57->at(idxi) == trk_vhit57->at(idxj)) ++nshared;
+	if(trk_vhit58->at(idxi) != -1 && trk_vhit58->at(idxi) == trk_vhit58->at(idxj)) ++nshared;
+	if(trk_vhit59->at(idxi) != -1 && trk_vhit59->at(idxi) == trk_vhit59->at(idxj)) ++nshared;
+
+	return nshared;
+}
+
 void makeIPMap::Loop()
 {
 	gStyle->SetOptStat(0);
@@ -59,6 +125,9 @@ void makeIPMap::Loop()
 	double binsinvpt[4] = {0.000,0.0005,0.001,0.002};
 	//double binstheta[11] = {0.00,0.01,0.02,0.03,0.04,0.05,0.10,0.20,0.30,0.50,3.142};
 	//double binsdip[11] = {0.00,0.003,0.01,0.02,0.03,0.05,0.10,0.20,0.30,0.50,1.00};
+	double binscosphi[11] = {-1.0,-0.8,-0.6,-0.4,-0.2,0.0,0.2,0.4,0.6,0.8,1.0};
+	double binsratio[11] = {0.003,0.01,0.03,0.1,0.3,1.0,3.0,10.0,30.0,100.0,300.0};
+	double binsnshare[4] = {0.,2.,4.,20.};
 	TH2D prompt(   "prompt",   "", 60, binsip, 3, binsinvpt);
 	TH2D nonprompt("nonprompt","", 60, binsip, 3, binsinvpt);
 	TH2D truth(    "truth",    "", 60, binsip, 3, binsinvpt);
@@ -67,7 +136,10 @@ void makeIPMap::Loop()
 	TH2D promptandnontruth("promptandnontruth","", 60, binsip, 3, binsinvpt);
 	TH2D subnonprompt("subnonprompt","", 60, binsip, 3, binsinvpt);
 
-	TH2D deltaDR("deltaDR","", 10, -1., 1., 10., 0., 0.5); //binsdip, 10, binstheta);
+	TH2D deltaDR("deltaDR","", 10, binscosphi, 3, binsnshare);
+	TH2D deltaDR2("deltaDR2","", 10, binsratio, 3, binsnshare);
+
+	TH2D phiprompt(   "phiprompt",   "", 10, binscosphi, 3, binsinvpt);
 
 	int pvr_idx(0);
 	double tx(0.), ty(0.), dx(0.), dy(0.), sigma(0.), invpt(0.);
@@ -85,7 +157,7 @@ void makeIPMap::Loop()
 		std::map<int, std::vector<int> > promptTrksByPV;
 
 		for(int idx=0; idx!= trk_z->size(); ++idx) {
-			if(trk_vid->at(idx) == 1) continue;
+			if(trk_type->at(idx) != 3) continue;
 			if(trk_pt->at(idx)<500 || trk_prb_ghost->at(idx)>0.3) continue;
 			++nTotal;
 
@@ -152,7 +224,7 @@ void makeIPMap::Loop()
 				      TMath::Abs(gen_y->at(gen_idx) - pvr_y->at(pvr_idx)) < 1e-5 &&
 				      TMath::Abs(gen_z->at(gen_idx) - pvr_z->at(pvr_idx)) < 1e-5) isPrompt=true;
 
-			if(isPrompt) {
+			if(isPrompt || !isTruth) {
 				TVector3 pi(trk_px->at(idx), trk_py->at(idx), trk_pz->at(idx));
 				TVector3 xi(trk_x->at(idx), trk_y->at(idx), trk_z->at(idx));
 				TVector3 pv(pvr_x->at(pvr_idx),pvr_y->at(pvr_idx),pvr_z->at(pvr_idx));
@@ -162,11 +234,14 @@ void makeIPMap::Loop()
 				for(int jtrk=0; jtrk<promptTrksByPV[pvr_idx].size(); ++jtrk) {
 					int idxj = promptTrksByPV[pvr_idx][jtrk];
 
+					int nshared = getNSharedVeloHits(idx,idxj);
+
 					TVector3 pj(trk_px->at(idxj), trk_py->at(idxj), trk_pz->at(idxj));
 					TVector3 xj(trk_x->at(idxj), trk_y->at(idxj), trk_z->at(idxj));
 
 					TVector3 dxdyj = calcDxDy(xj, pj, pv);
 					double dij = dxdyi.Dot(dxdyj)/(dxdyi.Mag()*dxdyj.Mag());
+					double dij2 = dxdyi.Mag()/dxdyj.Mag();
 
 					//double cosTheta(-2.);
 					//Double_t ptot2 = pi.Mag2()*pj.Mag2();
@@ -177,7 +252,9 @@ void makeIPMap::Loop()
 					//}
 					double theta = pi.Angle(pj);
 
-					deltaDR.Fill(dij,theta);
+					deltaDR.Fill(dij,nshared);//theta);
+					deltaDR2.Fill(dij2,nshared);//theta);
+					deltaDR2.Fill(1./dij2,nshared);//theta);
 				}
 				promptTrksByPV[pvr_idx].push_back(idx);
 			}
@@ -205,6 +282,7 @@ void makeIPMap::Loop()
 				if(isPrompt) {
 					++nPrompt;
 					prompt.Fill(TMath::Sqrt(dx*dx+dy*dy)/sigma, invpt);
+					phiprompt.Fill(TMath::ATan2(dy,dx), invpt);
 				}
 				else nonprompt.Fill(TMath::Sqrt(dx*dx+dy*dy)/sigma, invpt);
 			}
@@ -225,6 +303,8 @@ void makeIPMap::Loop()
 	promptandnontruth.Write();
 	subnonprompt.Write();
 	deltaDR.Write();
+	deltaDR2.Write();
+	phiprompt.Write();
 	f->Close();
 
 	std::cout << maxX << "\t" << minX << "\t" << maxY << "\t" << minY << std::endl;

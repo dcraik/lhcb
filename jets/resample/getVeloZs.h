@@ -1,26 +1,26 @@
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
-// Wed Jun  7 12:11:21 2017 by ROOT version 6.06/00
+// Fri Jun 16 21:40:33 2017 by ROOT version 5.34/36
 // from TTree data/data
-// found on file: lightjets.part.root
+// found on file: output.root
 //////////////////////////////////////////////////////////
 
-#ifndef makeIPMap_h
-#define makeIPMap_h
+#ifndef getVeloZs_h
+#define getVeloZs_h
 
 #include <TROOT.h>
 #include <TChain.h>
 #include <TFile.h>
 
 // Header file for the classes stored in the TTree if any.
-#include "vector"
+#include <vector>
 
-class makeIPMap {
+// Fixed size dimensions of array or collections stored in the TTree if any.
+
+class getVeloZs {
 public :
    TTree          *fChain;   //!pointer to the analyzed TTree or TChain
    Int_t           fCurrent; //!current Tree number in a TChain
-
-// Fixed size dimensions of array or collections stored in the TTree if any.
 
    // Declaration of leaf types
    vector<double>  *gen_idx_pvr;
@@ -71,8 +71,6 @@ public :
    vector<double>  *trk_idx_gen;
    vector<double>  *trk_idx_pvr;
    vector<double>  *trk_idx_jet;
-   vector<double>  *trk_p;
-   vector<double>  *trk_pt;
    vector<double>  *trk_px;
    vector<double>  *trk_py;
    vector<double>  *trk_pz;
@@ -89,73 +87,103 @@ public :
    vector<double>  *trk_ecal;
    vector<double>  *trk_hcal;
    vector<double>  *trk_prb_ghost;
-   vector<double>  *trk_type;
    vector<double>  *trk_is_mu;
    vector<double>  *trk_vid;
    vector<double>  *trk_x;
    vector<double>  *trk_y;
    vector<double>  *trk_z;
-   std::vector<double>  *trk_vhit0;
-   std::vector<double>  *trk_vhit1;
-   std::vector<double>  *trk_vhit2;
-   std::vector<double>  *trk_vhit3;
-   std::vector<double>  *trk_vhit4;
-   std::vector<double>  *trk_vhit5;
-   std::vector<double>  *trk_vhit6;
-   std::vector<double>  *trk_vhit7;
-   std::vector<double>  *trk_vhit8;
-   std::vector<double>  *trk_vhit9;
-   std::vector<double>  *trk_vhit10;
-   std::vector<double>  *trk_vhit11;
-   std::vector<double>  *trk_vhit12;
-   std::vector<double>  *trk_vhit13;
-   std::vector<double>  *trk_vhit14;
-   std::vector<double>  *trk_vhit15;
-   std::vector<double>  *trk_vhit16;
-   std::vector<double>  *trk_vhit17;
-   std::vector<double>  *trk_vhit18;
-   std::vector<double>  *trk_vhit19;
-   std::vector<double>  *trk_vhit20;
-   std::vector<double>  *trk_vhit21;
-   std::vector<double>  *trk_vhit22;
-   std::vector<double>  *trk_vhit23;
-   std::vector<double>  *trk_vhit24;
-   std::vector<double>  *trk_vhit25;
-   std::vector<double>  *trk_vhit26;
-   std::vector<double>  *trk_vhit27;
-   std::vector<double>  *trk_vhit28;
-   std::vector<double>  *trk_vhit29;
-   std::vector<double>  *trk_vhit30;
-   std::vector<double>  *trk_vhit31;
-   std::vector<double>  *trk_vhit32;
-   std::vector<double>  *trk_vhit33;
-   std::vector<double>  *trk_vhit34;
-   std::vector<double>  *trk_vhit35;
-   std::vector<double>  *trk_vhit36;
-   std::vector<double>  *trk_vhit37;
-   std::vector<double>  *trk_vhit38;
-   std::vector<double>  *trk_vhit39;
-   std::vector<double>  *trk_vhit40;
-   std::vector<double>  *trk_vhit41;
-   std::vector<double>  *trk_vhit42;
-   std::vector<double>  *trk_vhit43;
-   std::vector<double>  *trk_vhit44;
-   std::vector<double>  *trk_vhit45;
-   std::vector<double>  *trk_vhit46;
-   std::vector<double>  *trk_vhit47;
-   std::vector<double>  *trk_vhit48;
-   std::vector<double>  *trk_vhit49;
-   std::vector<double>  *trk_vhit50;
-   std::vector<double>  *trk_vhit51;
-   std::vector<double>  *trk_vhit52;
-   std::vector<double>  *trk_vhit53;
-   std::vector<double>  *trk_vhit54;
-   std::vector<double>  *trk_vhit55;
-   std::vector<double>  *trk_vhit56;
-   std::vector<double>  *trk_vhit57;
-   std::vector<double>  *trk_vhit58;
-   std::vector<double>  *trk_vhit59;
-   std::vector<double>  *trk_vhit60;
+   vector<double>  *trk_vhit0;
+   vector<double>  *trk_vhit1;
+   vector<double>  *trk_vhit2;
+   vector<double>  *trk_vhit3;
+   vector<double>  *trk_vhit4;
+   vector<double>  *trk_vhit5;
+   vector<double>  *trk_vhit6;
+   vector<double>  *trk_vhit7;
+   vector<double>  *trk_vhit8;
+   vector<double>  *trk_vhit9;
+   vector<double>  *trk_vhit10;
+   vector<double>  *trk_vhit11;
+   vector<double>  *trk_vhit12;
+   vector<double>  *trk_vhit13;
+   vector<double>  *trk_vhit14;
+   vector<double>  *trk_vhit15;
+   vector<double>  *trk_vhit16;
+   vector<double>  *trk_vhit17;
+   vector<double>  *trk_vhit18;
+   vector<double>  *trk_vhit19;
+   vector<double>  *trk_vhit20;
+   vector<double>  *trk_vhit21;
+   vector<double>  *trk_vhit22;
+   vector<double>  *trk_vhit23;
+   vector<double>  *trk_vhit24;
+   vector<double>  *trk_vhit25;
+   vector<double>  *trk_vhit26;
+   vector<double>  *trk_vhit27;
+   vector<double>  *trk_vhit28;
+   vector<double>  *trk_vhit29;
+   vector<double>  *trk_vhit30;
+   vector<double>  *trk_vhit31;
+   vector<double>  *trk_vhit32;
+   vector<double>  *trk_vhit33;
+   vector<double>  *trk_vhit34;
+   vector<double>  *trk_vhit35;
+   vector<double>  *trk_vhit36;
+   vector<double>  *trk_vhit37;
+   vector<double>  *trk_vhit38;
+   vector<double>  *trk_vhit39;
+   vector<double>  *trk_vhit40;
+   vector<double>  *trk_vhit41;
+   vector<double>  *trk_vhit42;
+   vector<double>  *trk_vhit43;
+   vector<double>  *trk_vhit44;
+   vector<double>  *trk_vhit45;
+   vector<double>  *trk_vz0;
+   vector<double>  *trk_vz1;
+   vector<double>  *trk_vz2;
+   vector<double>  *trk_vz3;
+   vector<double>  *trk_vz4;
+   vector<double>  *trk_vz5;
+   vector<double>  *trk_vz6;
+   vector<double>  *trk_vz7;
+   vector<double>  *trk_vz8;
+   vector<double>  *trk_vz9;
+   vector<double>  *trk_vz10;
+   vector<double>  *trk_vz11;
+   vector<double>  *trk_vz12;
+   vector<double>  *trk_vz13;
+   vector<double>  *trk_vz14;
+   vector<double>  *trk_vz15;
+   vector<double>  *trk_vz16;
+   vector<double>  *trk_vz17;
+   vector<double>  *trk_vz18;
+   vector<double>  *trk_vz19;
+   vector<double>  *trk_vz20;
+   vector<double>  *trk_vz21;
+   vector<double>  *trk_vz22;
+   vector<double>  *trk_vz23;
+   vector<double>  *trk_vz24;
+   vector<double>  *trk_vz25;
+   vector<double>  *trk_vz26;
+   vector<double>  *trk_vz27;
+   vector<double>  *trk_vz28;
+   vector<double>  *trk_vz29;
+   vector<double>  *trk_vz30;
+   vector<double>  *trk_vz31;
+   vector<double>  *trk_vz32;
+   vector<double>  *trk_vz33;
+   vector<double>  *trk_vz34;
+   vector<double>  *trk_vz35;
+   vector<double>  *trk_vz36;
+   vector<double>  *trk_vz37;
+   vector<double>  *trk_vz38;
+   vector<double>  *trk_vz39;
+   vector<double>  *trk_vz40;
+   vector<double>  *trk_vz41;
+   vector<double>  *trk_vz42;
+   vector<double>  *trk_vz43;
+   vector<double>  *trk_vz44;
+   vector<double>  *trk_vz45;
    vector<double>  *neu_idx_gen;
    vector<double>  *neu_idx_jet;
    vector<double>  *neu_px;
@@ -214,8 +242,6 @@ public :
    TBranch        *b_trk_idx_gen;   //!
    TBranch        *b_trk_idx_pvr;   //!
    TBranch        *b_trk_idx_jet;   //!
-   TBranch        *b_trk_p;   //!
-   TBranch        *b_trk_pt;   //!
    TBranch        *b_trk_px;   //!
    TBranch        *b_trk_py;   //!
    TBranch        *b_trk_pz;   //!
@@ -232,7 +258,6 @@ public :
    TBranch        *b_trk_ecal;   //!
    TBranch        *b_trk_hcal;   //!
    TBranch        *b_trk_prb_ghost;   //!
-   TBranch        *b_trk_type;   //!
    TBranch        *b_trk_is_mu;   //!
    TBranch        *b_trk_vid;   //!
    TBranch        *b_trk_x;   //!
@@ -284,21 +309,52 @@ public :
    TBranch        *b_trk_vhit43;   //!
    TBranch        *b_trk_vhit44;   //!
    TBranch        *b_trk_vhit45;   //!
-   TBranch        *b_trk_vhit46;   //!
-   TBranch        *b_trk_vhit47;   //!
-   TBranch        *b_trk_vhit48;   //!
-   TBranch        *b_trk_vhit49;   //!
-   TBranch        *b_trk_vhit50;   //!
-   TBranch        *b_trk_vhit51;   //!
-   TBranch        *b_trk_vhit52;   //!
-   TBranch        *b_trk_vhit53;   //!
-   TBranch        *b_trk_vhit54;   //!
-   TBranch        *b_trk_vhit55;   //!
-   TBranch        *b_trk_vhit56;   //!
-   TBranch        *b_trk_vhit57;   //!
-   TBranch        *b_trk_vhit58;   //!
-   TBranch        *b_trk_vhit59;   //!
-   TBranch        *b_trk_vhit60;   //!
+   TBranch        *b_trk_vz0;   //!
+   TBranch        *b_trk_vz1;   //!
+   TBranch        *b_trk_vz2;   //!
+   TBranch        *b_trk_vz3;   //!
+   TBranch        *b_trk_vz4;   //!
+   TBranch        *b_trk_vz5;   //!
+   TBranch        *b_trk_vz6;   //!
+   TBranch        *b_trk_vz7;   //!
+   TBranch        *b_trk_vz8;   //!
+   TBranch        *b_trk_vz9;   //!
+   TBranch        *b_trk_vz10;   //!
+   TBranch        *b_trk_vz11;   //!
+   TBranch        *b_trk_vz12;   //!
+   TBranch        *b_trk_vz13;   //!
+   TBranch        *b_trk_vz14;   //!
+   TBranch        *b_trk_vz15;   //!
+   TBranch        *b_trk_vz16;   //!
+   TBranch        *b_trk_vz17;   //!
+   TBranch        *b_trk_vz18;   //!
+   TBranch        *b_trk_vz19;   //!
+   TBranch        *b_trk_vz20;   //!
+   TBranch        *b_trk_vz21;   //!
+   TBranch        *b_trk_vz22;   //!
+   TBranch        *b_trk_vz23;   //!
+   TBranch        *b_trk_vz24;   //!
+   TBranch        *b_trk_vz25;   //!
+   TBranch        *b_trk_vz26;   //!
+   TBranch        *b_trk_vz27;   //!
+   TBranch        *b_trk_vz28;   //!
+   TBranch        *b_trk_vz29;   //!
+   TBranch        *b_trk_vz30;   //!
+   TBranch        *b_trk_vz31;   //!
+   TBranch        *b_trk_vz32;   //!
+   TBranch        *b_trk_vz33;   //!
+   TBranch        *b_trk_vz34;   //!
+   TBranch        *b_trk_vz35;   //!
+   TBranch        *b_trk_vz36;   //!
+   TBranch        *b_trk_vz37;   //!
+   TBranch        *b_trk_vz38;   //!
+   TBranch        *b_trk_vz39;   //!
+   TBranch        *b_trk_vz40;   //!
+   TBranch        *b_trk_vz41;   //!
+   TBranch        *b_trk_vz42;   //!
+   TBranch        *b_trk_vz43;   //!
+   TBranch        *b_trk_vz44;   //!
+   TBranch        *b_trk_vz45;   //!
    TBranch        *b_neu_idx_gen;   //!
    TBranch        *b_neu_idx_jet;   //!
    TBranch        *b_neu_px;   //!
@@ -308,8 +364,8 @@ public :
    TBranch        *b_neu_pid;   //!
    TBranch        *b_evt_pvr_n;   //!
 
-   makeIPMap(TTree *tree=0);
-   virtual ~makeIPMap();
+   getVeloZs(TTree *tree=0);
+   virtual ~getVeloZs();
    virtual Int_t    Cut(Long64_t entry);
    virtual Int_t    GetEntry(Long64_t entry);
    virtual Long64_t LoadTree(Long64_t entry);
@@ -317,21 +373,19 @@ public :
    virtual void     Loop();
    virtual Bool_t   Notify();
    virtual void     Show(Long64_t entry = -1);
-
-   int getNSharedVeloHits(int idx, int idxj);
 };
 
 #endif
 
-#ifdef makeIPMap_cxx
-makeIPMap::makeIPMap(TTree *tree) : fChain(0) 
+#ifdef getVeloZs_cxx
+getVeloZs::getVeloZs(TTree *tree) : fChain(0) 
 {
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
    if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("lightjets_filtered_addVars.root");
+      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("output.root");
       if (!f || !f->IsOpen()) {
-         f = new TFile("lightjets_filtered_addVars.root");
+         f = new TFile("output.root");
       }
       f->GetObject("data",tree);
 
@@ -339,19 +393,19 @@ makeIPMap::makeIPMap(TTree *tree) : fChain(0)
    Init(tree);
 }
 
-makeIPMap::~makeIPMap()
+getVeloZs::~getVeloZs()
 {
    if (!fChain) return;
    delete fChain->GetCurrentFile();
 }
 
-Int_t makeIPMap::GetEntry(Long64_t entry)
+Int_t getVeloZs::GetEntry(Long64_t entry)
 {
 // Read contents of entry.
    if (!fChain) return 0;
    return fChain->GetEntry(entry);
 }
-Long64_t makeIPMap::LoadTree(Long64_t entry)
+Long64_t getVeloZs::LoadTree(Long64_t entry)
 {
 // Set the environment to read one entry
    if (!fChain) return -5;
@@ -364,7 +418,7 @@ Long64_t makeIPMap::LoadTree(Long64_t entry)
    return centry;
 }
 
-void makeIPMap::Init(TTree *tree)
+void getVeloZs::Init(TTree *tree)
 {
    // The Init() function is called when the selector needs to initialize
    // a new tree or chain. Typically here the branch addresses and branch
@@ -423,8 +477,6 @@ void makeIPMap::Init(TTree *tree)
    trk_idx_gen = 0;
    trk_idx_pvr = 0;
    trk_idx_jet = 0;
-   trk_p = 0;
-   trk_pt = 0;
    trk_px = 0;
    trk_py = 0;
    trk_pz = 0;
@@ -441,7 +493,6 @@ void makeIPMap::Init(TTree *tree)
    trk_ecal = 0;
    trk_hcal = 0;
    trk_prb_ghost = 0;
-   trk_type = 0;
    trk_is_mu = 0;
    trk_vid = 0;
    trk_x = 0;
@@ -493,21 +544,52 @@ void makeIPMap::Init(TTree *tree)
    trk_vhit43 = 0;
    trk_vhit44 = 0;
    trk_vhit45 = 0;
-   trk_vhit46 = 0;
-   trk_vhit47 = 0;
-   trk_vhit48 = 0;
-   trk_vhit49 = 0;
-   trk_vhit50 = 0;
-   trk_vhit51 = 0;
-   trk_vhit52 = 0;
-   trk_vhit53 = 0;
-   trk_vhit54 = 0;
-   trk_vhit55 = 0;
-   trk_vhit56 = 0;
-   trk_vhit57 = 0;
-   trk_vhit58 = 0;
-   trk_vhit59 = 0;
-   trk_vhit60 = 0;
+   trk_vz0 = 0;
+   trk_vz1 = 0;
+   trk_vz2 = 0;
+   trk_vz3 = 0;
+   trk_vz4 = 0;
+   trk_vz5 = 0;
+   trk_vz6 = 0;
+   trk_vz7 = 0;
+   trk_vz8 = 0;
+   trk_vz9 = 0;
+   trk_vz10 = 0;
+   trk_vz11 = 0;
+   trk_vz12 = 0;
+   trk_vz13 = 0;
+   trk_vz14 = 0;
+   trk_vz15 = 0;
+   trk_vz16 = 0;
+   trk_vz17 = 0;
+   trk_vz18 = 0;
+   trk_vz19 = 0;
+   trk_vz20 = 0;
+   trk_vz21 = 0;
+   trk_vz22 = 0;
+   trk_vz23 = 0;
+   trk_vz24 = 0;
+   trk_vz25 = 0;
+   trk_vz26 = 0;
+   trk_vz27 = 0;
+   trk_vz28 = 0;
+   trk_vz29 = 0;
+   trk_vz30 = 0;
+   trk_vz31 = 0;
+   trk_vz32 = 0;
+   trk_vz33 = 0;
+   trk_vz34 = 0;
+   trk_vz35 = 0;
+   trk_vz36 = 0;
+   trk_vz37 = 0;
+   trk_vz38 = 0;
+   trk_vz39 = 0;
+   trk_vz40 = 0;
+   trk_vz41 = 0;
+   trk_vz42 = 0;
+   trk_vz43 = 0;
+   trk_vz44 = 0;
+   trk_vz45 = 0;
    neu_idx_gen = 0;
    neu_idx_jet = 0;
    neu_px = 0;
@@ -569,8 +651,6 @@ void makeIPMap::Init(TTree *tree)
    fChain->SetBranchAddress("trk_idx_gen", &trk_idx_gen, &b_trk_idx_gen);
    fChain->SetBranchAddress("trk_idx_pvr", &trk_idx_pvr, &b_trk_idx_pvr);
    fChain->SetBranchAddress("trk_idx_jet", &trk_idx_jet, &b_trk_idx_jet);
-   fChain->SetBranchAddress("trk_p", &trk_p, &b_trk_p);
-   fChain->SetBranchAddress("trk_pt", &trk_pt, &b_trk_pt);
    fChain->SetBranchAddress("trk_px", &trk_px, &b_trk_px);
    fChain->SetBranchAddress("trk_py", &trk_py, &b_trk_py);
    fChain->SetBranchAddress("trk_pz", &trk_pz, &b_trk_pz);
@@ -587,7 +667,6 @@ void makeIPMap::Init(TTree *tree)
    fChain->SetBranchAddress("trk_ecal", &trk_ecal, &b_trk_ecal);
    fChain->SetBranchAddress("trk_hcal", &trk_hcal, &b_trk_hcal);
    fChain->SetBranchAddress("trk_prb_ghost", &trk_prb_ghost, &b_trk_prb_ghost);
-   fChain->SetBranchAddress("trk_type", &trk_type, &b_trk_type);
    fChain->SetBranchAddress("trk_is_mu", &trk_is_mu, &b_trk_is_mu);
    fChain->SetBranchAddress("trk_vid", &trk_vid, &b_trk_vid);
    fChain->SetBranchAddress("trk_x", &trk_x, &b_trk_x);
@@ -639,21 +718,52 @@ void makeIPMap::Init(TTree *tree)
    fChain->SetBranchAddress("trk_vhit43", &trk_vhit43, &b_trk_vhit43);
    fChain->SetBranchAddress("trk_vhit44", &trk_vhit44, &b_trk_vhit44);
    fChain->SetBranchAddress("trk_vhit45", &trk_vhit45, &b_trk_vhit45);
-   fChain->SetBranchAddress("trk_vhit46", &trk_vhit46, &b_trk_vhit46);
-   fChain->SetBranchAddress("trk_vhit47", &trk_vhit47, &b_trk_vhit47);
-   fChain->SetBranchAddress("trk_vhit48", &trk_vhit48, &b_trk_vhit48);
-   fChain->SetBranchAddress("trk_vhit49", &trk_vhit49, &b_trk_vhit49);
-   fChain->SetBranchAddress("trk_vhit50", &trk_vhit50, &b_trk_vhit50);
-   fChain->SetBranchAddress("trk_vhit51", &trk_vhit51, &b_trk_vhit51);
-   fChain->SetBranchAddress("trk_vhit52", &trk_vhit52, &b_trk_vhit52);
-   fChain->SetBranchAddress("trk_vhit53", &trk_vhit53, &b_trk_vhit53);
-   fChain->SetBranchAddress("trk_vhit54", &trk_vhit54, &b_trk_vhit54);
-   fChain->SetBranchAddress("trk_vhit55", &trk_vhit55, &b_trk_vhit55);
-   fChain->SetBranchAddress("trk_vhit56", &trk_vhit56, &b_trk_vhit56);
-   fChain->SetBranchAddress("trk_vhit57", &trk_vhit57, &b_trk_vhit57);
-   fChain->SetBranchAddress("trk_vhit58", &trk_vhit58, &b_trk_vhit58);
-   fChain->SetBranchAddress("trk_vhit59", &trk_vhit59, &b_trk_vhit59);
-   fChain->SetBranchAddress("trk_vhit60", &trk_vhit60, &b_trk_vhit60);
+   fChain->SetBranchAddress("trk_vz0", &trk_vz0, &b_trk_vz0);
+   fChain->SetBranchAddress("trk_vz1", &trk_vz1, &b_trk_vz1);
+   fChain->SetBranchAddress("trk_vz2", &trk_vz2, &b_trk_vz2);
+   fChain->SetBranchAddress("trk_vz3", &trk_vz3, &b_trk_vz3);
+   fChain->SetBranchAddress("trk_vz4", &trk_vz4, &b_trk_vz4);
+   fChain->SetBranchAddress("trk_vz5", &trk_vz5, &b_trk_vz5);
+   fChain->SetBranchAddress("trk_vz6", &trk_vz6, &b_trk_vz6);
+   fChain->SetBranchAddress("trk_vz7", &trk_vz7, &b_trk_vz7);
+   fChain->SetBranchAddress("trk_vz8", &trk_vz8, &b_trk_vz8);
+   fChain->SetBranchAddress("trk_vz9", &trk_vz9, &b_trk_vz9);
+   fChain->SetBranchAddress("trk_vz10", &trk_vz10, &b_trk_vz10);
+   fChain->SetBranchAddress("trk_vz11", &trk_vz11, &b_trk_vz11);
+   fChain->SetBranchAddress("trk_vz12", &trk_vz12, &b_trk_vz12);
+   fChain->SetBranchAddress("trk_vz13", &trk_vz13, &b_trk_vz13);
+   fChain->SetBranchAddress("trk_vz14", &trk_vz14, &b_trk_vz14);
+   fChain->SetBranchAddress("trk_vz15", &trk_vz15, &b_trk_vz15);
+   fChain->SetBranchAddress("trk_vz16", &trk_vz16, &b_trk_vz16);
+   fChain->SetBranchAddress("trk_vz17", &trk_vz17, &b_trk_vz17);
+   fChain->SetBranchAddress("trk_vz18", &trk_vz18, &b_trk_vz18);
+   fChain->SetBranchAddress("trk_vz19", &trk_vz19, &b_trk_vz19);
+   fChain->SetBranchAddress("trk_vz20", &trk_vz20, &b_trk_vz20);
+   fChain->SetBranchAddress("trk_vz21", &trk_vz21, &b_trk_vz21);
+   fChain->SetBranchAddress("trk_vz22", &trk_vz22, &b_trk_vz22);
+   fChain->SetBranchAddress("trk_vz23", &trk_vz23, &b_trk_vz23);
+   fChain->SetBranchAddress("trk_vz24", &trk_vz24, &b_trk_vz24);
+   fChain->SetBranchAddress("trk_vz25", &trk_vz25, &b_trk_vz25);
+   fChain->SetBranchAddress("trk_vz26", &trk_vz26, &b_trk_vz26);
+   fChain->SetBranchAddress("trk_vz27", &trk_vz27, &b_trk_vz27);
+   fChain->SetBranchAddress("trk_vz28", &trk_vz28, &b_trk_vz28);
+   fChain->SetBranchAddress("trk_vz29", &trk_vz29, &b_trk_vz29);
+   fChain->SetBranchAddress("trk_vz30", &trk_vz30, &b_trk_vz30);
+   fChain->SetBranchAddress("trk_vz31", &trk_vz31, &b_trk_vz31);
+   fChain->SetBranchAddress("trk_vz32", &trk_vz32, &b_trk_vz32);
+   fChain->SetBranchAddress("trk_vz33", &trk_vz33, &b_trk_vz33);
+   fChain->SetBranchAddress("trk_vz34", &trk_vz34, &b_trk_vz34);
+   fChain->SetBranchAddress("trk_vz35", &trk_vz35, &b_trk_vz35);
+   fChain->SetBranchAddress("trk_vz36", &trk_vz36, &b_trk_vz36);
+   fChain->SetBranchAddress("trk_vz37", &trk_vz37, &b_trk_vz37);
+   fChain->SetBranchAddress("trk_vz38", &trk_vz38, &b_trk_vz38);
+   fChain->SetBranchAddress("trk_vz39", &trk_vz39, &b_trk_vz39);
+   fChain->SetBranchAddress("trk_vz40", &trk_vz40, &b_trk_vz40);
+   fChain->SetBranchAddress("trk_vz41", &trk_vz41, &b_trk_vz41);
+   fChain->SetBranchAddress("trk_vz42", &trk_vz42, &b_trk_vz42);
+   fChain->SetBranchAddress("trk_vz43", &trk_vz43, &b_trk_vz43);
+   fChain->SetBranchAddress("trk_vz44", &trk_vz44, &b_trk_vz44);
+   fChain->SetBranchAddress("trk_vz45", &trk_vz45, &b_trk_vz45);
    fChain->SetBranchAddress("neu_idx_gen", &neu_idx_gen, &b_neu_idx_gen);
    fChain->SetBranchAddress("neu_idx_jet", &neu_idx_jet, &b_neu_idx_jet);
    fChain->SetBranchAddress("neu_px", &neu_px, &b_neu_px);
@@ -665,7 +775,7 @@ void makeIPMap::Init(TTree *tree)
    Notify();
 }
 
-Bool_t makeIPMap::Notify()
+Bool_t getVeloZs::Notify()
 {
    // The Notify() function is called when a new file is opened. This
    // can be either for a new TTree in a TChain or when when a new TTree
@@ -676,18 +786,18 @@ Bool_t makeIPMap::Notify()
    return kTRUE;
 }
 
-void makeIPMap::Show(Long64_t entry)
+void getVeloZs::Show(Long64_t entry)
 {
 // Print contents of entry.
 // If entry is not specified, print current entry
    if (!fChain) return;
    fChain->Show(entry);
 }
-Int_t makeIPMap::Cut(Long64_t entry)
+Int_t getVeloZs::Cut(Long64_t entry)
 {
 // This function may be called from Loop.
 // returns  1 if entry is accepted.
 // returns -1 otherwise.
    return 1;
 }
-#endif // #ifdef makeIPMap_cxx
+#endif // #ifdef getVeloZs_cxx
