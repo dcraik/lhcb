@@ -494,13 +494,17 @@ void checkDaVinciSVs::Loop()
 					double pt2 = p4.Vect().Cross(fv.Unit()).Mag2();
 					double mcor = TMath::Sqrt(m*m + pt2) + TMath::Sqrt(pt2);
 					double tz = fv.Z()*m/p4.Z()/(3e11)*(1e12);
+					double sigma2i = trk_ip->at(trks[itrk])*trk_ip->at(trks[itrk]) / trk_ip_chi2->at(trks[itrk]);
+					double sigma2j = trk_ip->at(trks[jtrk])*trk_ip->at(trks[jtrk]) / trk_ip_chi2->at(trks[jtrk]);
+					double vtxchi2 = d*d/(sigma2i+sigma2j);
 
 					//Apply 2-body SV requirements
 					if(m < 0. || m > 5000.) continue;
 					if(d > 0.2) continue;
 					if(mcor<600.) continue;
 					if(tz<0. || tz>=10.) continue;
-					//TODO add VTXCHI2<10, FDCHI2>25, HITS>0 
+					if(vtxchi2>=10) continue;
+					//TODO add FDCHI2>25, HITS>0 
 					sv2ij.push_back(std::pair<int,int>(trks[itrk],trks[jtrk]));
 					sv2.push_back(sv);
 					sv2fv.push_back(fv);
@@ -656,7 +660,7 @@ void checkDaVinciSVs::Loop()
 			}
 
 			if(svN.size() > 0) ++foundNBSV;
-			std::cout << svN.size() << "\t" << jentry << std::endl;
+			//std::cout << svN.size() << "\t" << jentry << std::endl;
 
 		}
 
