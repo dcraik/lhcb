@@ -1,5 +1,7 @@
 #include <iostream>
 #include <vector>
+#include <boost/progress.hpp>
+#include <boost/timer.hpp>
 #include "TTree.h"
 #include "TChain.h"
 #include "TFile.h"
@@ -70,10 +72,11 @@ int main(int argc, char *argv[]){
   TRandom3 rand;
 
   char str[1000];
-  sprintf(str,"for_yandex_data.root");
+  sprintf(str,"/tmp/dcraik/for_yandex_data.root");
   TFile fout(str,"recreate");
 
   TTree *tout = new TTree("T","");
+  int e(0);
   double JPX,JPY,JPZ,JE,JPT,JETA,JS1,JS2,JQ,JN,JNQ,JNN,JPTD,JDIJETDEC,JDIJETSVDEC, JDIJETSVSVDEC, JDIJETSVMUDEC, JDIJETMUMUDEC;
   double PARTON,BMAXPT,CMAXPT;
   double SVM,SVMCOR,SVMINPERP,SVPT,SVDR,SVN,SVNJ,SVQ,SVFDCHI2,SVPERP,SVETA,SVTZ,
@@ -82,7 +85,9 @@ int main(int argc, char *argv[]){
   double MUPT,MUIPCHI2,MUDR,MUPNN,NMU;
   double HPT,HIPCHI2,HDR;
   double D0M, D0PX, D0PY, D0PZ, D0E, D0X, D0Y, D0Z, D0FD, D0DIRA, D0DOCA, D0DOCAKPI, D0VTXCHI2;
+  double DPMM, DPMPX, DPMPY, DPMPZ, DPME, DPMX, DPMY, DPMZ, DPMFD, DPMDIRA, DPMDOCA, DPMDOCAMAX;
 
+  tout->Branch("EVT",&e);
   tout->Branch("TrueParton",&PARTON);
   tout->Branch("TrueMaxBPT",&BMAXPT);
   tout->Branch("TrueMaxCPT",&CMAXPT);
@@ -154,10 +159,30 @@ int main(int argc, char *argv[]){
   tout->Branch("D0DOCA",     &D0DOCA);
   tout->Branch("D0DOCAKPI",  &D0DOCAKPI);
   tout->Branch("D0VTXCHI2",  &D0VTXCHI2);
+  tout->Branch("DM",        &DPMM);
+  tout->Branch("DPX",       &DPMPX);
+  tout->Branch("DPY",       &DPMPY);
+  tout->Branch("DPZ",       &DPMPZ);
+  tout->Branch("DE",        &DPME);
+  tout->Branch("DX",        &DPMX);
+  tout->Branch("DY",        &DPMY);
+  tout->Branch("DZ",        &DPMZ);
+  tout->Branch("DFD",       &DPMFD);
+  tout->Branch("DDIRA",     &DPMDIRA);
+  tout->Branch("DDOCA",     &DPMDOCA);
+  tout->Branch("DDOCAMAX",  &DPMDOCAMAX);
 
   TChain *t = new TChain("data");
-  sprintf(str,"dataTest.root");
-  t->Add(str);
+  boost::progress_display show_addfile_progress( 268 );
+  for(int i=0; i<10/*268*/; ++i) {
+	++show_addfile_progress;
+  	sprintf(str,"/eos/lhcb/user/d/dcraik/jets/87/%d/output.root",i);
+  	TFile* f = TFile::Open(str);
+  	if(f) {
+  	      delete f;
+  	      t->Add(str);
+  	}
+  }
 
 //  vector<double> *gen_px = new vector<double>();
 //  vector<double> *gen_py = new vector<double>();
@@ -251,6 +276,7 @@ int main(int argc, char *argv[]){
   vector<double> *trk_ismu = new vector<double>();
   vector<double> *trk_j = new vector<double>();
   vector<double>  *trk_pid = new vector<double>();
+  vector<double>  *trk_type = new vector<double>();
   t->SetBranchAddress("trk_q",&trk_q);  
   t->SetBranchAddress("trk_prb_ghost",&trk_ghost);  
   t->SetBranchAddress("trk_x",&trk_x);  
@@ -268,6 +294,8 @@ int main(int argc, char *argv[]){
   t->SetBranchAddress("trk_is_mu",&trk_ismu);    
   t->SetBranchAddress("trk_idx_jet",&trk_j);    
   t->SetBranchAddress("trk_pid",&trk_pid);    
+  t->SetBranchAddress("trk_pid",&trk_pid);    
+  t->SetBranchAddress("trk_type",&trk_type);    
 
   vector<double> *neu_px = new vector<double>();
   vector<double> *neu_py = new vector<double>();
@@ -283,9 +311,11 @@ int main(int argc, char *argv[]){
   int nent = t->GetEntries();
   //nent = 1e5;
   cout << nent << endl;
+  boost::progress_display show_progress( nent );
 
   int njtot = 0, njsv = 0;
-  for(int e=0; e<nent; e++){
+  for(e=0; e<nent; e++){
+    ++show_progress;
 
     t->GetEntry(e);
     if(npv != 1) continue;
@@ -373,6 +403,20 @@ int main(int argc, char *argv[]){
       vector<double> d0_docaKpi;
       vector<double> d0_vtxchi2;
 
+      int countDpm(0);
+      vector<double> d_m;
+      vector<double> d_px;
+      vector<double> d_py;
+      vector<double> d_pz;
+      vector<double> d_e;
+      vector<double> d_x;
+      vector<double> d_y;
+      vector<double> d_z;
+      vector<double> d_fd;
+      vector<double> d_dira;
+      vector<double> d_doca;
+      vector<double> d_docamax;
+
 
       int ihard = -1, imu = -1, nmu = 0, jnchr = 0, jnneu = 0, ndispl6 = 0, ndispl9 = 0, ndispl16 = 0;
       double ptd = 0, jetq = 0, ry = 0, rp = 0, m11 = 0, m12 = 0, m22 = 0, sumpt2 = 0, pnnmu_best = 0;
@@ -404,19 +448,62 @@ int main(int argc, char *argv[]){
 	  if(trk_ipchi2->at(i) > 9) ndispl9++;
 	  if(trk_ipchi2->at(i) > 16) ndispl16++;
 	}
-	if(trk_pnnk->at(i)>0.3 /*&& TMath::Abs(trk_pid->at(i))==321*/ && trk_ipchi2->at(i)>16.) {
+	if(trk_pnnk->at(i)>0.3 /*&& TMath::Abs(trk_pid->at(i))==321*/ && trk_ipchi2->at(i)>16. && trk_type->at(i)==3) {
 	  	TVector3 xtrk1 = TVector3(trk_x->at(i),trk_y->at(i),trk_z->at(i));
 	  	TLorentzVector p4trk1(trk_px->at(i),trk_py->at(i),trk_pz->at(i),trk_e->at(i));
-		p4trk1.SetE(TMath::Sqrt(p4trk1.P()*p4trk1.P() - 493.7*493.7));
+		p4trk1.SetE(TMath::Sqrt(p4trk1.P()*p4trk1.P() + 493.7*493.7));
+		//make D0 candidates
 		for(int ii=0; ii<ntrk; ++ii) {//try every pair twice as first picked is the kaon
+			if(trk_j->at(ii) != j) continue;
 			if(ii==i) continue;
 			if(trk_pid->at(i)*trk_pid->at(ii) > 0) continue;
-			if(trk_pnnpi->at(ii)>0.3 /*&& TMath::Abs(trk_pid->at(ii))==211*/ && trk_ipchi2->at(ii)>16.) {
+			if(trk_pnnpi->at(ii)>0.3 /*&& TMath::Abs(trk_pid->at(ii))==211*/ && trk_ipchi2->at(ii)>16. && trk_type->at(ii)==3) {
 	  			TVector3 xtrk2 = TVector3(trk_x->at(ii),trk_y->at(ii),trk_z->at(ii));
 	  			TLorentzVector p4trk2(trk_px->at(ii),trk_py->at(ii),trk_pz->at(ii),trk_e->at(ii));
-				p4trk2.SetE(TMath::Sqrt(p4trk2.P()*p4trk2.P() - 139.6*139.6));
-				TLorentzVector p4D = p4trk1 + p4trk2;
-				if(TMath::Abs(p4D.M()-1864.) > 80.) continue;
+				p4trk2.SetE(TMath::Sqrt(p4trk2.P()*p4trk2.P() + 139.6*139.6));
+
+				//also try to make D+ candidates
+				for(int iii=ii+1; iii<ntrk; ++iii) {
+					if(trk_j->at(iii) != j) continue;
+					if(iii==i) continue;
+					if(trk_pid->at(i)*trk_pid->at(iii) > 0) continue;
+					if(trk_pnnpi->at(iii)>0.3 /*&& TMath::Abs(trk_pid->at(iii))==211*/ && trk_ipchi2->at(iii)>16. && trk_type->at(iii)==3) {
+	  					TVector3 xtrk3 = TVector3(trk_x->at(iii),trk_y->at(iii),trk_z->at(iii));
+	  					TLorentzVector p4trk3(trk_px->at(iii),trk_py->at(iii),trk_pz->at(iii),trk_e->at(iii));
+						p4trk3.SetE(TMath::Sqrt(p4trk3.P()*p4trk3.P() + 139.6*139.6));
+						TLorentzVector p4Dpm = p4trk1 + p4trk2 + p4trk3;
+						if(TMath::Abs(p4Dpm.M()-1870.) > 160.) continue;
+						TVector3 sv12, sv13, sv23, sv123;
+						double doca12 = calcDoca(sv12, xtrk1, p4trk1.Vect(), xtrk2, p4trk2.Vect());
+						double doca13 = calcDoca(sv13, xtrk1, p4trk1.Vect(), xtrk3, p4trk3.Vect());
+						double doca23 = calcDoca(sv23, xtrk2, p4trk2.Vect(), xtrk3, p4trk3.Vect());
+						double docamax = TMath::Max(doca12, TMath::Max(doca13,doca23));
+						if(docamax>0.1) continue;
+						sv123 = sv12 + sv13 + sv23;
+						sv123 *= (1./3.);
+						double docaDpm = calcDocaPoint(sv123, p4Dpm.Vect(), pv);
+						TVector3 fvDpm = sv123-pv;
+						double diraDpm = fvDpm.Unit().Dot(p4Dpm.Vect().Unit());
+						//printf("found D+: mass=%.2f, docamax=%.3f, dira=%.4f\n", p4Dpm.M(), docamax, diraDpm);
+						++countDpm;
+						d_m.push_back(p4Dpm.M());
+						d_px.push_back(p4Dpm.Px());
+  						d_py.push_back(p4Dpm.Py());
+  						d_pz.push_back(p4Dpm.Pz());
+  						d_e.push_back(p4Dpm.E());
+  						d_x.push_back(sv123.X());
+  						d_y.push_back(sv123.Y());
+  						d_z.push_back(sv123.Z());
+  						d_fd.push_back(fvDpm.Mag());
+  						d_dira.push_back(diraDpm);
+  						d_doca.push_back(docaDpm);
+  						d_docamax.push_back(docamax);
+					}
+				}
+
+				//D0 candidates
+				TLorentzVector p4D0 = p4trk1 + p4trk2;
+				if(TMath::Abs(p4D0.M()-1864.) > 160.) continue;
 				TVector3 sv;
 				double docaKpi = calcDoca(sv, xtrk1, p4trk1.Vect(), xtrk2, p4trk2.Vect());
 				if(docaKpi>0.1) continue;
@@ -424,24 +511,25 @@ int main(int argc, char *argv[]){
 				double sigma2j = trk_ip->at(ii)*trk_ip->at(ii) / trk_ipchi2->at(ii);
 				double vtxchi2 = docaKpi*docaKpi/(sigma2i+sigma2j);
 				if(vtxchi2>10.) continue;
-				double docaD = calcDocaPoint(sv, p4D.Vect(), pv);
+				double docaD0 = calcDocaPoint(sv, p4D0.Vect(), pv);
 				TVector3 fv = sv-pv;
-				double dira = fv.Unit().Dot(p4D.Vect().Unit());
-				//printf("found D0: mass=%.2f, doca=%.3f, dira=%.4f, vtxchi2=%.1f, KID=%.0f, pNNk=%.2f, piID=%.0f, pNNpi=%.2f\n", p4D.M(), docaKpi, dira, vtxchi2, trk_pid->at(i), trk_pnnk->at(i), trk_pid->at(ii), trk_pnnpi->at(ii));
+				double dira = fv.Unit().Dot(p4D0.Vect().Unit());
+				//printf("found D0: mass=%.2f, doca=%.3f, dira=%.4f, vtxchi2=%.1f, KID=%.0f, pNNk=%.2f, piID=%.0f, pNNpi=%.2f\n", p4D0.M(), docaKpi, dira, vtxchi2, trk_pid->at(i), trk_pnnk->at(i), trk_pid->at(ii), trk_pnnpi->at(ii));
 				++countD0;
-				d0_m.push_back(p4D.M());
-				d0_px.push_back(sv.X());
-  				d0_py.push_back(sv.Y());
-  				d0_pz.push_back(sv.Z());
-  				d0_e.push_back(p4D.Px());
-  				d0_x.push_back(p4D.Py());
-  				d0_y.push_back(p4D.Pz());
-  				d0_z.push_back(p4D.E());
+				d0_m.push_back(p4D0.M());
+				d0_px.push_back(p4D0.Px());
+  				d0_py.push_back(p4D0.Py());
+  				d0_pz.push_back(p4D0.Pz());
+  				d0_e.push_back(p4D0.E());
+  				d0_x.push_back(sv.X());
+  				d0_y.push_back(sv.Y());
+  				d0_z.push_back(sv.Z());
   				d0_fd.push_back(fv.Mag());
   				d0_dira.push_back(dira);
-  				d0_doca.push_back(docaD);
+  				d0_doca.push_back(docaD0);
   				d0_docaKpi.push_back(docaKpi);
   				d0_vtxchi2.push_back(vtxchi2);
+				if(d0_x.at(d0_x.size()-1)==0.) {std::cout << "foo" << std::endl; sv.Print(); xtrk1.Print(); p4trk1.Print(); xtrk2.Print(); p4trk2.Print(); p4D0.Print();}
 			}
 		}
 	}
@@ -462,6 +550,7 @@ int main(int argc, char *argv[]){
         D0DOCA    = d0_doca[whichD0];
         D0DOCAKPI = d0_docaKpi[whichD0];
         D0VTXCHI2 = d0_vtxchi2[whichD0];
+	//if(D0PX==0.) std::cout << D0M << "\t" << D0PX << "\t" << D0PY << "\t" << D0PZ << std::endl;
       } else {
         D0M       = -1000.;
         D0PX      = -1000.;
@@ -477,8 +566,37 @@ int main(int argc, char *argv[]){
         D0DOCAKPI = -1000.;
         D0VTXCHI2 = -1000.;
       }
+      //pick a random D+
+      if(!d_px.empty()) {
+        int whichD = rand.Integer(d_px.size());
+        DPMM       = d_m[whichD];
+        DPMPX      = d_px[whichD];
+        DPMPY      = d_py[whichD];
+        DPMPZ      = d_pz[whichD];
+        DPME       = d_e[whichD];
+        DPMX       = d_x[whichD];
+        DPMY       = d_y[whichD];
+        DPMZ       = d_z[whichD];
+        DPMFD      = d_fd[whichD];
+        DPMDIRA    = d_dira[whichD];
+        DPMDOCA    = d_doca[whichD];
+        DPMDOCAMAX = d_docamax[whichD];
+      } else {
+        DPMM       = -1000.;
+        DPMPX      = -1000.;
+        DPMPY      = -1000.;
+        DPMPZ      = -1000.;
+        DPME       = -1000.;
+        DPMX       = -1000.;
+        DPMY       = -1000.;
+        DPMZ       = -1000.;
+        DPMFD      = -1000.;
+        DPMDIRA    = -1000.;
+        DPMDOCA    = -1000.;
+        DPMDOCAMAX = -1000.;
+      }
       
-      if(countD0>1) std::cout << countD0 << std::endl;
+      //std::cout << countDpm << std::endl;
       jetq /= p4j.Pt();
       ptd = sqrt(ptd) / p4j.Pt();      
       for(int i=0; i<nneu; i++){
