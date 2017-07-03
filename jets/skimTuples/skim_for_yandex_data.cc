@@ -86,6 +86,9 @@ int main(int argc, char *argv[]){
   double HPT,HIPCHI2,HDR;
   double D0M, D0PX, D0PY, D0PZ, D0E, D0X, D0Y, D0Z, D0FD, D0DIRA, D0DOCA, D0DOCAKPI, D0VTXCHI2;
   double DPMM, DPMPX, DPMPY, DPMPZ, DPME, DPMX, DPMY, DPMZ, DPMFD, DPMDIRA, DPMDOCA, DPMDOCAMAX;
+  double DSM, DSPX, DSPY, DSPZ, DSE, DSX, DSY, DSZ, DSFD, DSDIRA, DSDOCA, DSDOCAMAX;
+  double LCM, LCPX, LCPY, LCPZ, LCE, LCX, LCY, LCZ, LCFD, LCDIRA, LCDOCA, LCDOCAMAX;
+  double D2K3PIM, D2K3PIPX, D2K3PIPY, D2K3PIPZ, D2K3PIE, D2K3PIX, D2K3PIY, D2K3PIZ, D2K3PIFD, D2K3PIDIRA, D2K3PIDOCA, D2K3PIDOCAMAX;
 
   tout->Branch("EVT",&e);
   tout->Branch("TrueParton",&PARTON);
@@ -171,6 +174,42 @@ int main(int argc, char *argv[]){
   tout->Branch("DDIRA",     &DPMDIRA);
   tout->Branch("DDOCA",     &DPMDOCA);
   tout->Branch("DDOCAMAX",  &DPMDOCAMAX);
+  tout->Branch("DSM",        &DSM);
+  tout->Branch("DSPX",       &DSPX);
+  tout->Branch("DSPY",       &DSPY);
+  tout->Branch("DSPZ",       &DSPZ);
+  tout->Branch("DSE",        &DSE);
+  tout->Branch("DSX",        &DSX);
+  tout->Branch("DSY",        &DSY);
+  tout->Branch("DSZ",        &DSZ);
+  tout->Branch("DSFD",       &DSFD);
+  tout->Branch("DSDIRA",     &DSDIRA);
+  tout->Branch("DSDOCA",     &DSDOCA);
+  tout->Branch("DSDOCAMAX",  &DSDOCAMAX);
+  tout->Branch("LCM",        &LCM);
+  tout->Branch("LCPX",       &LCPX);
+  tout->Branch("LCPY",       &LCPY);
+  tout->Branch("LCPZ",       &LCPZ);
+  tout->Branch("LCE",        &LCE);
+  tout->Branch("LCX",        &LCX);
+  tout->Branch("LCY",        &LCY);
+  tout->Branch("LCZ",        &LCZ);
+  tout->Branch("LCFD",       &LCFD);
+  tout->Branch("LCDIRA",     &LCDIRA);
+  tout->Branch("LCDOCA",     &LCDOCA);
+  tout->Branch("LCDOCAMAX",  &LCDOCAMAX);
+  tout->Branch("D2K3PIM",        &D2K3PIM);
+  tout->Branch("D2K3PIPX",       &D2K3PIPX);
+  tout->Branch("D2K3PIPY",       &D2K3PIPY);
+  tout->Branch("D2K3PIPZ",       &D2K3PIPZ);
+  tout->Branch("D2K3PIE",        &D2K3PIE);
+  tout->Branch("D2K3PIX",        &D2K3PIX);
+  tout->Branch("D2K3PIY",        &D2K3PIY);
+  tout->Branch("D2K3PIZ",        &D2K3PIZ);
+  tout->Branch("D2K3PIFD",       &D2K3PIFD);
+  tout->Branch("D2K3PIDIRA",     &D2K3PIDIRA);
+  tout->Branch("D2K3PIDOCA",     &D2K3PIDOCA);
+  tout->Branch("D2K3PIDOCAMAX",  &D2K3PIDOCAMAX);
 
   TChain *t = new TChain("data");
   boost::progress_display show_addfile_progress( 268 );
@@ -272,6 +311,7 @@ int main(int argc, char *argv[]){
   vector<double> *trk_ipchi2 = new vector<double>();
   vector<double> *trk_pnnk = new vector<double>();
   vector<double> *trk_pnnpi = new vector<double>();
+  vector<double> *trk_pnnp = new vector<double>();
   vector<double> *trk_pnnmu = new vector<double>();
   vector<double> *trk_ismu = new vector<double>();
   vector<double> *trk_j = new vector<double>();
@@ -290,6 +330,7 @@ int main(int argc, char *argv[]){
   t->SetBranchAddress("trk_ip_chi2",&trk_ipchi2);    
   t->SetBranchAddress("trk_pnn_k",&trk_pnnk);    
   t->SetBranchAddress("trk_pnn_pi",&trk_pnnpi);    
+  t->SetBranchAddress("trk_pnn_p",&trk_pnnp);    
   t->SetBranchAddress("trk_pnn_mu",&trk_pnnmu);    
   t->SetBranchAddress("trk_is_mu",&trk_ismu);    
   t->SetBranchAddress("trk_idx_jet",&trk_j);    
@@ -417,6 +458,48 @@ int main(int argc, char *argv[]){
       vector<double> d_doca;
       vector<double> d_docamax;
 
+      int countDs(0);
+      vector<double> ds_m;
+      vector<double> ds_px;
+      vector<double> ds_py;
+      vector<double> ds_pz;
+      vector<double> ds_e;
+      vector<double> ds_x;
+      vector<double> ds_y;
+      vector<double> ds_z;
+      vector<double> ds_fd;
+      vector<double> ds_dira;
+      vector<double> ds_doca;
+      vector<double> ds_docamax;
+
+      int countLc(0);
+      vector<double> lc_m;
+      vector<double> lc_px;
+      vector<double> lc_py;
+      vector<double> lc_pz;
+      vector<double> lc_e;
+      vector<double> lc_x;
+      vector<double> lc_y;
+      vector<double> lc_z;
+      vector<double> lc_fd;
+      vector<double> lc_dira;
+      vector<double> lc_doca;
+      vector<double> lc_docamax;
+
+      int countD2K3pi(0);
+      vector<double> d2k3pi_m;
+      vector<double> d2k3pi_px;
+      vector<double> d2k3pi_py;
+      vector<double> d2k3pi_pz;
+      vector<double> d2k3pi_e;
+      vector<double> d2k3pi_x;
+      vector<double> d2k3pi_y;
+      vector<double> d2k3pi_z;
+      vector<double> d2k3pi_fd;
+      vector<double> d2k3pi_dira;
+      vector<double> d2k3pi_doca;
+      vector<double> d2k3pi_docamax;
+
 
       int ihard = -1, imu = -1, nmu = 0, jnchr = 0, jnneu = 0, ndispl6 = 0, ndispl9 = 0, ndispl16 = 0;
       double ptd = 0, jetq = 0, ry = 0, rp = 0, m11 = 0, m12 = 0, m22 = 0, sumpt2 = 0, pnnmu_best = 0;
@@ -448,6 +531,7 @@ int main(int argc, char *argv[]){
 	  if(trk_ipchi2->at(i) > 9) ndispl9++;
 	  if(trk_ipchi2->at(i) > 16) ndispl16++;
 	}
+	//all of the combinations we're going to try have opp charged Kpi pair so start with that
 	if(trk_pnnk->at(i)>0.3 /*&& TMath::Abs(trk_pid->at(i))==321*/ && trk_ipchi2->at(i)>16. && trk_type->at(i)==3) {
 	  	TVector3 xtrk1 = TVector3(trk_x->at(i),trk_y->at(i),trk_z->at(i));
 	  	TLorentzVector p4trk1(trk_px->at(i),trk_py->at(i),trk_pz->at(i),trk_e->at(i));
@@ -466,7 +550,7 @@ int main(int argc, char *argv[]){
 				for(int iii=ii+1; iii<ntrk; ++iii) {
 					if(trk_j->at(iii) != j) continue;
 					if(iii==i) continue;
-					if(trk_pid->at(i)*trk_pid->at(iii) > 0) continue;
+					if(trk_pid->at(i)*trk_pid->at(iii) > 0) continue;//same charge pions
 					if(trk_pnnpi->at(iii)>0.3 /*&& TMath::Abs(trk_pid->at(iii))==211*/ && trk_ipchi2->at(iii)>16. && trk_type->at(iii)==3) {
 	  					TVector3 xtrk3 = TVector3(trk_x->at(iii),trk_y->at(iii),trk_z->at(iii));
 	  					TLorentzVector p4trk3(trk_px->at(iii),trk_py->at(iii),trk_pz->at(iii),trk_e->at(iii));
@@ -498,6 +582,135 @@ int main(int argc, char *argv[]){
   						d_dira.push_back(diraDpm);
   						d_doca.push_back(docaDpm);
   						d_docamax.push_back(docamax);
+					}
+				}
+
+				//also try to make Ds+ candidates
+				for(int iii=0; iii<ntrk; ++iii) {
+					if(trk_j->at(iii) != j) continue;
+					if(iii==i || iii==ii) continue;
+					if(trk_pid->at(i)*trk_pid->at(iii) > 0) continue;//opp charged kaons
+					if(trk_pnnk->at(iii)>0.3 /*&& TMath::Abs(trk_pid->at(iii))==321*/ && trk_ipchi2->at(iii)>16. && trk_type->at(iii)==3) {
+	  					TVector3 xtrk3 = TVector3(trk_x->at(iii),trk_y->at(iii),trk_z->at(iii));
+	  					TLorentzVector p4trk3(trk_px->at(iii),trk_py->at(iii),trk_pz->at(iii),trk_e->at(iii));
+						p4trk3.SetE(TMath::Sqrt(p4trk3.P()*p4trk3.P() + 493.7*493.7));
+						TLorentzVector p4Ds = p4trk1 + p4trk2 + p4trk3;
+						if(TMath::Abs(p4Ds.M()-1968.) > 160.) continue;
+						TVector3 sv12, sv13, sv23, sv123;
+						double doca12 = calcDoca(sv12, xtrk1, p4trk1.Vect(), xtrk2, p4trk2.Vect());
+						double doca13 = calcDoca(sv13, xtrk1, p4trk1.Vect(), xtrk3, p4trk3.Vect());
+						double doca23 = calcDoca(sv23, xtrk2, p4trk2.Vect(), xtrk3, p4trk3.Vect());
+						double docamax = TMath::Max(doca12, TMath::Max(doca13,doca23));
+						if(docamax>0.1) continue;
+						sv123 = sv12 + sv13 + sv23;
+						sv123 *= (1./3.);
+						double docaDs = calcDocaPoint(sv123, p4Ds.Vect(), pv);
+						TVector3 fvDs = sv123-pv;
+						double diraDs = fvDs.Unit().Dot(p4Ds.Vect().Unit());
+						//printf("found Ds+: mass=%.2f, docamax=%.3f, dira=%.4f\n", p4Ds.M(), docamax, diraDs);
+						++countDs;
+						ds_m.push_back(p4Ds.M());
+						ds_px.push_back(p4Ds.Px());
+  						ds_py.push_back(p4Ds.Py());
+  						ds_pz.push_back(p4Ds.Pz());
+  						ds_e.push_back(p4Ds.E());
+  						ds_x.push_back(sv123.X());
+  						ds_y.push_back(sv123.Y());
+  						ds_z.push_back(sv123.Z());
+  						ds_fd.push_back(fvDs.Mag());
+  						ds_dira.push_back(diraDs);
+  						ds_doca.push_back(docaDs);
+  						ds_docamax.push_back(docamax);
+					}
+				}
+
+				//also try to make Lc+ candidates
+				for(int iii=0; iii<ntrk; ++iii) {
+					if(trk_j->at(iii) != j) continue;
+					if(iii==i || iii==ii) continue;
+					if(trk_pid->at(i)*trk_pid->at(iii) > 0) continue;//opp charged kaon and proton
+					if(trk_pnnp->at(iii)>0.3 /*&& TMath::Abs(trk_pid->at(iii))==2212*/ && trk_ipchi2->at(iii)>16. && trk_type->at(iii)==3) {
+	  					TVector3 xtrk3 = TVector3(trk_x->at(iii),trk_y->at(iii),trk_z->at(iii));
+	  					TLorentzVector p4trk3(trk_px->at(iii),trk_py->at(iii),trk_pz->at(iii),trk_e->at(iii));
+						p4trk3.SetE(TMath::Sqrt(p4trk3.P()*p4trk3.P() + 938.3*938.3));
+						TLorentzVector p4Lc = p4trk1 + p4trk2 + p4trk3;
+						if(TMath::Abs(p4Lc.M()-2286.) > 160.) continue;
+						TVector3 sv12, sv13, sv23, sv123;
+						double doca12 = calcDoca(sv12, xtrk1, p4trk1.Vect(), xtrk2, p4trk2.Vect());
+						double doca13 = calcDoca(sv13, xtrk1, p4trk1.Vect(), xtrk3, p4trk3.Vect());
+						double doca23 = calcDoca(sv23, xtrk2, p4trk2.Vect(), xtrk3, p4trk3.Vect());
+						double docamax = TMath::Max(doca12, TMath::Max(doca13,doca23));
+						if(docamax>0.1) continue;
+						sv123 = sv12 + sv13 + sv23;
+						sv123 *= (1./3.);
+						double docaLc = calcDocaPoint(sv123, p4Lc.Vect(), pv);
+						TVector3 fvLc = sv123-pv;
+						double diraLc = fvLc.Unit().Dot(p4Lc.Vect().Unit());
+						//printf("found Lc+: mass=%.2f, docamax=%.3f, dira=%.4f\n", p4Lc.M(), docamax, diraLc);
+						++countLc;
+						lc_m.push_back(p4Lc.M());
+						lc_px.push_back(p4Lc.Px());
+  						lc_py.push_back(p4Lc.Py());
+  						lc_pz.push_back(p4Lc.Pz());
+  						lc_e.push_back(p4Lc.E());
+  						lc_x.push_back(sv123.X());
+  						lc_y.push_back(sv123.Y());
+  						lc_z.push_back(sv123.Z());
+  						lc_fd.push_back(fvLc.Mag());
+  						lc_dira.push_back(diraLc);
+  						lc_doca.push_back(docaLc);
+  						lc_docamax.push_back(docamax);
+					}
+				}
+
+				//also try to make D0->Kpipipi candidates
+				for(int iii=0; iii<ntrk; ++iii) {
+					if(trk_j->at(iii) != j) continue;
+					if(iii==i || iii==ii) continue;
+					if(trk_pnnpi->at(iii)>0.3 /*&& TMath::Abs(trk_pid->at(iii))==321*/ && trk_ipchi2->at(iii)>16. && trk_type->at(iii)==3) {
+	  					TVector3 xtrk3 = TVector3(trk_x->at(iii),trk_y->at(iii),trk_z->at(iii));
+	  					TLorentzVector p4trk3(trk_px->at(iii),trk_py->at(iii),trk_pz->at(iii),trk_e->at(iii));
+						p4trk3.SetE(TMath::Sqrt(p4trk3.P()*p4trk3.P() + 139.6*139.6));
+						for(int iv=iii+1; iv<ntrk; ++iv) {
+							if(trk_j->at(iv) != j) continue;
+							if(iv==i || iv==ii) continue;
+							if(trk_pid->at(iv)*trk_pid->at(iii) > 0) continue;//adding an opp charged pion pair
+							if(trk_pnnpi->at(iv)>0.3 /*&& TMath::Abs(trk_pid->at(iii))==321*/ && trk_ipchi2->at(iv)>16. && trk_type->at(iv)==3) {
+	  							TVector3 xtrk4 = TVector3(trk_x->at(iv),trk_y->at(iv),trk_z->at(iv));
+	  							TLorentzVector p4trk4(trk_px->at(iv),trk_py->at(iv),trk_pz->at(iv),trk_e->at(iv));
+								p4trk4.SetE(TMath::Sqrt(p4trk4.P()*p4trk4.P() + 139.6*139.6));
+								TLorentzVector p4D2K3pi = p4trk1 + p4trk2 + p4trk3 + p4trk4;
+								if(TMath::Abs(p4D2K3pi.M()-1864.) > 160.) continue;
+								TVector3 sv12, sv13, sv14, sv23, sv24, sv34, sv1234;
+								double doca12 = calcDoca(sv12, xtrk1, p4trk1.Vect(), xtrk2, p4trk2.Vect());
+								double doca13 = calcDoca(sv13, xtrk1, p4trk1.Vect(), xtrk3, p4trk3.Vect());
+								double doca14 = calcDoca(sv14, xtrk1, p4trk1.Vect(), xtrk4, p4trk4.Vect());
+								double doca23 = calcDoca(sv23, xtrk2, p4trk2.Vect(), xtrk3, p4trk3.Vect());
+								double doca24 = calcDoca(sv24, xtrk2, p4trk2.Vect(), xtrk4, p4trk4.Vect());
+								double doca34 = calcDoca(sv34, xtrk3, p4trk3.Vect(), xtrk4, p4trk4.Vect());
+								double docamax = TMath::Max(TMath::Max(doca12, TMath::Max(doca13,doca14)),TMath::Max(doca23, TMath::Max(doca24,doca34)));
+								if(docamax>0.1) continue;
+								sv1234 = sv12 + sv13 + sv14 + sv23 + sv24 + sv34;
+								sv1234 *= (1./6.);
+								double docaD2K3pi = calcDocaPoint(sv1234, p4D2K3pi.Vect(), pv);
+								TVector3 fvD2K3pi = sv1234-pv;
+								double diraD2K3pi = fvD2K3pi.Unit().Dot(p4D2K3pi.Vect().Unit());
+								//printf("found D0->K3pi: mass=%.2f, docamax=%.3f, dira=%.4f\n", p4D2K3pi.M(), docamax, diraD2K3pi);
+								++countD2K3pi;
+								d2k3pi_m.push_back(p4D2K3pi.M());
+								d2k3pi_px.push_back(p4D2K3pi.Px());
+  								d2k3pi_py.push_back(p4D2K3pi.Py());
+  								d2k3pi_pz.push_back(p4D2K3pi.Pz());
+  								d2k3pi_e.push_back(p4D2K3pi.E());
+  								d2k3pi_x.push_back(sv1234.X());
+  								d2k3pi_y.push_back(sv1234.Y());
+  								d2k3pi_z.push_back(sv1234.Z());
+  								d2k3pi_fd.push_back(fvD2K3pi.Mag());
+  								d2k3pi_dira.push_back(diraD2K3pi);
+  								d2k3pi_doca.push_back(docaD2K3pi);
+  								d2k3pi_docamax.push_back(docamax);
+							}
+						}
 					}
 				}
 
@@ -594,6 +807,93 @@ int main(int argc, char *argv[]){
         DPMDIRA    = -1000.;
         DPMDOCA    = -1000.;
         DPMDOCAMAX = -1000.;
+      }
+      //pick a random Ds+
+      if(!ds_px.empty()) {
+        int whichDs = rand.Integer(ds_px.size());
+        DSM       = ds_m[whichDs];
+        DSPX      = ds_px[whichDs];
+        DSPY      = ds_py[whichDs];
+        DSPZ      = ds_pz[whichDs];
+        DSE       = ds_e[whichDs];
+        DSX       = ds_x[whichDs];
+        DSY       = ds_y[whichDs];
+        DSZ       = ds_z[whichDs];
+        DSFD      = ds_fd[whichDs];
+        DSDIRA    = ds_dira[whichDs];
+        DSDOCA    = ds_doca[whichDs];
+        DSDOCAMAX = ds_docamax[whichDs];
+      } else {
+        DSM       = -1000.;
+        DSPX      = -1000.;
+        DSPY      = -1000.;
+        DSPZ      = -1000.;
+        DSE       = -1000.;
+        DSX       = -1000.;
+        DSY       = -1000.;
+        DSZ       = -1000.;
+        DSFD      = -1000.;
+        DSDIRA    = -1000.;
+        DSDOCA    = -1000.;
+        DSDOCAMAX = -1000.;
+      }
+      //pick a random Lc+
+      if(!lc_px.empty()) {
+        int whichLc = rand.Integer(lc_px.size());
+        LCM       = lc_m[whichLc];
+        LCPX      = lc_px[whichLc];
+        LCPY      = lc_py[whichLc];
+        LCPZ      = lc_pz[whichLc];
+        LCE       = lc_e[whichLc];
+        LCX       = lc_x[whichLc];
+        LCY       = lc_y[whichLc];
+        LCZ       = lc_z[whichLc];
+        LCFD      = lc_fd[whichLc];
+        LCDIRA    = lc_dira[whichLc];
+        LCDOCA    = lc_doca[whichLc];
+        LCDOCAMAX = lc_docamax[whichLc];
+      } else {
+        LCM       = -1000.;
+        LCPX      = -1000.;
+        LCPY      = -1000.;
+        LCPZ      = -1000.;
+        LCE       = -1000.;
+        LCX       = -1000.;
+        LCY       = -1000.;
+        LCZ       = -1000.;
+        LCFD      = -1000.;
+        LCDIRA    = -1000.;
+        LCDOCA    = -1000.;
+        LCDOCAMAX = -1000.;
+      }
+      //pick a random D0->K3pi
+      if(!d2k3pi_px.empty()) {
+        int whichD0 = rand.Integer(d2k3pi_px.size());
+        D2K3PIM       = d2k3pi_m[whichD0];
+        D2K3PIPX      = d2k3pi_px[whichD0];
+        D2K3PIPY      = d2k3pi_py[whichD0];
+        D2K3PIPZ      = d2k3pi_pz[whichD0];
+        D2K3PIE       = d2k3pi_e[whichD0];
+        D2K3PIX       = d2k3pi_x[whichD0];
+        D2K3PIY       = d2k3pi_y[whichD0];
+        D2K3PIZ       = d2k3pi_z[whichD0];
+        D2K3PIFD      = d2k3pi_fd[whichD0];
+        D2K3PIDIRA    = d2k3pi_dira[whichD0];
+        D2K3PIDOCA    = d2k3pi_doca[whichD0];
+        D2K3PIDOCAMAX = d2k3pi_docamax[whichD0];
+      } else {
+        D2K3PIM       = -1000.;
+        D2K3PIPX      = -1000.;
+        D2K3PIPY      = -1000.;
+        D2K3PIPZ      = -1000.;
+        D2K3PIE       = -1000.;
+        D2K3PIX       = -1000.;
+        D2K3PIY       = -1000.;
+        D2K3PIZ       = -1000.;
+        D2K3PIFD      = -1000.;
+        D2K3PIDIRA    = -1000.;
+        D2K3PIDOCA    = -1000.;
+        D2K3PIDOCAMAX = -1000.;
       }
       
       //std::cout << countDpm << std::endl;
