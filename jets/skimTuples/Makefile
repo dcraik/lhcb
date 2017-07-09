@@ -5,7 +5,13 @@ ROOTFLAGS = `root-config --cflags` # --libs` `gsl-config --cflags` -lThread -lMi
 ROOTLIBS  = `root-config --glibs` -lRooFit -lThread -lMinuit -lMathCore -lRooStats -lRooFit -lRooFitCore -lFoam -lTreePlayer
 INCPATH   = -I.
 
-all : 	skim_for_yandex_data
+all : 	skim_for_yandex	skim_for_yandex_data
+
+skim_for_yandex.o : skim_for_yandex.cc
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
+
+skim_for_yandex : skim_for_yandex.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
 
 skim_for_yandex_data.o : skim_for_yandex_data.cc
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
