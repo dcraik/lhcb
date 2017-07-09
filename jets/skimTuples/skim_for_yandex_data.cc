@@ -84,11 +84,11 @@ int main(int argc, char *argv[]){
   double NSV,PVX,PVY,PVZ,NDISPL6,NDISPL9,NDISPL16;
   double MUPT,MUIPCHI2,MUDR,MUPNN,NMU;
   double HPT,HIPCHI2,HDR;
-  double D0M, D0PX, D0PY, D0PZ, D0E, D0X, D0Y, D0Z, D0FD, D0DIRA, D0DOCA, D0DOCAKPI, D0VTXCHI2;
-  double DPMM, DPMPX, DPMPY, DPMPZ, DPME, DPMX, DPMY, DPMZ, DPMFD, DPMDIRA, DPMDOCA, DPMDOCAMAX;
-  double DSM, DSPX, DSPY, DSPZ, DSE, DSX, DSY, DSZ, DSFD, DSDIRA, DSDOCA, DSDOCAMAX;
-  double LCM, LCPX, LCPY, LCPZ, LCE, LCX, LCY, LCZ, LCFD, LCDIRA, LCDOCA, LCDOCAMAX;
-  double D2K3PIM, D2K3PIPX, D2K3PIPY, D2K3PIPZ, D2K3PIE, D2K3PIX, D2K3PIY, D2K3PIZ, D2K3PIFD, D2K3PIDIRA, D2K3PIDOCA, D2K3PIDOCAMAX;
+  double D0M, D0PX, D0PY, D0PZ, D0E, D0X, D0Y, D0Z, D0FD, D0DIRA, D0DOCA, D0IPCHI2MIN, D0DOCAKPI, D0VTXCHI2;
+  double DPMM, DPMPX, DPMPY, DPMPZ, DPME, DPMX, DPMY, DPMZ, DPMFD, DPMDIRA, DPMDOCA, DPMIPCHI2MIN, DPMDOCAMAX;
+  double DSM, DSPX, DSPY, DSPZ, DSE, DSX, DSY, DSZ, DSFD, DSDIRA, DSDOCA, DSIPCHI2MIN, DSDOCAMAX;
+  double LCM, LCPX, LCPY, LCPZ, LCE, LCX, LCY, LCZ, LCFD, LCDIRA, LCDOCA, LCIPCHI2MIN, LCDOCAMAX;
+  double D2K3PIM, D2K3PIPX, D2K3PIPY, D2K3PIPZ, D2K3PIE, D2K3PIX, D2K3PIY, D2K3PIZ, D2K3PIFD, D2K3PIDIRA, D2K3PIDOCA, D2K3PIIPCHI2MIN, D2K3PIDOCAMAX;
 
   tout->Branch("EVT",&e);
   tout->Branch("TrueParton",&PARTON);
@@ -159,7 +159,8 @@ int main(int argc, char *argv[]){
   tout->Branch("D0Z",        &D0Z);
   tout->Branch("D0FD",       &D0FD);
   tout->Branch("D0DIRA",     &D0DIRA);
-  tout->Branch("D0DOCA",     &D0DOCA);
+  tout->Branch("D0IP",     &D0DOCA);
+  tout->Branch("D0IPCHI2MIN",    &D0IPCHI2MIN);
   tout->Branch("D0DOCAKPI",  &D0DOCAKPI);
   tout->Branch("D0VTXCHI2",  &D0VTXCHI2);
   tout->Branch("DM",        &DPMM);
@@ -172,7 +173,8 @@ int main(int argc, char *argv[]){
   tout->Branch("DZ",        &DPMZ);
   tout->Branch("DFD",       &DPMFD);
   tout->Branch("DDIRA",     &DPMDIRA);
-  tout->Branch("DDOCA",     &DPMDOCA);
+  tout->Branch("DIP",     &DPMDOCA);
+  tout->Branch("DIPCHI2MIN",    &DPMIPCHI2MIN);
   tout->Branch("DDOCAMAX",  &DPMDOCAMAX);
   tout->Branch("DSM",        &DSM);
   tout->Branch("DSPX",       &DSPX);
@@ -184,7 +186,8 @@ int main(int argc, char *argv[]){
   tout->Branch("DSZ",        &DSZ);
   tout->Branch("DSFD",       &DSFD);
   tout->Branch("DSDIRA",     &DSDIRA);
-  tout->Branch("DSDOCA",     &DSDOCA);
+  tout->Branch("DSIP",     &DSDOCA);
+  tout->Branch("DSIPCHI2MIN",    &DSIPCHI2MIN);
   tout->Branch("DSDOCAMAX",  &DSDOCAMAX);
   tout->Branch("LCM",        &LCM);
   tout->Branch("LCPX",       &LCPX);
@@ -196,7 +199,8 @@ int main(int argc, char *argv[]){
   tout->Branch("LCZ",        &LCZ);
   tout->Branch("LCFD",       &LCFD);
   tout->Branch("LCDIRA",     &LCDIRA);
-  tout->Branch("LCDOCA",     &LCDOCA);
+  tout->Branch("LCIP",     &LCDOCA);
+  tout->Branch("LCIPCHI2MIN",    &LCIPCHI2MIN);
   tout->Branch("LCDOCAMAX",  &LCDOCAMAX);
   tout->Branch("D2K3PIM",        &D2K3PIM);
   tout->Branch("D2K3PIPX",       &D2K3PIPX);
@@ -208,14 +212,15 @@ int main(int argc, char *argv[]){
   tout->Branch("D2K3PIZ",        &D2K3PIZ);
   tout->Branch("D2K3PIFD",       &D2K3PIFD);
   tout->Branch("D2K3PIDIRA",     &D2K3PIDIRA);
-  tout->Branch("D2K3PIDOCA",     &D2K3PIDOCA);
+  tout->Branch("D2K3PIIP",     &D2K3PIDOCA);
+  tout->Branch("D2K3PIIPCHI2MIN",    &D2K3PIIPCHI2MIN);
   tout->Branch("D2K3PIDOCAMAX",  &D2K3PIDOCAMAX);
 
   TChain *t = new TChain("data");
-  boost::progress_display show_addfile_progress( 268 );
-  for(int i=0; i<10/*268*/; ++i) {
+  boost::progress_display show_addfile_progress( 56 );
+  for(int i=0; i<56/*268*/; ++i) {
 	++show_addfile_progress;
-  	sprintf(str,"/eos/lhcb/user/d/dcraik/jets/87/%d/output.root",i);
+  	sprintf(str,"/eos/lhcb/user/d/dcraik/jets/96/%d/output.root",i);
   	TFile* f = TFile::Open(str);
   	if(f) {
   	      delete f;
@@ -239,25 +244,41 @@ int main(int argc, char *argv[]){
   vector<double> *jet_pz = new vector<double>();
   vector<double> *jet_e = new vector<double>();
   vector<double> *jet_pv = new vector<double>();
-  vector<double> *jet_Hlt2JetsDiJetDecision = new vector<double>();
-  vector<double> *jet_Hlt2JetsDiJetSVDecision = new vector<double>();
-  vector<double> *jet_Hlt2JetsDiJetSVSVDecision = new vector<double>();
-  vector<double> *jet_Hlt2JetsDiJetSVMuDecision = new vector<double>();
-  vector<double> *jet_Hlt2JetsDiJetMuMuDecision = new vector<double>();
-  vector<double> *jet_dR1 = new vector<double>();
-  vector<double> *jet_dR2 = new vector<double>();
+  vector<double> *jet_DiJet = new vector<double>();
+  vector<double> *jet_DiJetSV = new vector<double>();
+  vector<double> *jet_DiJetSVSV = new vector<double>();
+  vector<double> *jet_DiJetSVMu = new vector<double>();
+  vector<double> *jet_DiJetMuMu = new vector<double>();
+  vector<double> *jet_DiJet_dR1 = new vector<double>();
+  vector<double> *jet_DiJet_dR2 = new vector<double>();
+  vector<double> *jet_DiJetSV_dR1 = new vector<double>();
+  vector<double> *jet_DiJetSV_dR2 = new vector<double>();
+  vector<double> *jet_DiJetSVSV_dR1 = new vector<double>();
+  vector<double> *jet_DiJetSVSV_dR2 = new vector<double>();
+  vector<double> *jet_DiJetSVMu_dR1 = new vector<double>();
+  vector<double> *jet_DiJetSVMu_dR2 = new vector<double>();
+  vector<double> *jet_DiJetMuMu_dR1 = new vector<double>();
+  vector<double> *jet_DiJetMuMu_dR2 = new vector<double>();
   t->SetBranchAddress("jet_px",&jet_px);  
   t->SetBranchAddress("jet_py",&jet_py);  
   t->SetBranchAddress("jet_pz",&jet_pz);  
   t->SetBranchAddress("jet_e",&jet_e);  
   t->SetBranchAddress("jet_idx_pvr",&jet_pv);  
-  t->SetBranchAddress("jet_Hlt2JetsDiJetDecision",&jet_Hlt2JetsDiJetDecision);  
-  t->SetBranchAddress("jet_Hlt2JetsDiJetSVDecision",&jet_Hlt2JetsDiJetSVDecision);  
-  t->SetBranchAddress("jet_Hlt2JetsDiJetSVSVDecision",&jet_Hlt2JetsDiJetSVSVDecision);  
-  t->SetBranchAddress("jet_Hlt2JetsDiJetSVMuDecision",&jet_Hlt2JetsDiJetSVMuDecision);  
-  t->SetBranchAddress("jet_Hlt2JetsDiJetMuMuDecision",&jet_Hlt2JetsDiJetMuMuDecision);  
-  t->SetBranchAddress("jet_dR1",&jet_dR1);  
-  t->SetBranchAddress("jet_dR2",&jet_dR2);  
+  t->SetBranchAddress("jet_DiJet_Dec",&jet_DiJet);  
+  t->SetBranchAddress("jet_DiJetSV_Dec",&jet_DiJetSV);  
+  t->SetBranchAddress("jet_DiJetSVSV_Dec",&jet_DiJetSVSV);  
+  t->SetBranchAddress("jet_DiJetSVMu_Dec",&jet_DiJetSVMu);  
+  t->SetBranchAddress("jet_DiJetMuMu_Dec",&jet_DiJetMuMu);  
+  t->SetBranchAddress("jet_DiJet_dR1",&jet_DiJet_dR1);  
+  t->SetBranchAddress("jet_DiJet_dR2",&jet_DiJet_dR2);  
+  t->SetBranchAddress("jet_DiJetSV_dR1",&jet_DiJetSV_dR1);  
+  t->SetBranchAddress("jet_DiJetSV_dR2",&jet_DiJetSV_dR2);  
+  t->SetBranchAddress("jet_DiJetSVSV_dR1",&jet_DiJetSVSV_dR1);  
+  t->SetBranchAddress("jet_DiJetSVSV_dR2",&jet_DiJetSVSV_dR2);  
+  t->SetBranchAddress("jet_DiJetSVMu_dR1",&jet_DiJetSVMu_dR1);  
+  t->SetBranchAddress("jet_DiJetSVMu_dR2",&jet_DiJetSVMu_dR2);  
+  t->SetBranchAddress("jet_DiJetMuMu_dR1",&jet_DiJetMuMu_dR1);  
+  t->SetBranchAddress("jet_DiJetMuMu_dR2",&jet_DiJetMuMu_dR2);  
 
   double npv;
   t->SetBranchAddress("evt_pvr_n",&npv); 
@@ -335,7 +356,6 @@ int main(int argc, char *argv[]){
   t->SetBranchAddress("trk_is_mu",&trk_ismu);    
   t->SetBranchAddress("trk_idx_jet",&trk_j);    
   t->SetBranchAddress("trk_pid",&trk_pid);    
-  t->SetBranchAddress("trk_pid",&trk_pid);    
   t->SetBranchAddress("trk_type",&trk_type);    
 
   vector<double> *neu_px = new vector<double>();
@@ -354,6 +374,10 @@ int main(int argc, char *argv[]){
   cout << nent << endl;
   boost::progress_display show_progress( nent );
 
+  int noTOSFoundA(0), oneTOSFoundA(0), sameTOSFoundA(0), okTOSA(0);
+//  int noTOSFoundB(0), oneTOSFoundB(0), sameTOSFoundB(0), okTOSB(0);
+//  int methodsMatch(0), methodsDiffer(0);
+
   int njtot = 0, njsv = 0;
   for(e=0; e<nent; e++){
     ++show_progress;
@@ -368,10 +392,155 @@ int main(int argc, char *argv[]){
     int ntrk = trk_e->size();
     int nneu = neu_e->size();
 
+    int tosJ1DiJet(-1),     tosJ2DiJet(-1);
+    int tosJ1DiJetSV(-1),   tosJ2DiJetSV(-1);
+    int tosJ1DiJetSVSV(-1), tosJ2DiJetSVSV(-1);
+    int tosJ1DiJetSVMu(-1), tosJ2DiJetSVMu(-1);
+    int tosJ1DiJetMuMu(-1), tosJ2DiJetMuMu(-1);
+    double dR1DiJet(0.5),     dR2DiJet(0.5);
+    double dR1DiJetSV(0.5),   dR2DiJetSV(0.5);
+    double dR1DiJetSVSV(0.5), dR2DiJetSVSV(0.5);
+    double dR1DiJetSVMu(0.5), dR2DiJetSVMu(0.5);
+    double dR1DiJetMuMu(0.5), dR2DiJetMuMu(0.5);
+//    double pt1(0.), pt2(0.);
+    
+    //first find TOS jets
+//    if(jet_DiJetSVMu->at(0)==0) continue;
+//    std::cout << nj << " jets" << std::endl;
+    for(int j=0; j<nj; j++){
+////	    std::cout << "j" << j << std::endl;
+//	    if(jet_DiJetSVMu_dR1->at(j)<0.5) {
+////		    std::cout << j << " close to jet1: dR=" << jet_DiJetSVMu_dR1->at(j) << std::endl;
+//		    double pt=TMath::Sqrt(jet_px->at(j)*jet_px->at(j) + jet_py->at(j)*jet_py->at(j));
+//		    if(pt>pt1) {
+////			std::cout << j << " has highest pT so far: " << pt << ">" << pt1 << std::endl;
+//		    	tosJ1A=j;
+//			pt1=pt;
+//		    }
+//	    }
+//	    if(jet_DiJetSVMu_dR2->at(j)<0.5) {
+////		    std::cout << j << " close to jet2: dR=" << jet_DiJetSVMu_dR2->at(j) << std::endl;
+//		    double pt=TMath::Sqrt(jet_px->at(j)*jet_px->at(j) + jet_py->at(j)*jet_py->at(j));
+//		    if(pt>pt2) {
+////			std::cout << j << " has highest pT so far: " << pt << ">" << pt2 << std::endl;
+//		    	tosJ2A=j;
+//			pt2=pt;
+//		    }
+//	    }
+	    if(jet_DiJet->at(0)!=0) {
+	    	if(jet_DiJet_dR1->at(j)<dR1DiJet) {
+	    	        tosJ1DiJet=j;
+	    	        dR1DiJet=jet_DiJet_dR1->at(j);
+	    	}
+	    	if(jet_DiJet_dR2->at(j)<dR2DiJet) {
+	    	        tosJ2DiJet=j;
+	    	        dR2DiJet=jet_DiJet_dR2->at(j);
+	    	}
+	    }
+	
+	    if(jet_DiJetSV->at(0)!=0) {
+	    	if(jet_DiJetSV_dR1->at(j)<dR1DiJetSV) {
+	    	        tosJ1DiJetSV=j;
+	    	        dR1DiJetSV=jet_DiJet_dR1->at(j);
+	    	}
+	    	if(jet_DiJetSV_dR2->at(j)<dR2DiJetSV) {
+	    	        tosJ2DiJetSV=j;
+	    	        dR2DiJetSV=jet_DiJet_dR2->at(j);
+	    	}
+	    }
+	
+	    if(jet_DiJetSVSV->at(0)!=0) {
+	    	if(jet_DiJetSVSV_dR1->at(j)<dR1DiJetSVSV) {
+	    	        tosJ1DiJetSVSV=j;
+	    	        dR1DiJetSVSV=jet_DiJet_dR1->at(j);
+	    	}
+	    	if(jet_DiJetSVSV_dR2->at(j)<dR2DiJetSVSV) {
+	    	        tosJ2DiJetSVSV=j;
+	    	        dR2DiJetSVSV=jet_DiJet_dR2->at(j);
+	    	}
+	    }
+	
+	    if(jet_DiJetSVMu->at(0)!=0) {
+	    	if(jet_DiJetSVMu_dR1->at(j)<dR1DiJetSVMu) {
+	    	        tosJ1DiJetSVMu=j;
+	    	        dR1DiJetSVMu=jet_DiJet_dR1->at(j);
+	    	}
+	    	if(jet_DiJetSVMu_dR2->at(j)<dR2DiJetSVMu) {
+	    	        tosJ2DiJetSVMu=j;
+	    	        dR2DiJetSVMu=jet_DiJet_dR2->at(j);
+	    	}
+	    }
+	
+	    if(jet_DiJetMuMu->at(0)!=0) {
+	    	if(jet_DiJetMuMu_dR1->at(j)<dR1DiJetMuMu) {
+	    	        tosJ1DiJetMuMu=j;
+	    	        dR1DiJetMuMu=jet_DiJet_dR1->at(j);
+	    	}
+	    	if(jet_DiJetMuMu_dR2->at(j)<dR2DiJetMuMu) {
+	    	        tosJ2DiJetMuMu=j;
+	    	        dR2DiJetMuMu=jet_DiJet_dR2->at(j);
+	    	}
+	    }
+	
+    }
+    if(jet_DiJet->at(0)!=0) {
+    	if(tosJ1DiJet==-1 && tosJ2DiJet==-1) ++noTOSFoundA;
+    	else if(tosJ1DiJet==-1 || tosJ2DiJet==-1) ++oneTOSFoundA;
+    	else if(tosJ1DiJet==tosJ2DiJet) ++sameTOSFoundA;
+    	else ++okTOSA;
+    }
+    if(jet_DiJetSV->at(0)!=0) {
+    	if(tosJ1DiJetSV==-1 && tosJ2DiJetSV==-1) ++noTOSFoundA;
+    	else if(tosJ1DiJetSV==-1 || tosJ2DiJetSV==-1) ++oneTOSFoundA;
+    	else if(tosJ1DiJetSV==tosJ2DiJetSV) ++sameTOSFoundA;
+    	else ++okTOSA;
+    }
+    if(jet_DiJetSVSV->at(0)!=0) {
+    	if(tosJ1DiJetSVSV==-1 && tosJ2DiJetSVSV==-1) ++noTOSFoundA;
+    	else if(tosJ1DiJetSVSV==-1 || tosJ2DiJetSVSV==-1) ++oneTOSFoundA;
+    	else if(tosJ1DiJetSVSV==tosJ2DiJetSVSV) ++sameTOSFoundA;
+    	else ++okTOSA;
+    }
+    if(jet_DiJetSVMu->at(0)!=0) {
+    	if(tosJ1DiJetSVMu==-1 && tosJ2DiJetSVMu==-1) ++noTOSFoundA;
+    	else if(tosJ1DiJetSVMu==-1 || tosJ2DiJetSVMu==-1) {
+		//std::cout << std::endl;
+		//for(int j=0; j<nj; ++j) {
+		//	std::cout << jet_DiJetSVMu_dR1->at(j) << "\t";
+		//}
+		//std::cout << std::endl;
+		//for(int j=0; j<nj; ++j) {
+		//	std::cout << jet_DiJetSVMu_dR2->at(j) << "\t";
+		//}
+		//std::cout << std::endl;
+		//std::cout << std::endl;
+		++oneTOSFoundA;
+	}
+    	else if(tosJ1DiJetSVMu==tosJ2DiJetSVMu) ++sameTOSFoundA;
+    	else ++okTOSA;
+    }
+    if(jet_DiJetMuMu->at(0)!=0) {
+    	if(tosJ1DiJetMuMu==-1 && tosJ2DiJetMuMu==-1) ++noTOSFoundA;
+    	else if(tosJ1DiJetMuMu==-1 || tosJ2DiJetMuMu==-1) ++oneTOSFoundA;
+    	else if(tosJ1DiJetMuMu==tosJ2DiJetMuMu) ++sameTOSFoundA;
+    	else ++okTOSA;
+    }
+
+    //if(tosJ1B==-1 && tosJ2B==-1) ++noTOSFoundB;
+    //else if(tosJ1B==-1 || tosJ2B==-1) ++oneTOSFoundB;
+    //else if(tosJ1B==tosJ2B) ++sameTOSFoundB;
+    //else ++okTOSB;
+
+    //if(!(tosJ1A==-1 || tosJ2A==-1 || tosJ1B==-1 || tosJ2B==-1)) {
+    //	if(tosJ1B==tosJ1A && tosJ2B==tosJ2A) ++methodsMatch;
+    //	else ++methodsDiffer;
+    //}
+    //continue;//TODO
+
     for(int j=0; j<nj; j++){
       TLorentzVector p4j(jet_px->at(j),jet_py->at(j),jet_pz->at(j),
 			 jet_e->at(j));
-      if(p4j.Pt() < 20e3) continue;
+      if(p4j.Pt() < 10e3) continue;
 //      TLorentzVector p4mcj;
 //
 //      // match to true jet
@@ -429,6 +598,9 @@ int main(int argc, char *argv[]){
       int ipv = jet_pv->at(j);
       TVector3 pv(pvx->at(ipv),pvy->at(ipv),pvz->at(ipv)); 
 
+      double D0ptmax(0), Dptmax(0), Dsptmax(0), Lcptmax(0), D2K3piptmax(0);
+      int bestD0(0), bestD(0), bestDs(0), bestLc(0), bestD2K3pi(0);
+
       int countD0(0);
       vector<double> d0_m;
       vector<double> d0_px;
@@ -441,6 +613,7 @@ int main(int argc, char *argv[]){
       vector<double> d0_fd;
       vector<double> d0_dira;
       vector<double> d0_doca;
+      vector<double> d0_ipmin;
       vector<double> d0_docaKpi;
       vector<double> d0_vtxchi2;
 
@@ -456,6 +629,7 @@ int main(int argc, char *argv[]){
       vector<double> d_fd;
       vector<double> d_dira;
       vector<double> d_doca;
+      vector<double> d_ipmin;
       vector<double> d_docamax;
 
       int countDs(0);
@@ -470,6 +644,7 @@ int main(int argc, char *argv[]){
       vector<double> ds_fd;
       vector<double> ds_dira;
       vector<double> ds_doca;
+      vector<double> ds_ipmin;
       vector<double> ds_docamax;
 
       int countLc(0);
@@ -484,6 +659,7 @@ int main(int argc, char *argv[]){
       vector<double> lc_fd;
       vector<double> lc_dira;
       vector<double> lc_doca;
+      vector<double> lc_ipmin;
       vector<double> lc_docamax;
 
       int countD2K3pi(0);
@@ -498,6 +674,7 @@ int main(int argc, char *argv[]){
       vector<double> d2k3pi_fd;
       vector<double> d2k3pi_dira;
       vector<double> d2k3pi_doca;
+      vector<double> d2k3pi_ipmin;
       vector<double> d2k3pi_docamax;
 
 
@@ -562,6 +739,7 @@ int main(int argc, char *argv[]){
 						double doca13 = calcDoca(sv13, xtrk1, p4trk1.Vect(), xtrk3, p4trk3.Vect());
 						double doca23 = calcDoca(sv23, xtrk2, p4trk2.Vect(), xtrk3, p4trk3.Vect());
 						double docamax = TMath::Max(doca12, TMath::Max(doca13,doca23));
+						double ipmin = TMath::Min(trk_ipchi2->at(i), TMath::Min(trk_ipchi2->at(ii),trk_ipchi2->at(iii)));
 						if(docamax>0.1) continue;
 						sv123 = sv12 + sv13 + sv23;
 						sv123 *= (1./3.);
@@ -581,7 +759,13 @@ int main(int argc, char *argv[]){
   						d_fd.push_back(fvDpm.Mag());
   						d_dira.push_back(diraDpm);
   						d_doca.push_back(docaDpm);
+  						d_ipmin.push_back(ipmin);
   						d_docamax.push_back(docamax);
+
+						if(p4Dpm.Pt() > Dptmax) {
+							Dptmax = p4Dpm.Pt();
+							bestD = d_m.size()-1;
+						}
 					}
 				}
 
@@ -601,6 +785,7 @@ int main(int argc, char *argv[]){
 						double doca13 = calcDoca(sv13, xtrk1, p4trk1.Vect(), xtrk3, p4trk3.Vect());
 						double doca23 = calcDoca(sv23, xtrk2, p4trk2.Vect(), xtrk3, p4trk3.Vect());
 						double docamax = TMath::Max(doca12, TMath::Max(doca13,doca23));
+						double ipmin = TMath::Min(trk_ipchi2->at(i), TMath::Min(trk_ipchi2->at(ii),trk_ipchi2->at(iii)));
 						if(docamax>0.1) continue;
 						sv123 = sv12 + sv13 + sv23;
 						sv123 *= (1./3.);
@@ -620,7 +805,13 @@ int main(int argc, char *argv[]){
   						ds_fd.push_back(fvDs.Mag());
   						ds_dira.push_back(diraDs);
   						ds_doca.push_back(docaDs);
+  						ds_ipmin.push_back(ipmin);
   						ds_docamax.push_back(docamax);
+
+						if(p4Ds.Pt() > Dsptmax) {
+							Dsptmax = p4Ds.Pt();
+							bestDs = ds_m.size()-1;
+						}
 					}
 				}
 
@@ -640,6 +831,7 @@ int main(int argc, char *argv[]){
 						double doca13 = calcDoca(sv13, xtrk1, p4trk1.Vect(), xtrk3, p4trk3.Vect());
 						double doca23 = calcDoca(sv23, xtrk2, p4trk2.Vect(), xtrk3, p4trk3.Vect());
 						double docamax = TMath::Max(doca12, TMath::Max(doca13,doca23));
+						double ipmin = TMath::Min(trk_ipchi2->at(i), TMath::Min(trk_ipchi2->at(ii),trk_ipchi2->at(iii)));
 						if(docamax>0.1) continue;
 						sv123 = sv12 + sv13 + sv23;
 						sv123 *= (1./3.);
@@ -659,7 +851,13 @@ int main(int argc, char *argv[]){
   						lc_fd.push_back(fvLc.Mag());
   						lc_dira.push_back(diraLc);
   						lc_doca.push_back(docaLc);
+  						lc_ipmin.push_back(ipmin);
   						lc_docamax.push_back(docamax);
+
+						if(p4Lc.Pt() > Lcptmax) {
+							Lcptmax = p4Lc.Pt();
+							bestLc = lc_m.size()-1;
+						}
 					}
 				}
 
@@ -689,6 +887,7 @@ int main(int argc, char *argv[]){
 								double doca24 = calcDoca(sv24, xtrk2, p4trk2.Vect(), xtrk4, p4trk4.Vect());
 								double doca34 = calcDoca(sv34, xtrk3, p4trk3.Vect(), xtrk4, p4trk4.Vect());
 								double docamax = TMath::Max(TMath::Max(doca12, TMath::Max(doca13,doca14)),TMath::Max(doca23, TMath::Max(doca24,doca34)));
+								double ipmin = TMath::Min(TMath::Min(trk_ipchi2->at(i),trk_ipchi2->at(ii)), TMath::Min(trk_ipchi2->at(iii),trk_ipchi2->at(iv)));
 								if(docamax>0.1) continue;
 								sv1234 = sv12 + sv13 + sv14 + sv23 + sv24 + sv34;
 								sv1234 *= (1./6.);
@@ -708,7 +907,13 @@ int main(int argc, char *argv[]){
   								d2k3pi_fd.push_back(fvD2K3pi.Mag());
   								d2k3pi_dira.push_back(diraD2K3pi);
   								d2k3pi_doca.push_back(docaD2K3pi);
+  								d2k3pi_ipmin.push_back(ipmin);
   								d2k3pi_docamax.push_back(docamax);
+
+								if(p4D2K3pi.Pt() > D2K3piptmax) {
+									D2K3piptmax = p4D2K3pi.Pt();
+									bestD2K3pi = d2k3pi_m.size()-1;
+								}
 							}
 						}
 					}
@@ -719,6 +924,7 @@ int main(int argc, char *argv[]){
 				if(TMath::Abs(p4D0.M()-1864.) > 160.) continue;
 				TVector3 sv;
 				double docaKpi = calcDoca(sv, xtrk1, p4trk1.Vect(), xtrk2, p4trk2.Vect());
+				double ipmin = TMath::Min(trk_ipchi2->at(i), trk_ipchi2->at(ii));
 				if(docaKpi>0.1) continue;
 				double sigma2i = trk_ip->at(i)*trk_ip->at(i) / trk_ipchi2->at(i);
 				double sigma2j = trk_ip->at(ii)*trk_ip->at(ii) / trk_ipchi2->at(ii);
@@ -742,14 +948,19 @@ int main(int argc, char *argv[]){
   				d0_doca.push_back(docaD0);
   				d0_docaKpi.push_back(docaKpi);
   				d0_vtxchi2.push_back(vtxchi2);
-				if(d0_x.at(d0_x.size()-1)==0.) {std::cout << "foo" << std::endl; sv.Print(); xtrk1.Print(); p4trk1.Print(); xtrk2.Print(); p4trk2.Print(); p4D0.Print();}
+  				d0_ipmin.push_back(ipmin);
+
+				if(p4D0.Pt() > D0ptmax) {
+					D0ptmax = p4D0.Pt();
+					bestD0 = d0_m.size()-1;
+				}
 			}
 		}
 	}
       }
       //pick a random D0
       if(!d0_px.empty()) {
-        int whichD0 = rand.Integer(d0_px.size());
+        int whichD0 = bestD0;//rand.Integer(d0_px.size());
         D0M       = d0_m[whichD0];
         D0PX      = d0_px[whichD0];
         D0PY      = d0_py[whichD0];
@@ -760,6 +971,7 @@ int main(int argc, char *argv[]){
         D0Z       = d0_z[whichD0];
         D0FD      = d0_fd[whichD0];
         D0DIRA    = d0_dira[whichD0];
+        D0IPCHI2MIN= d0_ipmin[whichD0];
         D0DOCA    = d0_doca[whichD0];
         D0DOCAKPI = d0_docaKpi[whichD0];
         D0VTXCHI2 = d0_vtxchi2[whichD0];
@@ -775,13 +987,14 @@ int main(int argc, char *argv[]){
         D0Z       = -1000.;
         D0FD      = -1000.;
         D0DIRA    = -1000.;
+        D0IPCHI2MIN= -1000;
         D0DOCA    = -1000.;
         D0DOCAKPI = -1000.;
         D0VTXCHI2 = -1000.;
       }
       //pick a random D+
       if(!d_px.empty()) {
-        int whichD = rand.Integer(d_px.size());
+        int whichD = bestD;//rand.Integer(d_px.size());
         DPMM       = d_m[whichD];
         DPMPX      = d_px[whichD];
         DPMPY      = d_py[whichD];
@@ -792,6 +1005,7 @@ int main(int argc, char *argv[]){
         DPMZ       = d_z[whichD];
         DPMFD      = d_fd[whichD];
         DPMDIRA    = d_dira[whichD];
+        DPMIPCHI2MIN= d_ipmin[whichD];
         DPMDOCA    = d_doca[whichD];
         DPMDOCAMAX = d_docamax[whichD];
       } else {
@@ -805,12 +1019,13 @@ int main(int argc, char *argv[]){
         DPMZ       = -1000.;
         DPMFD      = -1000.;
         DPMDIRA    = -1000.;
+        DPMIPCHI2MIN= -1000;
         DPMDOCA    = -1000.;
         DPMDOCAMAX = -1000.;
       }
       //pick a random Ds+
       if(!ds_px.empty()) {
-        int whichDs = rand.Integer(ds_px.size());
+        int whichDs = bestDs;//rand.Integer(ds_px.size());
         DSM       = ds_m[whichDs];
         DSPX      = ds_px[whichDs];
         DSPY      = ds_py[whichDs];
@@ -821,6 +1036,7 @@ int main(int argc, char *argv[]){
         DSZ       = ds_z[whichDs];
         DSFD      = ds_fd[whichDs];
         DSDIRA    = ds_dira[whichDs];
+        DSIPCHI2MIN= ds_ipmin[whichDs];
         DSDOCA    = ds_doca[whichDs];
         DSDOCAMAX = ds_docamax[whichDs];
       } else {
@@ -834,12 +1050,13 @@ int main(int argc, char *argv[]){
         DSZ       = -1000.;
         DSFD      = -1000.;
         DSDIRA    = -1000.;
+        DSIPCHI2MIN= -1000;
         DSDOCA    = -1000.;
         DSDOCAMAX = -1000.;
       }
       //pick a random Lc+
       if(!lc_px.empty()) {
-        int whichLc = rand.Integer(lc_px.size());
+        int whichLc = bestLc;//rand.Integer(lc_px.size());
         LCM       = lc_m[whichLc];
         LCPX      = lc_px[whichLc];
         LCPY      = lc_py[whichLc];
@@ -850,6 +1067,7 @@ int main(int argc, char *argv[]){
         LCZ       = lc_z[whichLc];
         LCFD      = lc_fd[whichLc];
         LCDIRA    = lc_dira[whichLc];
+        LCIPCHI2MIN= lc_ipmin[whichLc];
         LCDOCA    = lc_doca[whichLc];
         LCDOCAMAX = lc_docamax[whichLc];
       } else {
@@ -863,12 +1081,13 @@ int main(int argc, char *argv[]){
         LCZ       = -1000.;
         LCFD      = -1000.;
         LCDIRA    = -1000.;
+        LCIPCHI2MIN= -1000;
         LCDOCA    = -1000.;
         LCDOCAMAX = -1000.;
       }
       //pick a random D0->K3pi
       if(!d2k3pi_px.empty()) {
-        int whichD0 = rand.Integer(d2k3pi_px.size());
+        int whichD0 = bestD2K3pi;//rand.Integer(d2k3pi_px.size());
         D2K3PIM       = d2k3pi_m[whichD0];
         D2K3PIPX      = d2k3pi_px[whichD0];
         D2K3PIPY      = d2k3pi_py[whichD0];
@@ -879,6 +1098,7 @@ int main(int argc, char *argv[]){
         D2K3PIZ       = d2k3pi_z[whichD0];
         D2K3PIFD      = d2k3pi_fd[whichD0];
         D2K3PIDIRA    = d2k3pi_dira[whichD0];
+        D2K3PIIPCHI2MIN= d2k3pi_ipmin[whichD0];
         D2K3PIDOCA    = d2k3pi_doca[whichD0];
         D2K3PIDOCAMAX = d2k3pi_docamax[whichD0];
       } else {
@@ -892,6 +1112,7 @@ int main(int argc, char *argv[]){
         D2K3PIZ       = -1000.;
         D2K3PIFD      = -1000.;
         D2K3PIDIRA    = -1000.;
+        D2K3PIIPCHI2MIN= -1000;
         D2K3PIDOCA    = -1000.;
         D2K3PIDOCAMAX = -1000.;
       }
@@ -941,8 +1162,9 @@ int main(int argc, char *argv[]){
       JNQ = jnchr;
       JNN = jnneu;
       JPTD = ptd;
-      if(jet_Hlt2JetsDiJetDecision->at(j) == 1) {
-	      if(jet_dR1->at(j)<0.5 || jet_dR2->at(j)<0.5) {
+      if(jet_DiJet->at(j) == 1) {
+	      //if(jet_DiJet_dR1->at(j)<0.5 || jet_DiJet_dR2->at(j)<0.5) {
+	      if(tosJ1DiJet == j || tosJ2DiJet == j) {
 		      JDIJETDEC=2;
 	      } else {
 		      JDIJETDEC=1;
@@ -950,8 +1172,9 @@ int main(int argc, char *argv[]){
       } else {
 	      JDIJETDEC=0;
       }
-      if(jet_Hlt2JetsDiJetSVDecision->at(j) == 1) {
-	      if(jet_dR1->at(j)<0.5 || jet_dR2->at(j)<0.5) {
+      if(jet_DiJetSV->at(j) == 1) {
+	      //if(jet_DiJetSV_dR1->at(j)<0.5 || jet_DiJetSV_dR2->at(j)<0.5) {
+	      if(tosJ1DiJetSV == j || tosJ2DiJetSV == j) {
 		      JDIJETSVDEC=2;
 	      } else {
 		      JDIJETSVDEC=1;
@@ -959,8 +1182,9 @@ int main(int argc, char *argv[]){
       } else {
 	      JDIJETSVDEC=0;
       }
-      if(jet_Hlt2JetsDiJetSVSVDecision->at(j) == 1) {
-	      if(jet_dR1->at(j)<0.5 || jet_dR2->at(j)<0.5) {
+      if(jet_DiJetSVSV->at(j) == 1) {
+	      //if(jet_DiJetSVSV_dR1->at(j)<0.5 || jet_DiJetSVSV_dR2->at(j)<0.5) {
+	      if(tosJ1DiJetSVSV == j || tosJ2DiJetSVSV == j) {
 		      JDIJETSVSVDEC=2;
 	      } else {
 		      JDIJETSVSVDEC=1;
@@ -968,8 +1192,9 @@ int main(int argc, char *argv[]){
       } else {
 	      JDIJETSVSVDEC=0;
       }
-      if(jet_Hlt2JetsDiJetSVMuDecision->at(j) == 1) {
-	      if(jet_dR1->at(j)<0.5 || jet_dR2->at(j)<0.5) {
+      if(jet_DiJetSVMu->at(j) == 1) {
+	      //if(jet_DiJetSVMu_dR1->at(j)<0.5 || jet_DiJetSVMu_dR2->at(j)<0.5) {
+	      if(tosJ1DiJetSVMu == j || tosJ2DiJetSVMu == j) {
 		      JDIJETSVMUDEC=2;
 	      } else {
 		      JDIJETSVMUDEC=1;
@@ -977,8 +1202,9 @@ int main(int argc, char *argv[]){
       } else {
 	      JDIJETSVMUDEC=0;
       }
-      if(jet_Hlt2JetsDiJetMuMuDecision->at(j) == 1) {
-	      if(jet_dR1->at(j)<0.5 || jet_dR2->at(j)<0.5) {
+      if(jet_DiJetMuMu->at(j) == 1) {
+	      //if(jet_DiJetMuMu_dR1->at(j)<0.5 || jet_DiJetMuMu_dR2->at(j)<0.5) {
+	      if(tosJ1DiJetMuMu == j || tosJ2DiJetMuMu == j) {
 		      JDIJETMUMUDEC=2;
 	      } else {
 		      JDIJETMUMUDEC=1;
@@ -1105,6 +1331,9 @@ int main(int argc, char *argv[]){
     }
   }
   cout << njsv / (double) njtot << endl;
+  cout << noTOSFoundA << "\t" << oneTOSFoundA << "\t" << sameTOSFoundA << "\t" << okTOSA << std::endl;
+//  cout << noTOSFoundB << "\t" << oneTOSFoundB << "\t" << sameTOSFoundB << "\t" << okTOSB << std::endl;
+//  cout << methodsMatch << "\t" << methodsDiffer << std::endl;
 
   fout.cd();
   tout->Write("T",TObject::kOverwrite);
