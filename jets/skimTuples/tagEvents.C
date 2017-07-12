@@ -1,16 +1,16 @@
 {
 	gStyle->SetOptStat(0);
 
-	TFile* f = TFile::Open("for_yandex_data_SV.root");
+	TFile* f = TFile::Open("/tmp/dcraik/for_yandex_data_SV.root");
 	TTree* t = dynamic_cast<TTree*>(f->Get("T"));
 
-	TFile* f0 = TFile::Open("for_yandex_data_SV_0tag.root","RECREATE");
+	TFile* f0 = TFile::Open("/tmp/dcraik/for_yandex_data_SV_0tag.root","RECREATE");
 	TTree* t0 = t->CloneTree(0);
 
-	TFile* f4 = TFile::Open("for_yandex_data_SV_4tag.root","RECREATE");
+	TFile* f4 = TFile::Open("/tmp/dcraik/for_yandex_data_SV_4tag.root","RECREATE");
 	TTree* t4 = t->CloneTree(0);
 
-	TFile* f5 = TFile::Open("for_yandex_data_SV_4tag.root","RECREATE");
+	TFile* f5 = TFile::Open("/tmp/dcraik/for_yandex_data_SV_5tag.root","RECREATE");
 	TTree* t5 = t->CloneTree(0);
 
 	int Evt;
@@ -68,7 +68,6 @@
 			beauty=false;
 			charm=false;
 			prevEvt = Evt;
-			whichJetTagged = -1;
 		}
 
 		//check this jet for beauty or charm tag
