@@ -1204,6 +1204,9 @@ void resampleTrackIPs::Loop()
 						double pt2 = p4.Vect().Cross(fv.Unit()).Mag2();
 						double mcor = TMath::Sqrt(m*m + pt2) + TMath::Sqrt(pt2);
 						double tz = fv.Z()*m/p4.Z()/(3e11)*(1e12);
+						double sigma2i = trk_ip->at(trks[itrk])*trk_ip->at(trks[itrk]) / trk_ip_chi2->at(trks[itrk]);
+						double sigma2j = trk_ip->at(trks[jtrk])*trk_ip->at(trks[jtrk]) / trk_ip_chi2->at(trks[jtrk]);
+						double vtxchi2 = d*d/(sigma2i+sigma2j);
 
 						TVector3 dxdyi = calcDxDy(trkhit[itrk], trkdir[itrk], TVector3(pvr_x->at(pvr_idx),pvr_y->at(pvr_idx),pvr_z->at(pvr_idx)));
 						TVector3 dxdyj = calcDxDy(trkhit[jtrk], trkdir[jtrk], TVector3(pvr_x->at(pvr_idx),pvr_y->at(pvr_idx),pvr_z->at(pvr_idx)));
@@ -1262,6 +1265,7 @@ void resampleTrackIPs::Loop()
 						if(tz<0. || tz>=10.) continue;
 						if(irep==0) ++n2BSVs14;
 						else ++n2BSVs24;
+						if(vtxchi2>=10) continue;
 						//TODO add VTXCHI2<10, FDCHI2>25, HITS>0 
 						sv2ij.push_back(std::pair<int,int>(trks[itrk],trks[jtrk]));
 						sv2.push_back(sv);
@@ -2068,15 +2072,17 @@ void resampleTrackIPs::Loop()
 //      - run with argument (n) to produce n resampled datasets
 int main(int argc, char** argv) {
 	int max(-1);
+	TString dir("");
 	if(argc>1) max=atoi(argv[1]);
+	if(argc>2) dir=argv[2];
 
 	if(max<0) {
-		resampleTrackIPs a;
+		resampleTrackIPs a(-1,dir);
 		a.Loop();
 	} else {
 		for(int i=0; i<=max; ++i) {
 			std::cout << i << " of " << max << std::endl;
-			resampleTrackIPs a(i);
+			resampleTrackIPs a(i,dir);
 			a.Loop();
 		}
 	}

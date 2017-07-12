@@ -421,7 +421,7 @@ public :
    TFile* newfile;
    TTree* newtree;
 
-   resampleTrackIPs(int irep=-1);
+   resampleTrackIPs(int irep=-1, TString dir="");
    virtual ~resampleTrackIPs();
    virtual Int_t    Cut(Long64_t entry);
    virtual Int_t    GetEntry(Long64_t entry);
@@ -440,22 +440,22 @@ public :
 #endif
 
 #ifdef resampleTrackIPs_cxx
-resampleTrackIPs::resampleTrackIPs(int irep) : fChain(0), _irep(irep), newfile(0), newtree(0)
+resampleTrackIPs::resampleTrackIPs(int irep, TString dir) : fChain(0), _irep(irep), newfile(0), newtree(0)
 {
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
 
    TTree* tree(0);
-   TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("lightjets_filtered_addVars.root");
+   TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject(dir+"lightjets_filtered_addVars.root");
    if (!f || !f->IsOpen()) {
-      f = new TFile("lightjets_filtered_addVars.root");
+      f = new TFile(dir+"lightjets_filtered_addVars.root");
    }
    f->GetObject("data",tree);
 
    Init(tree);
 
    if(_irep>=0) {
-   	TString fname("lightjets_filtered_addVars_resampled");
+   	TString fname(dir+"lightjets_filtered_addVars_resampled");
    	fname+=_irep; fname+=".root";
    	newfile = TFile::Open(fname, "RECREATE");
    	newtree = tree->CloneTree(0);
