@@ -13,6 +13,9 @@ void tagEvents(TString dir="./") {
 	TFile* f5 = TFile::Open(dir+"for_yandex_data_SV_5tag.root","RECREATE");
 	TTree* t5 = t->CloneTree(0);
 
+	TFile* fU = TFile::Open(dir+"for_yandex_data_SV_notag.root","RECREATE");
+	TTree* tU = t->CloneTree(0);
+
 	int Evt;
 	double D0M, D0IP;
 	double D2K3piM, D2K3piIP;
@@ -21,13 +24,18 @@ void tagEvents(TString dir="./") {
 	double LcM, LcIP;
 	double SVMCor;
 
-	double JPX,JPY, JPZ;
+	double JPX,JPY, JPZ, JE;
+	double JPT;
 
 	double JetDijetSVDec;
+
+	double NSV;
 
 	t->SetBranchAddress("TrueJetPx", &JPX);
 	t->SetBranchAddress("TrueJetPy", &JPY);
 	t->SetBranchAddress("TrueJetPz", &JPZ);
+	t->SetBranchAddress("TrueJetE", &JE);
+	t->SetBranchAddress("JetPT", &JPT);
 
 	t->SetBranchAddress("D0M", &D0M);
 	t->SetBranchAddress("D0IP", &D0IP);
@@ -42,13 +50,16 @@ void tagEvents(TString dir="./") {
 	t->SetBranchAddress("EVT", &Evt);
 	t->SetBranchAddress("SVMCor", &SVMCor);
 	t->SetBranchAddress("JetDijetSVDec", &JetDijetSVDec);
+	t->SetBranchAddress("NSV", &NSV);
 
 	int n = t->GetEntries();
 
 	int prevEvt(0), firstInEvt(0);
 
-	bool beauty(false), charm(false); //flags to keep track of whether the current event has been tagged
+	bool beauty(false), charm(false), tagged(false); //flags to keep track of whether the current event has been tagged
 	std::set<int> foundB, foundC; //store the events where we found beauty or charm
+	std::map<int, int> taggedJet;
+	std::map<int, TLorentzVector> taggedJetP4;
 
 	//first loop - do the tagging
 	for(int i=0; i<n; ++i) {
@@ -56,6 +67,7 @@ void tagEvents(TString dir="./") {
 		t->GetEntry(i);
 
 		if(JetDijetSVDec!=6 && JetDijetSVDec!=14) continue;
+		if(JPT<20000.) continue;
 
 		if(Evt != prevEvt) {//this jet is from a new event so finish off the previous one
 			if(beauty) {
@@ -67,27 +79,17 @@ void tagEvents(TString dir="./") {
 			//reset for next event
 			beauty=false;
 			charm=false;
+			tagged=false;
 			prevEvt = Evt;
 		}
 
 		//check this jet for beauty or charm tag
-		if(!beauty && !charm) {
-			if(TMath::Abs(D0M-1864.)<25.) {
-				if(D0IP>0.05) beauty=true;
-				else charm=true;
-			} else if(TMath::Abs(D2K3piM-1864.)<25.) {
-				if(D2K3piIP>0.05) beauty=true;
-				else charm=true;
-			} else if(TMath::Abs(DM-1870.)<25.) {
-				if(DIP>0.05) beauty=true;
-				else charm=true;
-			} else if(TMath::Abs(DsM-1968.)<25.) {
-				if(DsIP>0.05) beauty=true;
-				else charm=true;
-			} else if(TMath::Abs(LcM-2286.)<25.) {
-				if(LcIP>0.05) beauty=true;
-				else charm=true;
-			}
+		if(!tagged) {
+			tagged=true;
+			taggedJet[Evt] = i;
+			taggedJetP4[Evt] = TLorentzVector(JPX,JPY,JPZ,JE);
+			if(SVMCor>1000. && SVMCor<2500) charm=true;
+			else if(SVMCor>3000. && SVMCor<5500.) beauty=true;
 		}
 	}
 
@@ -114,41 +116,41 @@ void tagEvents(TString dir="./") {
 		if(!((int)i % (int)(n/20.))) std::cout << i << " of " << n << std::endl;
 		t->GetEntry(i);
 
-		if(JetDijetSVDec==0) continue;
+		//if(NSV==0) continue;
+		//if(JPT<20000.) continue;
 
-		if(foundB.count(Evt)) {
-			if((TMath::Abs(D0M-1864.)<25. && D0IP>0.05) ||
-			   (TMath::Abs(D2K3piM-1864.)<25. && D2K3piIP>0.05) || 
-			   (TMath::Abs(DM-1870.)<25. && DIP>0.05) ||
-			   (TMath::Abs(DsM-1968.)<25. && DsIP>0.05) ||
-			   (TMath::Abs(LcM-2286.)<25. && LcIP>0.05)) {
-				//tagged beauty jet
+		//if(JetDijetSVDec==0 || JetDijetSVDec>15) continue;
+		if(taggedJet.count(Evt)==0) {
+			tU->Fill();
+		} else if(foundB.count(Evt)) {
+			if(taggedJet[Evt] == i) {
 				hBT.Fill(SVMCor);
 			} else {
 				//untagged beauty jet
+				TLorentzVector p4(JPX,JPY,JPZ,JE);
+				if(TMath::Abs(p4.DeltaPhi(taggedJetP4[Evt]))<2.6) continue;
 				++njetsB;
 				hB.Fill(SVMCor);
 				t5->Fill();
 			}
 		} else if(foundC.count(Evt)) {
-			if((TMath::Abs(D0M-1864.)<25. && D0IP<0.05)  ||
-			   (TMath::Abs(D2K3piM-1864.)<25. && D2K3piIP<0.05) || 
-			   (TMath::Abs(DM-1870.)<25. && DIP<0.05) ||
-			   (TMath::Abs(DsM-1968.)<25. && DsIP<0.05) ||
-			   (TMath::Abs(LcM-2286.)<25. && LcIP<0.05)) {
-				//tagged charm jet
+			if(taggedJet[Evt] == i) {
 				hCT.Fill(SVMCor);
 			} else {
 				//untagged charm jet
+				TLorentzVector p4(JPX,JPY,JPZ,JE);
+				if(TMath::Abs(p4.DeltaPhi(taggedJetP4[Evt]))<2.6) continue;
 				++njetsC;
 				hC.Fill(SVMCor);
 				t4->Fill();
 			}
 		} else {
 			//event not tagged
-			++njetsQ;
-			hQ.Fill(SVMCor);
-			t0->Fill();
+			if(taggedJet[Evt] != i) {
+				++njetsQ;
+				hQ.Fill(SVMCor);
+				t0->Fill();
+			}
 		}
 	}
 
@@ -191,4 +193,7 @@ void tagEvents(TString dir="./") {
 
 	t5->AutoSave();
 	f5->Close();
+
+	tU->AutoSave();
+	fU->Close();
 }
