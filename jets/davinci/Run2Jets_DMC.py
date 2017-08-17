@@ -1,7 +1,7 @@
 #!/bin/env python
 
 from PhysConf.Filters import LoKi_Filters
-fltrs = LoKi_Filters (
+#fltrs = LoKi_Filters (
 #    HLT_Code = """
 #    HLT_PASS_RE ( 'L0DiMuonDecision' )
 #    & HLT_PASS_RE ( 'Hlt1DiMuonHighMassDecision' )
@@ -11,20 +11,17 @@ fltrs = LoKi_Filters (
 #   HLT_PASS_RE ( 'StrippingHltQEEJetsDiJet.*'    )
 #   """
 #    )
-    STRIP_Code = """
-   HLT_PASS_RE ( 'StrippingHltQEEJetsDiJetSVLineDecision'    )
-   """
-    )
 
 
-# Data type configuration.
-from GaudiKernel import SystemOfUnits as Units
-##Type     = 'MC'
-JetPtMin = 10 * Units.GeV
-
+## Data type configuration.
+#from GaudiKernel import SystemOfUnits as Units
+#Type     = 'MC'
+#JetPtMin = 10 * Units.GeV
+#
 ## Data.
 #from GaudiConf import IOHelper
-#IOHelper('ROOT').inputFiles(['/eos/lhcb/grid/prod/lhcb/LHCb/Collision16/BHADRONCOMPLETEEVENT.DST/00059907/0001/00059907_00010184_1.bhadroncompleteevent.dst'],#/tmp/dcraik/00042952_00000002_1.ldst'], #/data/dst/MC15.MD.49000004.1.00.dst'],
+#IOHelper('ROOT').inputFiles(['/eos/lhcb/grid/prod/lhcb/MC/2016/ALLSTREAMS.DST/00057115/0000/00057115_00000003_3.AllStreams.dst'],#/eos/lhcb/grid/prod/lhcb/LHCb/Collision16/BHADRONCOMPLETEEVENT.DST/00059907/0001/00059907_00010184_1.bhadroncompleteevent.dst'],#/tmp/dcraik/00042952_00000002_1.ldst'], #/data/dst/MC15.MD.49000004.1.00.dst'],
+##IOHelper('ROOT').inputFiles(['/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00041855/0000/00041855_00000011_1.ldst'],#/eos/lhcb/grid/prod/lhcb/MC/2016/ALLSTREAMS.DST/00057115/0000/00057115_00000003_3.AllStreams.dst'],#/eos/lhcb/grid/prod/lhcb/LHCb/Collision16/BHADRONCOMPLETEEVENT.DST/00059907/0001/00059907_00010184_1.bhadroncompleteevent.dst'],#/tmp/dcraik/00042952_00000002_1.ldst'], #/data/dst/MC15.MD.49000004.1.00.dst'],
 #                            clear = True)
 ##Type = 'MC'
 
@@ -442,7 +439,7 @@ D02K3pi_seq = SelectionSequence('D2K3pi0_Seq', TopSelection=recD02K3pi)
 
 # Turbo/DaVinci configuration.
 from Configurables import DstConf, TurboConf, DaVinci
-DaVinci().Simulation = False
+DaVinci().Simulation = True
 DaVinci().Lumi = True
 DaVinci().TupleFile = "LumiTuple.root"
 #DaVinci().appendToMainSequence([genPF, genJB, recPF, recJB])
@@ -450,7 +447,7 @@ DaVinci().TupleFile = "LumiTuple.root"
 DaVinci().appendToMainSequence([recPF, recJB, recSVs_seq.sequence(), recMus_seq.sequence(), D0_seq.sequence(), Dp_seq.sequence(), Ds_seq.sequence(), D02K3pi_seq.sequence()])
 ##TODO adding recSVs and recMus changes the daughters of jet objects from smart poniters to Particles
 DaVinci().DataType = '2016'
-DaVinci().EventPreFilters = fltrs.filters ('Filters')
+#DaVinci().EventPreFilters = fltrs.filters ('Filters')
 
 from Configurables import LumiIntegrateFSR, LumiIntegratorConf
 LumiIntegrateFSR('IntegrateBeamCrossing').SubtractBXTypes = ['None']
@@ -551,7 +548,7 @@ class Ntuple:
         mom = ['px', 'py', 'pz', 'e']
         pos = ['x', 'y', 'z']
         cov = ['dx', 'dy', 'dz', 'chi2', 'ndof']
-        self.init('gen', ['idx_pvr', 'idx_jet', 'pid', 'q'] + mom + pos)
+        self.init('gen', ['idx_pvr', 'idx_jet', 'idx_prnt', 'pid', 'q'] + mom + pos + ['prnt_pid'])#, 'prnt_key', 'key'])
         self.init('pvr', pos + cov)
         self.init('svr', ['idx_pvr', 'idx_jet'] + [
                 'idx_trk%i' % i for i in range(0, 10)] + 
@@ -882,11 +879,13 @@ class Ntuple:
                 jetTrkKeys = [ self.key(dau) for dau in jet.daughters() ]
                 nIn=0
                 for dau in obj.daughters():
-                    key = self.key(dau)
+                    #key = self.key(dau)
                     #if key in self.saved['trk']:
                     #    trks.append(self.saved['trk'][key])
                     #else :
                     #    trks.append(self.addTrk(dau))
+                    #trks.append(self.addTrk(dau))
+                    key = self.key(dau)
                     if key in jetTrkKeys:
                         nIn+=1
                 if nIn>nInBest:
@@ -1026,6 +1025,9 @@ class Ntuple:
     def addGen(self, obj, jet = -1, pre = 'gen'):
         key = self.key(obj)
         if key in self.saved[pre]: return self.saved[pre][key]
+        parent = obj.mother()
+        parKey = -1
+        parIdx = -1
         vrs = {}
         idx = len(self.saved[pre])
         self.fillPid(obj.particleID(), vrs)
@@ -1033,8 +1035,21 @@ class Ntuple:
         self.fillPos(obj.originVertex(), vrs)
         self.fillPvr(obj.primaryVertex(), vrs)
         vrs['idx_jet'] = jet
+        if parent:
+            parKey = self.key(parent)
+            if parKey in self.saved[pre]: parIdx = self.saved[pre][parKey]
+            vrs['idx_prnt'] = parIdx
+            vrs['prnt_pid'] = parent.particleID().pid()
+#            if parKey: vrs['prnt_key'] = int(parKey[2]*10)*1e12 + int(parKey[1]*10)*1e6 + int(parKey[0]*10)
+#        vrs['key'] = int(key[2]*10)*1e12 + int(key[1]*10)*1e6 + int(key[0]*10)
         self.saved[pre][key] = idx
         self.fill(pre, vrs = vrs)
+        #also print immediate decay products of heavy hadrons
+        pid = obj.particleID()
+        if pid.isHadron() and (pid.hasCharm() or pid.hasBottom()):
+            for vtx in obj.endVertices():
+                for part in vtx.products():
+                    self.addGen(part)
         return idx
     def addPvr(self, obj, pre = 'pvr'):
         key = self.key(obj)
@@ -1181,21 +1196,21 @@ while evtmax < 0 or evtnum < evtmax:
 
     # Fill generator level info.
     fill = False;
-    #gens = tes['MC/Particles']
-    #try:
-    #    ntuple.addGen(gens[0])
-    #    ntuple.addGen(gens[1])
-    #except: pass
-    #try:
-    #    for gen in gens:
-    #        pid = gen.particleID()
-    #        if pid.isHadron() and (pid.hasCharm() or pid.hasBottom()):
-    #            ntuple.addGen(gen)
-    #except: pass
-    #try:
-    #    jets = tes[genJB.Output]
-    #    for jet in jets: ntuple.addGen(jet); fill = True
-    #except: pass
+    gens = tes['MC/Particles']
+#    try:
+#        ntuple.addGen(gens[0])
+#        ntuple.addGen(gens[1])
+#    except: pass
+    try:
+        for gen in gens:
+            pid = gen.particleID()
+            if pid.isHadron() and (pid.hasCharm() or pid.hasBottom()):
+                ntuple.addGen(gen)
+    except: pass
+    try:
+        jets = tes[genJB.Output]
+        for jet in jets: ntuple.addGen(jet); fill = True
+    except: pass
 
     # Fill reconstructed.
     try:
@@ -1208,23 +1223,23 @@ while evtmax < 0 or evtnum < evtmax:
     # fill other tracks
     try:
         for trk in tes['Phys/StdAllNoPIDsPions/Particles']:
-            ntuple.addTrk(trk);
+            ntuple.addTrk(trk); #fill = True;
     except: pass
 
     # fill D's
     try:
         d0s = tes[recD0.algorithm().Output]
         for d0 in d0s:
-            ntuple.addDHad(d0,"d0")
+            ntuple.addDHad(d0,"d0"); fill = True;
         dps = tes[recDp.algorithm().Output]
         for dp in dps:
-            ntuple.addDHad(dp,"dp")
+            ntuple.addDHad(dp,"dp"); fill = True;
         dss = tes[recDs.algorithm().Output]
         for ds in dss:
-            ntuple.addDHad(ds,"ds")
+            ntuple.addDHad(ds,"ds"); fill = True;
         d0s = tes[recD02K3pi.algorithm().Output]
         for d0 in d0s:
-            ntuple.addDHad(d0,"d02k3pi")
+            ntuple.addDHad(d0,"d02k3pi"); fill = True;
     except: pass
 
     # Fill the ntuple.
