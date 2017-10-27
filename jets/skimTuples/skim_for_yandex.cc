@@ -73,7 +73,8 @@ int main(int argc, char *argv[]){
   TRandom3 rand(9000+type);
 
   char str[1000];
-  sprintf(str,"/tmp/dcraik/for_yandex_%d.root",type);
+  sprintf(str,"for_yandex_%d.root",type);
+  //sprintf(str,"/tmp/dcraik/for_yandex_%d.root",type);
   TFile fout(str,"recreate");
 
   TTree *tout = new TTree("T","");
@@ -213,9 +214,10 @@ int main(int argc, char *argv[]){
   tout->Branch("D2K3PIDOCAMAX",  &D2K3PIDOCAMAX);
 
   TChain *t = new TChain("data");
-  for(int i=1; i<101; ++i) {
-	  t->Add(TString::Format("/tmp/dcraik/lightjets_filtered_addVars_resampled%d.root",i));
-  }
+  t->Add("../resample/lightjets_filtered_addVars_resampled1.root");
+//  for(int i=1; i<101; ++i) {
+//	  t->Add(TString::Format("/tmp/dcraik/lightjets_filtered_addVars_resampled%d.root",i));
+//  }
   //t->Add("/tmp/dcraik/jets_sim_mix.root");
   //t->Add("/tmp/dcraik/light.root");
   //t->Add("lightjets_filtered_addVars_resampled1.root");

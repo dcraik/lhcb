@@ -27,6 +27,9 @@ void makeTemplates(TString dir="./") {
 	TH1D NDispl6_0("NDispl6_0","",12,0.,12.);
 	TH1D NDispl6_4("NDispl6_4","",12,0.,12.);
 	TH1D NDispl6_5("NDispl6_5","",12,0.,12.);
+	TH2D twod_0("twod_0","",20,0.,10000.,10.,2.,12.);
+	TH2D twod_4("twod_4","",20,0.,10000.,10.,2.,12.);
+	TH2D twod_5("twod_5","",20,0.,10000.,10.,2.,12.);
 
 	t0->Draw("SVM>>SVM_0","JetPT>20000 && JetPT<30000");
 	t4->Draw("SVM>>SVM_4","JetPT>20000 && JetPT<30000");
@@ -35,6 +38,10 @@ void makeTemplates(TString dir="./") {
 	t0->Draw("SVMCor>>SVMCor_0","JetPT>20000 && JetPT<30000");
 	t4->Draw("SVMCor>>SVMCor_4","JetPT>20000 && JetPT<30000");
 	t5->Draw("SVMCor>>SVMCor_5","JetPT>20000 && JetPT<30000");
+
+	t0->Draw("SVN:SVMCor>>twod_0","JetPT>20000 && JetPT<30000");
+	t4->Draw("SVN:SVMCor>>twod_4","JetPT>20000 && JetPT<30000");
+	t5->Draw("SVN:SVMCor>>twod_5","JetPT>20000 && JetPT<30000");
 
 	t0->Draw("TMath::Log(SVSumIPChi2)>>SVSumIPChi2_0","JetPT>20000 && JetPT<30000");
 	t4->Draw("TMath::Log(SVSumIPChi2)>>SVSumIPChi2_4","JetPT>20000 && JetPT<30000");
@@ -70,6 +77,9 @@ void makeTemplates(TString dir="./") {
 	NDispl6_0.Write();
 	NDispl6_4.Write();
 	NDispl6_5.Write();
+	twod_0.Write();
+	twod_4.Write();
+	twod_5.Write();
 	fout->Close();
 
 }

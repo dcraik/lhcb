@@ -1,5 +1,5 @@
 {
-	TFile* f = TFile::Open("/tmp/dcraik/for_yandex_data.root");
+	TFile* f = TFile::Open("/tmp/dcraik/for_yandex_data_new.root");
 	TTree* t = dynamic_cast<TTree*>(f->Get("T"));
 
 //	double JetDijetSVDec;
