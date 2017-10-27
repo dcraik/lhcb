@@ -126,8 +126,8 @@ public :
    std::vector<double>  *trk_idx_gen;
    std::vector<double>  *trk_idx_pvr;
    std::vector<double>  *trk_idx_jet;
-   std::vector<double>  *trk_p;
-   std::vector<double>  *trk_pt;
+//   std::vector<double>  *trk_p;
+//   std::vector<double>  *trk_pt;
    std::vector<double>  *trk_px;
    std::vector<double>  *trk_py;
    std::vector<double>  *trk_pz;
@@ -323,8 +323,8 @@ public :
    TBranch        *b_trk_idx_gen;   //!
    TBranch        *b_trk_idx_pvr;   //!
    TBranch        *b_trk_idx_jet;   //!
-   TBranch        *b_trk_p;   //!
-   TBranch        *b_trk_pt;   //!
+//   TBranch        *b_trk_p;   //!
+//   TBranch        *b_trk_pt;   //!
    TBranch        *b_trk_px;   //!
    TBranch        *b_trk_py;   //!
    TBranch        *b_trk_pz;   //!
@@ -434,7 +434,10 @@ public :
    int getNSharedEarlyVeloHits(int idxi, int idxj);
    int findTrkInJet(int trk_idx, int jet_idx);
    int findBestGenPvrForTrk(int idx, double x=-999., double y=-999.);
+   int findBestRecPvrForTrk(int idx, double x=-999., double y=-999.);
    int findBestPvrForSvr(TVector3 x, TVector3 p, bool gen=true);
+   void printSvr(int isvr);
+   void printTrk(int itrk, int isvr);
 };
 
 #endif
@@ -446,16 +449,16 @@ resampleTrackIPs::resampleTrackIPs(int irep, TString dir) : fChain(0), _irep(ire
 // used to generate this class and read the Tree.
 
    TTree* tree(0);
-   TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject(dir+"lightjets_filtered_addVars.root");
+   TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject(dir+"lightjets_filtered.root");
    if (!f || !f->IsOpen()) {
-      f = new TFile(dir+"lightjets_filtered_addVars.root");
+      f = new TFile(dir+"lightjets_filtered.root");
    }
    f->GetObject("data",tree);
 
    Init(tree);
 
    if(_irep>=0) {
-   	TString fname(dir+"lightjets_filtered_addVars_resampled");
+   	TString fname(dir+"lightjets_filtered_resampled");
    	fname+=_irep; fname+=".root";
    	newfile = TFile::Open(fname, "RECREATE");
    	newtree = tree->CloneTree(0);
@@ -600,8 +603,8 @@ void resampleTrackIPs::Init(TTree *tree)
    trk_idx_gen = 0;
    trk_idx_pvr = 0;
    trk_idx_jet = 0;
-   trk_p = 0;
-   trk_pt = 0;
+//   trk_p = 0;
+//   trk_pt = 0;
    trk_px = 0;
    trk_py = 0;
    trk_pz = 0;
@@ -800,8 +803,8 @@ void resampleTrackIPs::Init(TTree *tree)
    fChain->SetBranchAddress("trk_idx_gen", &trk_idx_gen, &b_trk_idx_gen);
    fChain->SetBranchAddress("trk_idx_pvr", &trk_idx_pvr, &b_trk_idx_pvr);
    fChain->SetBranchAddress("trk_idx_jet", &trk_idx_jet, &b_trk_idx_jet);
-   fChain->SetBranchAddress("trk_p", &trk_p, &b_trk_p);
-   fChain->SetBranchAddress("trk_pt", &trk_pt, &b_trk_pt);
+//   fChain->SetBranchAddress("trk_p", &trk_p, &b_trk_p);
+//   fChain->SetBranchAddress("trk_pt", &trk_pt, &b_trk_pt);
    fChain->SetBranchAddress("trk_px", &trk_px, &b_trk_px);
    fChain->SetBranchAddress("trk_py", &trk_py, &b_trk_py);
    fChain->SetBranchAddress("trk_pz", &trk_pz, &b_trk_pz);

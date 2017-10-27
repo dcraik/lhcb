@@ -94,6 +94,7 @@ j = Job(
 #  outputfiles     = [LocalFile("*.root")],
   )
 #j.application.readInputData(path)
+j.parallel_submit = True
 
 queues.add(j.submit)
 

@@ -13,15 +13,16 @@ from PhysConf.Filters import LoKi_Filters
 #    )
 
 
-## Data type configuration.
-#from GaudiKernel import SystemOfUnits as Units
-#Type     = 'MC'
-#JetPtMin = 10 * Units.GeV
-#
+# Data type configuration.
+from GaudiKernel import SystemOfUnits as Units
+Type     = 'MC'
+JetPtMin = 10 * Units.GeV
+
 ## Data.
 #from GaudiConf import IOHelper
-#IOHelper('ROOT').inputFiles(['/eos/lhcb/grid/prod/lhcb/MC/2016/ALLSTREAMS.DST/00057115/0000/00057115_00000003_3.AllStreams.dst'],#/eos/lhcb/grid/prod/lhcb/LHCb/Collision16/BHADRONCOMPLETEEVENT.DST/00059907/0001/00059907_00010184_1.bhadroncompleteevent.dst'],#/tmp/dcraik/00042952_00000002_1.ldst'], #/data/dst/MC15.MD.49000004.1.00.dst'],
-##IOHelper('ROOT').inputFiles(['/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00041855/0000/00041855_00000011_1.ldst'],#/eos/lhcb/grid/prod/lhcb/MC/2016/ALLSTREAMS.DST/00057115/0000/00057115_00000003_3.AllStreams.dst'],#/eos/lhcb/grid/prod/lhcb/LHCb/Collision16/BHADRONCOMPLETEEVENT.DST/00059907/0001/00059907_00010184_1.bhadroncompleteevent.dst'],#/tmp/dcraik/00042952_00000002_1.ldst'], #/data/dst/MC15.MD.49000004.1.00.dst'],
+##IOHelper('ROOT').inputFiles(['/eos/lhcb/grid/prod/lhcb/MC/2016/ALLSTREAMS.DST/00057115/0000/00057115_00000003_3.AllStreams.dst'],#/eos/lhcb/grid/prod/lhcb/LHCb/Collision16/BHADRONCOMPLETEEVENT.DST/00059907/0001/00059907_00010184_1.bhadroncompleteevent.dst'],#/tmp/dcraik/00042952_00000002_1.ldst'], #/data/dst/MC15.MD.49000004.1.00.dst'],
+#IOHelper('ROOT').inputFiles(['/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00041855/0000/00041855_00000011_1.ldst'],#/eos/lhcb/grid/prod/lhcb/MC/2016/ALLSTREAMS.DST/00057115/0000/00057115_00000003_3.AllStreams.dst'],#/eos/lhcb/grid/prod/lhcb/LHCb/Collision16/BHADRONCOMPLETEEVENT.DST/00059907/0001/00059907_00010184_1.bhadroncompleteevent.dst'],#/tmp/dcraik/00042952_00000002_1.ldst'], #/data/dst/MC15.MD.49000004.1.00.dst'],
+##IOHelper('ROOT').inputFiles(['/eos/lhcb/grid/prod/lhcb/MC/2015/DST/00046269/0000/00046269_00000001_2.dst'],
 #                            clear = True)
 ##Type = 'MC'
 
@@ -322,11 +323,22 @@ charmKaons = SimpleSelection (
             "& (MIPCHI2DV(PRIMARY) > 4)")
     )
 
+charmProtons = SimpleSelection (
+    'charmProtons'         ,
+    FilterDesktop   ,
+    [ looseprotons ]    ,
+    DecayDescriptor = "[p+]cc",
+    Code = (#"(PIDp - PIDpi > 5) & "
+            "(PT>200*MeV)"
+            "& (TRGHOSTPROB<0.3)"
+            "& (MIPCHI2DV(PRIMARY) > 4)")
+    )
+
 dcD0 = { }
 for child in ['pi+','K+'] :
     dcD0[child] = "(PT > 250*MeV)" \
                   "& (P > 2*GeV)" \
-                  "& (MIPCHI2DV(PRIMARY) > 16)"
+                  "& (MIPCHI2DV(PRIMARY) > 4)"#16)"
 #                  "& (TRCHI2 < 3)" \
 
 combcutsD0 = "in_range(1784*MeV,  AM, 1944*MeV)" \
@@ -356,15 +368,15 @@ for child in ['pi+','K+'] :
 
 combcutsDp = "in_range(1789*MeV,  AM, 1949*MeV)" \
              "& (ANUM(PT > 400*MeV) > 1)" \
-             "& (ANUM(PT > 1000*MeV) > 0)" \
-             "& (ANUM(MIPCHI2DV(PRIMARY) > 10) > 1)" \
-             "& (ANUM(MIPCHI2DV(PRIMARY) > 50) > 0)"
+             "& (ANUM(PT > 1000*MeV) > 0)" #\
+#             "& (ANUM(MIPCHI2DV(PRIMARY) > 10) > 1)" \
+#             "& (ANUM(MIPCHI2DV(PRIMARY) > 50) > 0)"
 
 parentcutsDp = "(VFASPF(VCHI2PDOF) < 25)" \
                "& BPVVALID()" \
                "& (BPVVDCHI2 > 16 )" \
-               "& (BPVLTIME() > 0.150*ps )" \
                "& (BPVDIRA > 0.9994 )"
+#               "& (BPVLTIME() > 0.150*ps )" \
 
 recDp = SimpleSelection (
     'recDp',
@@ -385,15 +397,15 @@ for child in ['pi+','K+'] :
 
 combcutsDs = "in_range(1889*MeV,  AM, 2049*MeV)" \
              "& (ANUM(PT > 400*MeV) > 1)" \
-             "& (ANUM(PT > 1000*MeV) > 0)" \
-             "& (ANUM(MIPCHI2DV(PRIMARY) > 10) > 1)" \
-             "& (ANUM(MIPCHI2DV(PRIMARY) > 50) > 0)"
+             "& (ANUM(PT > 1000*MeV) > 0)" #\
+#             "& (ANUM(MIPCHI2DV(PRIMARY) > 10) > 1)" \
+#             "& (ANUM(MIPCHI2DV(PRIMARY) > 50) > 0)"
 
 parentcutsDs = "(VFASPF(VCHI2PDOF) < 25)" \
                "& BPVVALID()" \
                "& (BPVVDCHI2 > 16 )" \
-               "& (BPVLTIME() > 0.150*ps )" \
                "& (BPVDIRA > 0.9994 )"
+#               "& (BPVLTIME() > 0.150*ps )" \
 
 recDs = SimpleSelection (
     'recDs',
@@ -403,6 +415,34 @@ recDs = SimpleSelection (
     DaughtersCuts   = dcDs,
     CombinationCut = (combcutsDs),
     MotherCut      =  (parentcutsDs),
+)
+
+dcLc = { }
+for child in ['pi+','K+','p+'] :
+    dcLc[child] = "(PT > 200*MeV)" \
+                  "& (P > 2*GeV)" \
+                  "& (MIPCHI2DV(PRIMARY) > 4)"
+#                  "& (TRCHI2 < 3)" \
+
+combcutsLc = "in_range(2256*MeV,  AM, 2316*MeV)" \
+             "& (ANUM(PT > 400*MeV) > 1)" \
+             "& (ANUM(PT > 1000*MeV) > 0)" #\
+#             "& (ANUM(MIPCHI2DV(PRIMARY) > 10) > 1)" \
+#             "& (ANUM(MIPCHI2DV(PRIMARY) > 50) > 0)"
+
+parentcutsLc = "(VFASPF(VCHI2PDOF) < 25)" \
+               "& BPVVALID()" \
+               "& (BPVVDCHI2 > 16 )" \
+               "& (BPVDIRA > 0.9994 )"
+
+recLc = SimpleSelection (
+    'recLc',
+    CombineParticles,
+    [charmProtons,charmKaons,charmPions],
+    DecayDescriptor = "[Lambda_c+ -> p+ K- pi+]cc",
+    DaughtersCuts   = dcLc,
+    CombinationCut = (combcutsLc),
+    MotherCut      =  (parentcutsLc),
 )
 
 dcD02K3pi = { }
@@ -433,6 +473,7 @@ recD02K3pi = SimpleSelection (
 D0_seq = SelectionSequence('D0_Seq', TopSelection=recD0)
 Dp_seq = SelectionSequence('Dp_Seq', TopSelection=recDp)
 Ds_seq = SelectionSequence('Ds_Seq', TopSelection=recDs)
+Lc_seq = SelectionSequence('Lc_Seq', TopSelection=recLc)
 D02K3pi_seq = SelectionSequence('D2K3pi0_Seq', TopSelection=recD02K3pi)
 
 ##########################
@@ -444,7 +485,7 @@ DaVinci().Lumi = True
 DaVinci().TupleFile = "LumiTuple.root"
 #DaVinci().appendToMainSequence([genPF, genJB, recPF, recJB])
 #DaVinci().appendToMainSequence([recPF, recJB])
-DaVinci().appendToMainSequence([recPF, recJB, recSVs_seq.sequence(), recMus_seq.sequence(), D0_seq.sequence(), Dp_seq.sequence(), Ds_seq.sequence(), D02K3pi_seq.sequence()])
+DaVinci().appendToMainSequence([recPF, recJB, recSVs_seq.sequence(), recMus_seq.sequence(), D0_seq.sequence(), Dp_seq.sequence(), Ds_seq.sequence(), Lc_seq.sequence(), D02K3pi_seq.sequence()])
 ##TODO adding recSVs and recMus changes the daughters of jet objects from smart poniters to Particles
 DaVinci().DataType = '2016'
 #DaVinci().EventPreFilters = fltrs.filters ('Filters')
@@ -539,6 +580,8 @@ class Ntuple:
         #tool.HltSelReportsLocation = '/Event/Hlt2/SelReports'
         #self.hlt2Tool = tool
 
+        self.stable = [11,-11,13,-13,211,-211,321,-321,2212,-2212,2112,-2112,22,111,310,130,311,-311]
+        self.Ds = [411,-411,421,-421,431,-431,4122,-4122]
         self.tes     = tes
         self.saved   = {}
         self.ntuple  = OrderedDict()
@@ -548,7 +591,7 @@ class Ntuple:
         mom = ['px', 'py', 'pz', 'e']
         pos = ['x', 'y', 'z']
         cov = ['dx', 'dy', 'dz', 'chi2', 'ndof']
-        self.init('gen', ['idx_pvr', 'idx_jet', 'idx_prnt', 'pid', 'q'] + mom + pos + ['prnt_pid'])#, 'prnt_key', 'key'])
+        self.init('gen', ['idx_pvr', 'idx_jet', 'idx_prnt', 'pid', 'q'] + mom + pos + ['prnt_pid', 'res_pid', 'from_sig'])#, 'prnt_key', 'key'])
         self.init('pvr', pos + cov)
         self.init('svr', ['idx_pvr', 'idx_jet'] + [
                 'idx_trk%i' % i for i in range(0, 10)] + 
@@ -565,6 +608,7 @@ class Ntuple:
         self.init('d0', ['idx_pvr','idx_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 2)]) 
         self.init('dp', ['idx_pvr','idx_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 3)]) 
         self.init('ds', ['idx_pvr','idx_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 3)]) 
+        self.init('lc', ['idx_pvr','idx_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 3)]) 
         self.init('d02k3pi', ['idx_pvr','idx_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 4)]) 
         self.init('evt', ['dec'] + ['%s_%s' % (k,l) for k in ['j1', 'j2'] for l in ['idx','dR','nsv','nmu','ntrk','nneu'] + mom ] )
         self.ntuple['evt_pvr_n'] = array.array('d', [-1])
@@ -674,6 +718,39 @@ class Ntuple:
         if not summary.substructure().empty():
             for ss in summary.substructure():
                 self.processHltSummary(ss,indent+" ")
+
+    def children(self, gen):
+        parts = []
+        for vtx in gen.endVertices():
+            for part in vtx.products():
+                parts += [part]
+        return parts
+
+ # Return the final charged children of a generated particle.
+    def finalChildren(self, gen):
+        inters = []
+        finals = []
+        if not gen: return []
+        final = []
+        decay = self.children(gen)
+        while len(decay) > 0:
+            tmp = self.children(decay[-1])
+            pid = int(decay[-1].particleID().abspid())
+            if (len(tmp) == 0 or pid in self.stable):
+                if pid != 22: finals += [pid]
+                final += [decay[-1]]
+                decay.pop()
+            else:
+                if pid != 22: inters += [pid]
+                decay.pop()
+                decay += tmp
+        if gen.particleID().abspid() == 15:
+            while finals[-1] != 16:
+                final.pop(); finals.pop()
+        finals.sort()
+        inters.sort()
+        return (final, inters, finals)
+
     def fill(self, key = None, val = None, idx = None, vrs = None):
         """
         Fill the ntuple for either an event or an object.
@@ -1022,12 +1099,18 @@ class Ntuple:
 
                 self.fill(pre, vrs = vrs)
            
-    def addGen(self, obj, jet = -1, pre = 'gen'):
+    def addGen(self, obj, jet = -1, pre = 'gen', par = None):
         key = self.key(obj)
         if key in self.saved[pre]: return self.saved[pre][key]
         parent = obj.mother()
+        res = None
+        if par and parent.particleID().pid()!=par.particleID().pid(): #if they don't match we have a resonance
+            res = parent
+            parent = par
         parKey = -1
         parIdx = -1
+        fromSig=0
+        if obj.fromSignal(): fromSig = 1
         vrs = {}
         idx = len(self.saved[pre])
         self.fillPid(obj.particleID(), vrs)
@@ -1035,11 +1118,16 @@ class Ntuple:
         self.fillPos(obj.originVertex(), vrs)
         self.fillPvr(obj.primaryVertex(), vrs)
         vrs['idx_jet'] = jet
+        vrs['from_sig'] = fromSig
+        if res:
+            vrs['res_pid'] = res.particleID().pid()
         if parent:
             parKey = self.key(parent)
             if parKey in self.saved[pre]: parIdx = self.saved[pre][parKey]
             vrs['idx_prnt'] = parIdx
             vrs['prnt_pid'] = parent.particleID().pid()
+            #if parent.particleID().pid() == 431:
+            #    print parIdx, obj.particleID().abspid()##TODO
 #            if parKey: vrs['prnt_key'] = int(parKey[2]*10)*1e12 + int(parKey[1]*10)*1e6 + int(parKey[0]*10)
 #        vrs['key'] = int(key[2]*10)*1e12 + int(key[1]*10)*1e6 + int(key[0]*10)
         self.saved[pre][key] = idx
@@ -1047,9 +1135,17 @@ class Ntuple:
         #also print immediate decay products of heavy hadrons
         pid = obj.particleID()
         if pid.isHadron() and (pid.hasCharm() or pid.hasBottom()):
-            for vtx in obj.endVertices():
-                for part in vtx.products():
+            if pid.abspid() in self.Ds:
+                #if pid.abspid() == 431:
+                #    print idx, self.finalChildren(obj)##TODO
+                for part in self.finalChildren(obj)[0]:
+                    self.addGen(part,par=obj)
+            else:
+                for part in self.children(obj):
                     self.addGen(part)
+            #for vtx in obj.endVertices():
+            #    for part in vtx.products():
+            #        self.addGen(part)
         return idx
     def addPvr(self, obj, pre = 'pvr'):
         key = self.key(obj)
@@ -1205,7 +1301,7 @@ while evtmax < 0 or evtnum < evtmax:
         for gen in gens:
             pid = gen.particleID()
             if pid.isHadron() and (pid.hasCharm() or pid.hasBottom()):
-                ntuple.addGen(gen)
+                ntuple.addGen(gen); fill = True
     except: pass
     try:
         jets = tes[genJB.Output]
@@ -1237,6 +1333,9 @@ while evtmax < 0 or evtnum < evtmax:
         dss = tes[recDs.algorithm().Output]
         for ds in dss:
             ntuple.addDHad(ds,"ds"); fill = True;
+        lcs = tes[recLc.algorithm().Output]
+        for lc in lcs:
+            ntuple.addDHad(lc,"lc"); fill = True;
         d0s = tes[recD02K3pi.algorithm().Output]
         for d0 in d0s:
             ntuple.addDHad(d0,"d02k3pi"); fill = True;

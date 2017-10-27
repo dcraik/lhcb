@@ -7,7 +7,19 @@ ROOTFLAGS = `root-config --cflags` # --libs` `gsl-config --cflags` -lThread -lMi
 ROOTLIBS  = `root-config --glibs` -lRooFit -lThread -lMinuit -lMathCore -lRooStats -lRooFit -lRooFitCore -lFoam -lTreePlayer
 INCPATH   = -I.
 
-all : 	resampleTrackIPs checkDaVinciSVs ipCorrelations
+all : 	resampleTrackIPs checkDaVinciSVs ipCorrelations filterLight makeIPMap
+
+filterLight.o : filterLight.C filterLight.h
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
+
+filterLight : filterLight.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
+
+makeIPMap.o : makeIPMap.C makeIPMap.h
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
+
+makeIPMap : makeIPMap.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
 
 resampleTrackIPs.o : resampleTrackIPs.C resampleTrackIPs.h
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@

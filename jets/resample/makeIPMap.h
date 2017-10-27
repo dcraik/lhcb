@@ -23,78 +23,78 @@ public :
 // Fixed size dimensions of array or collections stored in the TTree if any.
 
    // Declaration of leaf types
-   vector<double>  *gen_idx_pvr;
-   vector<double>  *gen_idx_jet;
-   vector<double>  *gen_pid;
-   vector<double>  *gen_q;
-   vector<double>  *gen_px;
-   vector<double>  *gen_py;
-   vector<double>  *gen_pz;
-   vector<double>  *gen_e;
-   vector<double>  *gen_x;
-   vector<double>  *gen_y;
-   vector<double>  *gen_z;
-   vector<double>  *pvr_x;
-   vector<double>  *pvr_y;
-   vector<double>  *pvr_z;
-   vector<double>  *pvr_dx;
-   vector<double>  *pvr_dy;
-   vector<double>  *pvr_dz;
-   vector<double>  *pvr_chi2;
-   vector<double>  *pvr_ndof;
-   vector<double>  *svr_idx_pvr;
-   vector<double>  *svr_idx_jet;
-   vector<double>  *svr_idx_trk0;
-   vector<double>  *svr_idx_trk1;
-   vector<double>  *svr_idx_trk2;
-   vector<double>  *svr_idx_trk3;
-   vector<double>  *svr_idx_trk4;
-   vector<double>  *svr_idx_trk5;
-   vector<double>  *svr_idx_trk6;
-   vector<double>  *svr_idx_trk7;
-   vector<double>  *svr_idx_trk8;
-   vector<double>  *svr_idx_trk9;
-   vector<double>  *svr_px;
-   vector<double>  *svr_py;
-   vector<double>  *svr_pz;
-   vector<double>  *svr_e;
-   vector<double>  *svr_x;
-   vector<double>  *svr_y;
-   vector<double>  *svr_z;
-   vector<double>  *svr_fd_min;
-   vector<double>  *svr_m_cor;
-   vector<double>  *jet_idx_pvr;
-   vector<double>  *jet_px;
-   vector<double>  *jet_py;
-   vector<double>  *jet_pz;
-   vector<double>  *jet_e;
-   vector<double>  *trk_idx_gen;
-   vector<double>  *trk_idx_pvr;
-   vector<double>  *trk_idx_jet;
-   vector<double>  *trk_p;
-   vector<double>  *trk_pt;
-   vector<double>  *trk_px;
-   vector<double>  *trk_py;
-   vector<double>  *trk_pz;
-   vector<double>  *trk_e;
-   vector<double>  *trk_pid;
-   vector<double>  *trk_q;
-   vector<double>  *trk_ip;
-   vector<double>  *trk_ip_chi2;
-   vector<double>  *trk_pnn_e;
-   vector<double>  *trk_pnn_mu;
-   vector<double>  *trk_pnn_pi;
-   vector<double>  *trk_pnn_k;
-   vector<double>  *trk_pnn_p;
-   vector<double>  *trk_ecal;
-   vector<double>  *trk_hcal;
-   vector<double>  *trk_prb_ghost;
-   vector<double>  *trk_type;
-   vector<double>  *trk_is_mu;
-   vector<double>  *trk_vid;
-   vector<double>  *trk_x;
-   vector<double>  *trk_y;
-   vector<double>  *trk_z;
+   std::vector<double>  *gen_idx_pvr;
+   std::vector<double>  *gen_idx_jet;
+   std::vector<double>  *gen_pid;
+   std::vector<double>  *gen_q;
+   std::vector<double>  *gen_px;
+   std::vector<double>  *gen_py;
+   std::vector<double>  *gen_pz;
+   std::vector<double>  *gen_e;
+   std::vector<double>  *gen_x;
+   std::vector<double>  *gen_y;
+   std::vector<double>  *gen_z;
+   std::vector<double>  *pvr_x;
+   std::vector<double>  *pvr_y;
+   std::vector<double>  *pvr_z;
+   std::vector<double>  *pvr_dx;
+   std::vector<double>  *pvr_dy;
+   std::vector<double>  *pvr_dz;
+   std::vector<double>  *pvr_chi2;
+   std::vector<double>  *pvr_ndof;
+   std::vector<double>  *svr_idx_pvr;
+   std::vector<double>  *svr_idx_jet;
+   std::vector<double>  *svr_idx_trk0;
+   std::vector<double>  *svr_idx_trk1;
+   std::vector<double>  *svr_idx_trk2;
+   std::vector<double>  *svr_idx_trk3;
+   std::vector<double>  *svr_idx_trk4;
+   std::vector<double>  *svr_idx_trk5;
+   std::vector<double>  *svr_idx_trk6;
+   std::vector<double>  *svr_idx_trk7;
+   std::vector<double>  *svr_idx_trk8;
+   std::vector<double>  *svr_idx_trk9;
+   std::vector<double>  *svr_px;
+   std::vector<double>  *svr_py;
+   std::vector<double>  *svr_pz;
+   std::vector<double>  *svr_e;
+   std::vector<double>  *svr_x;
+   std::vector<double>  *svr_y;
+   std::vector<double>  *svr_z;
+   std::vector<double>  *svr_fd_min;
+   std::vector<double>  *svr_m_cor;
+   std::vector<double>  *jet_idx_pvr;
+   std::vector<double>  *jet_px;
+   std::vector<double>  *jet_py;
+   std::vector<double>  *jet_pz;
+   std::vector<double>  *jet_e;
+   std::vector<double>  *trk_idx_gen;
+   std::vector<double>  *trk_idx_pvr;
+   std::vector<double>  *trk_idx_jet;
+//   std::vector<double>  *trk_p;
+//   std::vector<double>  *trk_pt;
+   std::vector<double>  *trk_px;
+   std::vector<double>  *trk_py;
+   std::vector<double>  *trk_pz;
+   std::vector<double>  *trk_e;
+   std::vector<double>  *trk_pid;
+   std::vector<double>  *trk_q;
+   std::vector<double>  *trk_ip;
+   std::vector<double>  *trk_ip_chi2;
+   std::vector<double>  *trk_pnn_e;
+   std::vector<double>  *trk_pnn_mu;
+   std::vector<double>  *trk_pnn_pi;
+   std::vector<double>  *trk_pnn_k;
+   std::vector<double>  *trk_pnn_p;
+   std::vector<double>  *trk_ecal;
+   std::vector<double>  *trk_hcal;
+   std::vector<double>  *trk_prb_ghost;
+   std::vector<double>  *trk_type;
+   std::vector<double>  *trk_is_mu;
+   std::vector<double>  *trk_vid;
+   std::vector<double>  *trk_x;
+   std::vector<double>  *trk_y;
+   std::vector<double>  *trk_z;
    std::vector<double>  *trk_vhit0;
    std::vector<double>  *trk_vhit1;
    std::vector<double>  *trk_vhit2;
@@ -156,13 +156,13 @@ public :
    std::vector<double>  *trk_vhit58;
    std::vector<double>  *trk_vhit59;
    std::vector<double>  *trk_vhit60;
-   vector<double>  *neu_idx_gen;
-   vector<double>  *neu_idx_jet;
-   vector<double>  *neu_px;
-   vector<double>  *neu_py;
-   vector<double>  *neu_pz;
-   vector<double>  *neu_e;
-   vector<double>  *neu_pid;
+   std::vector<double>  *neu_idx_gen;
+   std::vector<double>  *neu_idx_jet;
+   std::vector<double>  *neu_px;
+   std::vector<double>  *neu_py;
+   std::vector<double>  *neu_pz;
+   std::vector<double>  *neu_e;
+   std::vector<double>  *neu_pid;
    Double_t        evt_pvr_n;
 
    // List of branches
@@ -214,8 +214,8 @@ public :
    TBranch        *b_trk_idx_gen;   //!
    TBranch        *b_trk_idx_pvr;   //!
    TBranch        *b_trk_idx_jet;   //!
-   TBranch        *b_trk_p;   //!
-   TBranch        *b_trk_pt;   //!
+//   TBranch        *b_trk_p;   //!
+//   TBranch        *b_trk_pt;   //!
    TBranch        *b_trk_px;   //!
    TBranch        *b_trk_py;   //!
    TBranch        *b_trk_pz;   //!
@@ -329,9 +329,9 @@ makeIPMap::makeIPMap(TTree *tree) : fChain(0)
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
    if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("lightjets_filtered_addVars.root");
+      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("/tmp/dcraik/lightjets_filtered.root");
       if (!f || !f->IsOpen()) {
-         f = new TFile("lightjets_filtered_addVars.root");
+         f = new TFile("/tmp/dcraik/lightjets_filtered.root");
       }
       f->GetObject("data",tree);
 
@@ -423,8 +423,8 @@ void makeIPMap::Init(TTree *tree)
    trk_idx_gen = 0;
    trk_idx_pvr = 0;
    trk_idx_jet = 0;
-   trk_p = 0;
-   trk_pt = 0;
+//   trk_p = 0;
+//   trk_pt = 0;
    trk_px = 0;
    trk_py = 0;
    trk_pz = 0;
@@ -569,8 +569,8 @@ void makeIPMap::Init(TTree *tree)
    fChain->SetBranchAddress("trk_idx_gen", &trk_idx_gen, &b_trk_idx_gen);
    fChain->SetBranchAddress("trk_idx_pvr", &trk_idx_pvr, &b_trk_idx_pvr);
    fChain->SetBranchAddress("trk_idx_jet", &trk_idx_jet, &b_trk_idx_jet);
-   fChain->SetBranchAddress("trk_p", &trk_p, &b_trk_p);
-   fChain->SetBranchAddress("trk_pt", &trk_pt, &b_trk_pt);
+//   fChain->SetBranchAddress("trk_p", &trk_p, &b_trk_p);
+//   fChain->SetBranchAddress("trk_pt", &trk_pt, &b_trk_pt);
    fChain->SetBranchAddress("trk_px", &trk_px, &b_trk_px);
    fChain->SetBranchAddress("trk_py", &trk_py, &b_trk_py);
    fChain->SetBranchAddress("trk_pz", &trk_pz, &b_trk_pz);

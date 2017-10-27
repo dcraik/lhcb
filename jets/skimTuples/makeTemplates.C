@@ -8,6 +8,8 @@ void makeTemplates(TString dir="./") {
 	TFile* f5 = TFile::Open(dir+"for_yandex_5.root");
 	TTree* t5 = dynamic_cast<TTree*>(f5->Get("T"));
 
+	if(!t0 || !t4 || !t5) return;
+
 	TFile* fout = TFile::Open(dir+"templates.root","RECREATE");
 	TH1D SVM_0("SVM_0","",30,0.,10000.);
 	TH1D SVM_4("SVM_4","",30,0.,10000.);

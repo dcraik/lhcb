@@ -446,6 +446,44 @@ int resampleTrackIPs::findBestGenPvrForTrk(int idx, double x, double y) {
 	return pvr_idx;
 }
 
+
+int resampleTrackIPs::findBestRecPvrForTrk(int idx, double x, double y) {
+	int pvr_idx(-1);
+
+     	//assign the PV with the smallest DOCA
+     	if(pvr_idx<0) {
+     		int bestpvr(-1);
+     		double minDOCA=9999.;
+     		TVector3 pp(trk_x->at(idx), trk_y->at(idx), trk_z->at(idx));
+		if(x!=-999.) pp.SetX(x);
+		if(y!=-999.) pp.SetY(y);
+     		TVector3 dp(trk_px->at(idx), trk_py->at(idx), trk_pz->at(idx));
+     		for(uint ipvr=0; ipvr<pvr_z->size(); ++ipvr) {
+     			TVector3 pv(pvr_x->at(ipvr),pvr_y->at(ipvr),pvr_z->at(ipvr));
+     			double doca = calcDocaPoint(pp,dp,pv);
+     			if(doca<minDOCA) {
+     				bestpvr = ipvr;
+     				minDOCA = doca;
+     			}
+     		}
+     		pvr_idx=bestpvr;
+     		//this might be generated so look for close pv with higher index
+     		double minDist(2.);
+     		for(uint ipvr=bestpvr+1; ipvr<pvr_z->size(); ++ipvr) {
+     			double dist = TMath::Abs(pvr_z->at(ipvr) - pvr_z->at(bestpvr));
+     			if(dist < minDist) {
+     				minDist=dist;
+     				pvr_idx = ipvr;
+     			}
+     		}
+     	}
+     	if(pvr_idx<0) {
+     		//if we get here then the initial value of minDOCA might be too small
+     		std::cout << "WARNING - shouldn't reach here!" << std::endl;
+     	}
+	return pvr_idx;
+}
+
 int resampleTrackIPs::findBestPvrForSvr(TVector3 x, TVector3 p, bool gen) {
 	//find best pvr for our svr
 	int pvr_idx(-1);
@@ -488,6 +526,50 @@ int resampleTrackIPs::findBestPvrForSvr(TVector3 x, TVector3 p, bool gen) {
 	return pvr_idx;
 }
 
+void resampleTrackIPs::printTrk(int itrk, int isvr) {
+	int bestpvr = findBestGenPvrForTrk(itrk);
+	int bestrecopvr = findBestRecPvrForTrk(itrk);
+	int pvr = trk_idx_pvr->at(itrk);
+	int svrpvr = svr_idx_pvr->at(isvr);
+
+	TVector3 pi(trk_px->at(itrk), trk_py->at(itrk), trk_pz->at(itrk));
+	TVector3 xi(trk_x->at(itrk), trk_y->at(itrk), trk_z->at(itrk));
+	TVector3 owngenpv(pvr_x->at(bestpvr),pvr_y->at(bestpvr),pvr_z->at(bestpvr));
+	TVector3 ownrecpv(pvr_x->at(bestrecopvr),pvr_y->at(bestrecopvr),pvr_z->at(bestrecopvr));
+	TVector3 svrpv(pvr_x->at(svrpvr),pvr_y->at(svrpvr),pvr_z->at(svrpvr));
+	TVector3 pv(pvr_x->at(pvr),pvr_y->at(pvr),pvr_z->at(pvr));
+
+	double sigma2 = trk_ip->at(itrk)*trk_ip->at(itrk) / trk_ip_chi2->at(itrk);
+	double sigma = TMath::Sqrt(sigma2);
+
+	TVector3 dxdyrec = calcDxDy(xi, pi, ownrecpv);
+	TVector3 dxdygen = calcDxDy(xi, pi, owngenpv);
+	TVector3 dxdysvr = calcDxDy(xi, pi, svrpv);
+	TVector3 dxdy    = calcDxDy(xi, pi, pv);
+
+	double ipchi2rec = TMath::Power(dxdyrec.Mag() / sigma, 2);
+	double ipchi2gen = TMath::Power(dxdygen.Mag() / sigma, 2);
+	double ipchi2svr = TMath::Power(dxdysvr.Mag() / sigma, 2);
+	double ipchi2    = TMath::Power(dxdy.Mag() / sigma, 2);
+
+	printf("%d\t%d\t%d\t%d\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n",bestpvr, bestrecopvr, pvr, svrpvr, TMath::Log(trk_ip_chi2->at(itrk)), TMath::Log(ipchi2rec), TMath::Log(ipchi2gen), TMath::Log(ipchi2svr), TMath::Log(ipchi2));
+
+}
+
+void resampleTrackIPs::printSvr(int isvr) {
+	if(svr_idx_trk0->at(isvr)!=-1) printTrk(svr_idx_trk0->at(isvr), isvr);
+	if(svr_idx_trk1->at(isvr)!=-1) printTrk(svr_idx_trk1->at(isvr), isvr);
+	if(svr_idx_trk2->at(isvr)!=-1) printTrk(svr_idx_trk2->at(isvr), isvr);
+	if(svr_idx_trk3->at(isvr)!=-1) printTrk(svr_idx_trk3->at(isvr), isvr);
+	if(svr_idx_trk4->at(isvr)!=-1) printTrk(svr_idx_trk4->at(isvr), isvr);
+	if(svr_idx_trk5->at(isvr)!=-1) printTrk(svr_idx_trk5->at(isvr), isvr);
+	if(svr_idx_trk6->at(isvr)!=-1) printTrk(svr_idx_trk6->at(isvr), isvr);
+	if(svr_idx_trk7->at(isvr)!=-1) printTrk(svr_idx_trk7->at(isvr), isvr);
+	if(svr_idx_trk8->at(isvr)!=-1) printTrk(svr_idx_trk8->at(isvr), isvr);
+	if(svr_idx_trk9->at(isvr)!=-1) printTrk(svr_idx_trk9->at(isvr), isvr);
+	std::cout << std::endl;
+}
+
 //main loop
 void resampleTrackIPs::Loop()
 {
@@ -503,9 +585,12 @@ void resampleTrackIPs::Loop()
 	TH2D hist3("hist3", "", 10000, 0, 100, 3, 0, 1e-3);
 	TH2D hist4("hist4", "", 10000, 0, 100, 3, 0, 1e-3);
 	//IPchi2
-	TH1D hist5("hist5", "", 100, 0, 30);
-	TH1D hist6("hist6", "", 100, 0, 30);
-	TH1D hist7("hist7", "", 100, 0, 30);
+	TH1D hist5("hist5", "", 100, 0, 20);
+	TH1D hist6("hist6", "", 100, 0, 20);
+	TH1D hist7("hist7", "", 100, 0, 20);
+	TH1D hist5b("hist5b", "", 100, 0, 20);
+	TH1D hist6b("hist6b", "", 100, 0, 20);
+	TH1D hist7b("hist7b", "", 100, 0, 20);
 	//IP (chi2<16)
 	TH1D hist8("hist8", "", 100, 0, 1);
 	TH1D hist9("hist9", "", 100, 0, 1);
@@ -641,11 +726,17 @@ void resampleTrackIPs::Loop()
 		TString name = "_bin"; name+=i;
 		hs.push_back(h->ProjectionX(name,i,i));
 	}
-	TH2D* hNT = dynamic_cast<TH2D*>(fh->Get("promptandnontruth"));
+	TH2D* hNT = dynamic_cast<TH2D*>(fh->Get("nontruth"));//promptandnontruth"));
 	std::vector<TH1D*> hsNT;
 	for(int i=1; i<=h->GetNbinsY(); ++i) {
 		TString name = "_binNT"; name+=i;
 		hsNT.push_back(hNT->ProjectionX(name,i,i));
+	}
+	TH2D* hNP = dynamic_cast<TH2D*>(fh->Get("nonprompt"));
+	std::vector<TH1D*> hsNP;
+	for(int i=1; i<=h->GetNbinsY(); ++i) {
+		TString name = "_binNP"; name+=i;
+		hsNP.push_back(hNP->ProjectionX(name,i,i));
 	}
 	TH1D* hphi0 = dynamic_cast<TH2D*>(fh->Get("deltaDR"))->ProjectionX("hphi0",1,1);
 	TH1D* hphi1 = dynamic_cast<TH2D*>(fh->Get("deltaDR"))->ProjectionX("hphi1",2,2);
@@ -753,18 +844,51 @@ void resampleTrackIPs::Loop()
 		if (ientry < 0) break;
 		nb = fChain->GetEntry(jentry);   nbytes += nb;
 
+		std::set<int> trksToWatch;
+
 		svsBefore += svr_z->size();
 		for(uint isvr=0; isvr<svr_z->size(); ++isvr) {
 			pvr_idx = svr_idx_pvr->at(isvr);
 
 			vhist5z.Fill(svr_z->at(isvr) - pvr_z->at(pvr_idx));
+			//printSvr(isvr);
+
+			if(svr_idx_trk0->at(isvr)!=-1) {hist5b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk0->at(isvr)))); }//if(TMath::Log(trk_ip_chi2->at(svr_idx_trk0->at(isvr)))>8) printSvr(isvr);}
+			if(svr_idx_trk1->at(isvr)!=-1) {hist5b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk1->at(isvr)))); }//if(TMath::Log(trk_ip_chi2->at(svr_idx_trk1->at(isvr)))>8) printSvr(isvr);}
+			if(svr_idx_trk2->at(isvr)!=-1) {hist5b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk2->at(isvr)))); }//if(TMath::Log(trk_ip_chi2->at(svr_idx_trk2->at(isvr)))>8) printSvr(isvr);}
+			if(svr_idx_trk3->at(isvr)!=-1) {hist5b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk3->at(isvr)))); }//if(TMath::Log(trk_ip_chi2->at(svr_idx_trk3->at(isvr)))>8) printSvr(isvr);}
+			if(svr_idx_trk4->at(isvr)!=-1) {hist5b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk4->at(isvr)))); }//if(TMath::Log(trk_ip_chi2->at(svr_idx_trk4->at(isvr)))>8) printSvr(isvr);}
+			if(svr_idx_trk5->at(isvr)!=-1) {hist5b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk5->at(isvr)))); }//if(TMath::Log(trk_ip_chi2->at(svr_idx_trk5->at(isvr)))>8) printSvr(isvr);}
+			if(svr_idx_trk6->at(isvr)!=-1) {hist5b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk6->at(isvr)))); }//if(TMath::Log(trk_ip_chi2->at(svr_idx_trk6->at(isvr)))>8) printSvr(isvr);}
+			if(svr_idx_trk7->at(isvr)!=-1) {hist5b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk7->at(isvr)))); }//if(TMath::Log(trk_ip_chi2->at(svr_idx_trk7->at(isvr)))>8) printSvr(isvr);}
+			if(svr_idx_trk8->at(isvr)!=-1) {hist5b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk8->at(isvr)))); }//if(TMath::Log(trk_ip_chi2->at(svr_idx_trk8->at(isvr)))>8) printSvr(isvr);}
+			if(svr_idx_trk9->at(isvr)!=-1) {hist5b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk9->at(isvr)))); }//if(TMath::Log(trk_ip_chi2->at(svr_idx_trk9->at(isvr)))>8) printSvr(isvr);}
+
+			//if(svr_idx_trk0->at(isvr)!=-1 && TMath::Log(trk_ip_chi2->at(svr_idx_trk0->at(isvr)))>10.) trksToWatch.insert(svr_idx_trk0->at(isvr));
+			//if(svr_idx_trk1->at(isvr)!=-1 && TMath::Log(trk_ip_chi2->at(svr_idx_trk1->at(isvr)))>10.) trksToWatch.insert(svr_idx_trk1->at(isvr));
+			//if(svr_idx_trk2->at(isvr)!=-1 && TMath::Log(trk_ip_chi2->at(svr_idx_trk2->at(isvr)))>10.) trksToWatch.insert(svr_idx_trk2->at(isvr));
+			//if(svr_idx_trk3->at(isvr)!=-1 && TMath::Log(trk_ip_chi2->at(svr_idx_trk3->at(isvr)))>10.) trksToWatch.insert(svr_idx_trk3->at(isvr));
+			//if(svr_idx_trk4->at(isvr)!=-1 && TMath::Log(trk_ip_chi2->at(svr_idx_trk4->at(isvr)))>10.) trksToWatch.insert(svr_idx_trk4->at(isvr));
+			//if(svr_idx_trk5->at(isvr)!=-1 && TMath::Log(trk_ip_chi2->at(svr_idx_trk5->at(isvr)))>10.) trksToWatch.insert(svr_idx_trk5->at(isvr));
+			//if(svr_idx_trk6->at(isvr)!=-1 && TMath::Log(trk_ip_chi2->at(svr_idx_trk6->at(isvr)))>10.) trksToWatch.insert(svr_idx_trk6->at(isvr));
+			//if(svr_idx_trk7->at(isvr)!=-1 && TMath::Log(trk_ip_chi2->at(svr_idx_trk7->at(isvr)))>10.) trksToWatch.insert(svr_idx_trk7->at(isvr));
+			//if(svr_idx_trk8->at(isvr)!=-1 && TMath::Log(trk_ip_chi2->at(svr_idx_trk8->at(isvr)))>10.) trksToWatch.insert(svr_idx_trk8->at(isvr));
+			//if(svr_idx_trk9->at(isvr)!=-1 && TMath::Log(trk_ip_chi2->at(svr_idx_trk9->at(isvr)))>10.) trksToWatch.insert(svr_idx_trk9->at(isvr));
+		}
+
+		for(std::set<int>::iterator it=trksToWatch.begin(); it!=trksToWatch.end(); ++it) {
+			std::cout << "DEBUG track " << (*it) << " is being watched (log(IPchi2)=" << TMath::Log(trk_ip_chi2->at(*it)) << ")" << std::endl;
 		}
 
 		std::vector<double>* origtrk_x = new std::vector<double>();
 		std::vector<double>* origtrk_y = new std::vector<double>();
+		std::vector<double>* origtrk_ip = new std::vector<double>();
+		std::vector<double>* origtrk_ip_chi2 = new std::vector<double>();
 		for(uint i=0; i<trk_x->size(); ++i) {
 			origtrk_x->push_back(trk_x->at(i));
 			origtrk_y->push_back(trk_y->at(i));
+			origtrk_ip->push_back(trk_ip->at(i));
+			origtrk_ip_chi2->push_back(trk_ip_chi2->at(i));
 		}
 
 		std::map<int,std::vector<int>> passedTracksByRep;
@@ -810,9 +934,11 @@ void resampleTrackIPs::Loop()
 			std::map<int, std::vector<int> > promptTrksByPV;
 
 			for(uint idx=0; idx<trk_idx_gen->size(); ++idx) {
+				if(trksToWatch.count(idx)) std::cout << "DEBUG track " << idx << " START" << std::endl;
 				if(trk_type->at(idx) != 3) continue;
-				if(trk_pt->at(idx)<500 || trk_prb_ghost->at(idx)>0.3) continue;
+				if(trk_px->at(idx)*trk_px->at(idx) + trk_py->at(idx)*trk_py->at(idx)<500*500 || trk_prb_ghost->at(idx)>0.3) continue;
 				if(irep==0) ++realTotal;
+				if(trksToWatch.count(idx)) std::cout << "DEBUG track " << idx << " PASS PRESEL" << std::endl;
 
 				bool isPrompt(false), isTruth(false);
 				int gen_idx = trk_idx_gen->at(idx);
@@ -892,8 +1018,11 @@ void resampleTrackIPs::Loop()
 				binInvPt = h->GetYaxis()->FindBin(invpt);
 				sigma2 = trk_ip->at(idx)*trk_ip->at(idx) / trk_ip_chi2->at(idx); //assume unchanged by shift
 				sigma = TMath::Sqrt(sigma2);
+				
 				if(sigma!=sigma) continue;
-				if(!isPrompt) continue;//TODO
+				if(trksToWatch.count(idx)) std::cout << "DEBUG track " << idx << " PASS SIGMA" << std::endl;
+				//if(!isPrompt) continue;//TODO
+				if(trksToWatch.count(idx)) std::cout << "DEBUG track " << idx << " PASS PROMPT" << std::endl;
 
 				++total;
 
@@ -906,8 +1035,10 @@ void resampleTrackIPs::Loop()
 					double rho(0);
 					if(!isTruth) {
 						rho = sigma*getRandom(hsNT[binInvPt-1],&r); //interpolate rho within the bin
-					} else {
+					} else if(isPrompt) {
 						rho = sigma*getRandom(hs[binInvPt-1],&r); //interpolate rho within the bin
+					} else {
+						rho = sigma*getRandom(hsNP[binInvPt-1],&r); //interpolate rho within the bin
 					}
 
 					newDx = rho*TMath::Sin(phi);
@@ -918,6 +1049,9 @@ void resampleTrackIPs::Loop()
 					trk_x->at(idx) = origtrk_x->at(idx) + newDx - dx;
 					trk_y->at(idx) = origtrk_y->at(idx) + newDy - dy;
 				}
+				
+				trk_ip->at(idx) = TMath::Sqrt(newDx*newDx + newDy*newDy);
+				trk_ip_chi2->at(idx) = (newDx*newDx + newDy*newDy) / sigma2;
 
 				//if this track shares any hits with earlier tracks then check the ratio of and angle between the shifts is good
 				TVector3 pi(trk_px->at(idx), trk_py->at(idx), trk_pz->at(idx));
@@ -978,7 +1112,7 @@ void resampleTrackIPs::Loop()
 				//now check track meets IP chi2 requirement (Tab 2 ANA-2014-074)
 				//IP
 				if(irep==0) {
-					hist0.Fill(trk_ip->at(idx));
+					hist0.Fill(origtrk_ip->at(idx));
 					hist1.Fill(TMath::Sqrt(dx*dx + dy*dy));
 					double tmpX = origtrk_x->at(idx) + (pvr_z->at(pvr_idx) - trk_z->at(idx))*tx - pvr_x->at(pvr_idx);
 					double tmpY = origtrk_y->at(idx) + (pvr_z->at(pvr_idx) - trk_z->at(idx))*ty - pvr_y->at(pvr_idx);
@@ -988,8 +1122,8 @@ void resampleTrackIPs::Loop()
 				}
 				//with chi2 cuts
 				if(irep==0) {
-					if(trk_ip_chi2->at(idx) < 16) hist8.Fill(trk_ip->at(idx));
-					else hist11.Fill(trk_ip->at(idx));
+					if(origtrk_ip_chi2->at(idx) < 16) hist8.Fill(origtrk_ip->at(idx));
+					else hist11.Fill(origtrk_ip->at(idx));
 					if((dx*dx + dy*dy)/sigma2 < 16) hist9.Fill(TMath::Sqrt(dx*dx + dy*dy));
 					else hist12.Fill(TMath::Sqrt(dx*dx + dy*dy));
 				} else {
@@ -1013,25 +1147,25 @@ void resampleTrackIPs::Loop()
 				}
 				//IP/sigma
 				if(irep==0) {
-					hist18.Fill(TMath::Sqrt(trk_ip_chi2->at(idx)),invpt);
+					hist18.Fill(TMath::Sqrt(origtrk_ip_chi2->at(idx)),invpt);
 					hist19.Fill(TMath::Sqrt(dx*dx + dy*dy)/sigma,invpt);
 
-					//std::cout << TMath::Sqrt(trk_ip->at(idx)) << "\t" << TMath::Sqrt(dx*dx + dy*dy) << std::endl;
+					//std::cout << TMath::Sqrt(origtrk_ip->at(idx)) << "\t" << TMath::Sqrt(dx*dx + dy*dy) << std::endl;
 				} else {
 					hist20.Fill(TMath::Sqrt(newDx*newDx + newDy*newDy)/sigma,invpt);
 				}
 				//IPchi2
 				if(irep==0) {
-					hist5.Fill(trk_ip_chi2->at(idx));
-					hist6.Fill((dx*dx + dy*dy)/sigma2);
+					hist5.Fill(TMath::Log(origtrk_ip_chi2->at(idx)));
+					hist6.Fill(TMath::Log((dx*dx + dy*dy)/sigma2));
 					
-					trueSumIPchi2 += trk_ip_chi2->at(idx);
+					trueSumIPchi2 += origtrk_ip_chi2->at(idx);
 					sumIPchi2 += (dx*dx + dy*dy)/sigma2;
 
-					if(trk_ip_chi2->at(idx) < 13.) ++nTrueInIPchi2Bin[0];
-//					else if(trk_ip_chi2->at(idx) < 12.) ++nTrueInIPchi2Bin[1];
-//					else if(trk_ip_chi2->at(idx) < 18.) ++nTrueInIPchi2Bin[2];
-//					else if(trk_ip_chi2->at(idx) < 24.) ++nTrueInIPchi2Bin[3];
+					if(origtrk_ip_chi2->at(idx) < 13.) ++nTrueInIPchi2Bin[0];
+//					else if(origtrk_ip_chi2->at(idx) < 12.) ++nTrueInIPchi2Bin[1];
+//					else if(origtrk_ip_chi2->at(idx) < 18.) ++nTrueInIPchi2Bin[2];
+//					else if(origtrk_ip_chi2->at(idx) < 24.) ++nTrueInIPchi2Bin[3];
 					else ++nTrueInIPchi2Bin[4];
 					if((dx*dx + dy*dy)/sigma2 < 13.) ++nInIPchi2Bin[0];
 //					else if((dx*dx + dy*dy)/sigma2 < 12.) ++nInIPchi2Bin[1];
@@ -1039,7 +1173,7 @@ void resampleTrackIPs::Loop()
 //					else if((dx*dx + dy*dy)/sigma2 < 24.) ++nInIPchi2Bin[3];
 					else ++nInIPchi2Bin[4];
 				} else {
-					hist7.Fill((newDx*newDx + newDy*newDy)/sigma2);
+					hist7.Fill(TMath::Log((newDx*newDx + newDy*newDy)/sigma2));
 
 					sumIPchi2 += (newDx*newDx + newDy*newDy)/sigma2;
 
@@ -1057,12 +1191,13 @@ void resampleTrackIPs::Loop()
 
 				//apply the IPchi2 cut to the new IPchi2
 				//if(irep==0) {
-				//	if(trk_ip_chi2->at(idx) < 16.) continue;
+				//	if(origtrk_ip_chi2->at(idx) < 16.) continue;
 				//} else {
 					if((newDx*newDx + newDy*newDy) / sigma2 < 13.) continue;
 				//}
 				if(irep>0) ++countAfter;
 				else ++countBefore;
+				if(trksToWatch.count(idx)) std::cout << "DEBUG track " << idx << " PASS IPCHI2" << std::endl;
 
 				//get direction and point on track for vertexing
 				TVector3 dir(trk_px->at(idx),trk_py->at(idx),trk_pz->at(idx));
@@ -1204,8 +1339,8 @@ void resampleTrackIPs::Loop()
 						double pt2 = p4.Vect().Cross(fv.Unit()).Mag2();
 						double mcor = TMath::Sqrt(m*m + pt2) + TMath::Sqrt(pt2);
 						double tz = fv.Z()*m/p4.Z()/(3e11)*(1e12);
-						double sigma2i = trk_ip->at(trks[itrk])*trk_ip->at(trks[itrk]) / trk_ip_chi2->at(trks[itrk]);
-						double sigma2j = trk_ip->at(trks[jtrk])*trk_ip->at(trks[jtrk]) / trk_ip_chi2->at(trks[jtrk]);
+						double sigma2i = origtrk_ip->at(trks[itrk])*origtrk_ip->at(trks[itrk]) / origtrk_ip_chi2->at(trks[itrk]);
+						double sigma2j = origtrk_ip->at(trks[jtrk])*origtrk_ip->at(trks[jtrk]) / origtrk_ip_chi2->at(trks[jtrk]);
 						double vtxchi2 = d*d/(sigma2i+sigma2j);
 
 						TVector3 dxdyi = calcDxDy(trkhit[itrk], trkdir[itrk], TVector3(pvr_x->at(pvr_idx),pvr_y->at(pvr_idx),pvr_z->at(pvr_idx)));
@@ -1539,6 +1674,38 @@ void resampleTrackIPs::Loop()
 				
 			}
 
+			for(uint isvr=0; isvr<svr_z->size(); ++isvr) {
+				pvr_idx = svr_idx_pvr->at(isvr);
+
+				if(irep==0) {
+					//if(svr_idx_trk0->at(isvr)!=-1 && TMath::Log(origtrk_ip_chi2->at(svr_idx_trk0->at(isvr)))>8.) std::cout << TMath::Log(origtrk_ip_chi2->at(svr_idx_trk0->at(isvr))) << "\t" << TMath::Log(trk_ip_chi2->at(svr_idx_trk0->at(isvr))) << std::endl;
+					//if(svr_idx_trk1->at(isvr)!=-1 && TMath::Log(origtrk_ip_chi2->at(svr_idx_trk1->at(isvr)))>8.) std::cout << TMath::Log(origtrk_ip_chi2->at(svr_idx_trk1->at(isvr))) << "\t" << TMath::Log(trk_ip_chi2->at(svr_idx_trk1->at(isvr))) << std::endl;
+
+					if(svr_idx_trk0->at(isvr)!=-1) hist6b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk0->at(isvr))));
+					if(svr_idx_trk1->at(isvr)!=-1) hist6b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk1->at(isvr))));
+					if(svr_idx_trk2->at(isvr)!=-1) hist6b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk2->at(isvr))));
+					if(svr_idx_trk3->at(isvr)!=-1) hist6b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk3->at(isvr))));
+					if(svr_idx_trk4->at(isvr)!=-1) hist6b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk4->at(isvr))));
+					if(svr_idx_trk5->at(isvr)!=-1) hist6b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk5->at(isvr))));
+					if(svr_idx_trk6->at(isvr)!=-1) hist6b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk6->at(isvr))));
+					if(svr_idx_trk7->at(isvr)!=-1) hist6b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk7->at(isvr))));
+					if(svr_idx_trk8->at(isvr)!=-1) hist6b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk8->at(isvr))));
+					if(svr_idx_trk9->at(isvr)!=-1) hist6b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk9->at(isvr))));
+				} else {
+					if(svr_idx_trk0->at(isvr)!=-1) hist7b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk0->at(isvr))));
+					if(svr_idx_trk1->at(isvr)!=-1) hist7b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk1->at(isvr))));
+					if(svr_idx_trk2->at(isvr)!=-1) hist7b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk2->at(isvr))));
+					if(svr_idx_trk3->at(isvr)!=-1) hist7b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk3->at(isvr))));
+					if(svr_idx_trk4->at(isvr)!=-1) hist7b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk4->at(isvr))));
+					if(svr_idx_trk5->at(isvr)!=-1) hist7b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk5->at(isvr))));
+					if(svr_idx_trk6->at(isvr)!=-1) hist7b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk6->at(isvr))));
+					if(svr_idx_trk7->at(isvr)!=-1) hist7b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk7->at(isvr))));
+					if(svr_idx_trk8->at(isvr)!=-1) hist7b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk8->at(isvr))));
+					if(svr_idx_trk9->at(isvr)!=-1) hist7b.Fill(TMath::Log(trk_ip_chi2->at(svr_idx_trk9->at(isvr))));
+				}
+			}
+
+
 			if(newtree) newtree->Fill();
 		}//end loop over reps
 
@@ -1631,6 +1798,9 @@ void resampleTrackIPs::Loop()
 	hist5.Scale(1.   );//,"width");
 	hist6.Scale(1    );//,"width");
 	hist7.Scale(0.01 );//,"width");
+	hist5b.Scale(1.   );//,"width");
+	hist6b.Scale(1    );//,"width");
+	hist7b.Scale(0.01 );//,"width");
 	hist8.Scale(1.   );//,"width");
 	hist9.Scale(1    );//,"width");
 	hist10.Scale(0.01);//,"width");
@@ -1723,6 +1893,14 @@ void resampleTrackIPs::Loop()
 	hist6.Draw("same");
 	hist7.SetLineColor(kGreen+2);
 	hist7.Draw("same");
+	hist5b.SetLineStyle(kDashed);
+	hist5b.Draw("same");
+	hist6b.SetLineStyle(kDashed);
+	hist6b.SetLineColor(kRed);
+	hist6b.Draw("same");
+	hist7b.SetLineStyle(kDashed);
+	hist7b.SetLineColor(kGreen+2);
+	hist7b.Draw("same");
 	c.SaveAs("ipchi2.pdf");
 
 	c.SetLogx(0);
@@ -2072,7 +2250,7 @@ void resampleTrackIPs::Loop()
 //      - run with argument (n) to produce n resampled datasets
 int main(int argc, char** argv) {
 	int max(-1);
-	TString dir("");
+	TString dir("/tmp/dcraik/");
 	if(argc>1) max=atoi(argv[1]);
 	if(argc>2) dir=argv[2];
 
@@ -2080,7 +2258,7 @@ int main(int argc, char** argv) {
 		resampleTrackIPs a(-1,dir);
 		a.Loop();
 	} else {
-		for(int i=0; i<=max; ++i) {
+		for(int i=41; i<=max; ++i) {
 			std::cout << i << " of " << max << std::endl;
 			resampleTrackIPs a(i,dir);
 			a.Loop();

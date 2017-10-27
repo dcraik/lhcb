@@ -45,11 +45,12 @@ j = Job(
   backend        = Dirac(),
   outputfiles    = [DiracFile("*.root")],
   
-#  splitter       = SplitByFiles(filesPerJob = 1, maxFiles = 2),
+#  splitter       = SplitByFiles(filesPerJob = 1, maxFiles = 4),
 #  backend        = Local(),
 #  outputfiles     = [LocalFile("*.root")],
   )
 j.application.readInputData(path)
+j.parallel_submit = True
 
 queues.add(j.submit)
 

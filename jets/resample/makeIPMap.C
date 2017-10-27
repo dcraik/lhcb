@@ -3,6 +3,11 @@
 #include <TH2.h>
 #include <TStyle.h>
 #include <TCanvas.h>
+#include <TMath.h>
+#include <TVector3.h>
+#include <TLorentzVector.h>
+
+#include <iostream>
 
 //Calculate distance of closest approach of line given by point A and direction A to point B
 //Equation from Wolfram Alpha
@@ -141,6 +146,8 @@ void makeIPMap::Loop()
 
 	TH2D phiprompt(   "phiprompt",   "", 10, binscosphi, 3, binsinvpt);
 
+	TH2D hiipchi2prompt(   "hiipchi2prompt",   "", 60, binsip, 3, binsinvpt);
+
 	int pvr_idx(0);
 	double tx(0.), ty(0.), dx(0.), dy(0.), sigma(0.), invpt(0.);
 	int nSkipped(0), nTruth(0), nPrompt(0), nTotal(0);
@@ -156,9 +163,9 @@ void makeIPMap::Loop()
 		//store list of prompt tracks for each pvr to perform opening angle study
 		std::map<int, std::vector<int> > promptTrksByPV;
 
-		for(int idx=0; idx!= trk_z->size(); ++idx) {
+		for(uint idx=0; idx!= trk_z->size(); ++idx) {
 			if(trk_type->at(idx) != 3) continue;
-			if(trk_pt->at(idx)<500 || trk_prb_ghost->at(idx)>0.3) continue;
+			if((trk_px->at(idx)*trk_px->at(idx) + trk_py->at(idx)*trk_py->at(idx))<500*500 || trk_prb_ghost->at(idx)>0.3) continue;
 			++nTotal;
 
 			bool isPrompt(false), isTruth(false);
@@ -195,7 +202,7 @@ void makeIPMap::Loop()
 				double minDOCA=100.;
 				TVector3 pp(trk_x->at(idx), trk_y->at(idx), trk_z->at(idx));
 				TVector3 dp(trk_px->at(idx), trk_py->at(idx), trk_pz->at(idx));
-				for(int ipvr=0; ipvr<pvr_z->size(); ++ipvr) {
+				for(uint ipvr=0; ipvr<pvr_z->size(); ++ipvr) {
 					TVector3 pv(pvr_x->at(ipvr),pvr_y->at(ipvr),pvr_z->at(ipvr));
 					double doca = calcDocaPoint(pp,dp,pv);
 					if(doca<minDOCA) {
@@ -231,7 +238,7 @@ void makeIPMap::Loop()
 
 				TVector3 dxdyi = calcDxDy(xi, pi, pv);
 
-				for(int jtrk=0; jtrk<promptTrksByPV[pvr_idx].size(); ++jtrk) {
+				for(uint jtrk=0; jtrk<promptTrksByPV[pvr_idx].size(); ++jtrk) {
 					int idxj = promptTrksByPV[pvr_idx][jtrk];
 
 					int nshared = getNSharedVeloHits(idx,idxj);
@@ -283,6 +290,7 @@ void makeIPMap::Loop()
 					++nPrompt;
 					prompt.Fill(TMath::Sqrt(dx*dx+dy*dy)/sigma, invpt);
 					phiprompt.Fill(TMath::ATan2(dy,dx), invpt);
+					if(TMath::Log(trk_ip_chi2->at(idx)) > 10.) hiipchi2prompt.Fill(TMath::Sqrt(dx*dx+dy*dy)/sigma, invpt);
 				}
 				else nonprompt.Fill(TMath::Sqrt(dx*dx+dy*dy)/sigma, invpt);
 			}
@@ -294,7 +302,7 @@ void makeIPMap::Loop()
 	promptandnontruth.Add(&prompt,&nontruth);
 	subnonprompt.Add(&promptandnontruth,&nonprompt,1.,-((nTotal-nSkipped-nTruth)/static_cast<double>(nTruth)));
 
-	TFile* f = TFile::Open("ipmap-new.root","RECREATE");
+	TFile* f = TFile::Open("ipmap-new-new.root","RECREATE");
 	prompt.Write();
 	nonprompt.Write();
 	truth.Write();
@@ -305,9 +313,15 @@ void makeIPMap::Loop()
 	deltaDR.Write();
 	deltaDR2.Write();
 	phiprompt.Write();
+	hiipchi2prompt.Write();
 	f->Close();
 
 	std::cout << maxX << "\t" << minX << "\t" << maxY << "\t" << minY << std::endl;
 	std::cout << nSkipped << "\t" << nTruth << "\t" << nPrompt << "\t" << nTotal << std::endl;
 	//138.68  5.6146e-06      0.00995349      2.36823e-05
+}
+
+int main() {
+	makeIPMap m;
+	m.Loop();
 }

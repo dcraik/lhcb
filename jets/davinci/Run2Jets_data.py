@@ -11,10 +11,21 @@ fltrs = LoKi_Filters (
 #   HLT_PASS_RE ( 'StrippingHltQEEJetsDiJet.*'    )
 #   """
 #    )
+####DiJet*
+#    STRIP_Code = """
+#   HLT_PASS_RE ( 'StrippingHltQEEJetsDiJet.*LineDecision'    )
+#   """
+#    )
+####DiJetSV
     STRIP_Code = """
    HLT_PASS_RE ( 'StrippingHltQEEJetsDiJetSVLineDecision'    )
    """
     )
+####DiJet
+#    STRIP_Code = """
+#   HLT_PASS_RE ( 'StrippingHltQEEJetsDiJetLineDecision'    )
+#   """
+#    )
 
 
 # Data type configuration.
@@ -325,11 +336,22 @@ charmKaons = SimpleSelection (
             "& (MIPCHI2DV(PRIMARY) > 4)")
     )
 
+charmProtons = SimpleSelection (
+    'charmProtons'         ,
+    FilterDesktop   ,
+    [ looseprotons ]    ,
+    DecayDescriptor = "[p+]cc",
+    Code = (#"(PIDp - PIDpi > 5) & "
+            "(PT>200*MeV)"
+            "& (TRGHOSTPROB<0.3)"
+            "& (MIPCHI2DV(PRIMARY) > 4)")
+    )
+
 dcD0 = { }
 for child in ['pi+','K+'] :
     dcD0[child] = "(PT > 250*MeV)" \
                   "& (P > 2*GeV)" \
-                  "& (MIPCHI2DV(PRIMARY) > 16)"
+                  "& (MIPCHI2DV(PRIMARY) > 4)" #16)"
 #                  "& (TRCHI2 < 3)" \
 
 combcutsD0 = "in_range(1784*MeV,  AM, 1944*MeV)" \
@@ -359,15 +381,15 @@ for child in ['pi+','K+'] :
 
 combcutsDp = "in_range(1789*MeV,  AM, 1949*MeV)" \
              "& (ANUM(PT > 400*MeV) > 1)" \
-             "& (ANUM(PT > 1000*MeV) > 0)" \
-             "& (ANUM(MIPCHI2DV(PRIMARY) > 10) > 1)" \
-             "& (ANUM(MIPCHI2DV(PRIMARY) > 50) > 0)"
+             "& (ANUM(PT > 1000*MeV) > 0)" #\
+#             "& (ANUM(MIPCHI2DV(PRIMARY) > 10) > 1)" \
+#             "& (ANUM(MIPCHI2DV(PRIMARY) > 50) > 0)"
 
 parentcutsDp = "(VFASPF(VCHI2PDOF) < 25)" \
                "& BPVVALID()" \
                "& (BPVVDCHI2 > 16 )" \
-               "& (BPVLTIME() > 0.150*ps )" \
                "& (BPVDIRA > 0.9994 )"
+#               "& (BPVLTIME() > 0.150*ps )" \
 
 recDp = SimpleSelection (
     'recDp',
@@ -388,15 +410,15 @@ for child in ['pi+','K+'] :
 
 combcutsDs = "in_range(1889*MeV,  AM, 2049*MeV)" \
              "& (ANUM(PT > 400*MeV) > 1)" \
-             "& (ANUM(PT > 1000*MeV) > 0)" \
-             "& (ANUM(MIPCHI2DV(PRIMARY) > 10) > 1)" \
-             "& (ANUM(MIPCHI2DV(PRIMARY) > 50) > 0)"
+             "& (ANUM(PT > 1000*MeV) > 0)" #\
+#             "& (ANUM(MIPCHI2DV(PRIMARY) > 10) > 1)" \
+#             "& (ANUM(MIPCHI2DV(PRIMARY) > 50) > 0)"
 
 parentcutsDs = "(VFASPF(VCHI2PDOF) < 25)" \
                "& BPVVALID()" \
                "& (BPVVDCHI2 > 16 )" \
-               "& (BPVLTIME() > 0.150*ps )" \
                "& (BPVDIRA > 0.9994 )"
+#               "& (BPVLTIME() > 0.150*ps )" \
 
 recDs = SimpleSelection (
     'recDs',
@@ -406,6 +428,34 @@ recDs = SimpleSelection (
     DaughtersCuts   = dcDs,
     CombinationCut = (combcutsDs),
     MotherCut      =  (parentcutsDs),
+)
+
+dcLc = { }
+for child in ['pi+','K+','p+'] :
+    dcLc[child] = "(PT > 200*MeV)" \
+                  "& (P > 2*GeV)" \
+                  "& (MIPCHI2DV(PRIMARY) > 4)"
+#                  "& (TRCHI2 < 3)" \
+
+combcutsLc = "in_range(2256*MeV,  AM, 2316*MeV)" \
+             "& (ANUM(PT > 400*MeV) > 1)" \
+             "& (ANUM(PT > 1000*MeV) > 0)" #\
+#             "& (ANUM(MIPCHI2DV(PRIMARY) > 10) > 1)" \
+#             "& (ANUM(MIPCHI2DV(PRIMARY) > 50) > 0)"
+
+parentcutsLc = "(VFASPF(VCHI2PDOF) < 25)" \
+               "& BPVVALID()" \
+               "& (BPVVDCHI2 > 16 )" \
+               "& (BPVDIRA > 0.9994 )"
+
+recLc = SimpleSelection (
+    'recLc',
+    CombineParticles,
+    [charmProtons,charmKaons,charmPions],
+    DecayDescriptor = "[Lambda_c+ -> p+ K- pi+]cc",
+    DaughtersCuts   = dcLc,
+    CombinationCut = (combcutsLc),
+    MotherCut      =  (parentcutsLc),
 )
 
 dcD02K3pi = { }
@@ -436,6 +486,7 @@ recD02K3pi = SimpleSelection (
 D0_seq = SelectionSequence('D0_Seq', TopSelection=recD0)
 Dp_seq = SelectionSequence('Dp_Seq', TopSelection=recDp)
 Ds_seq = SelectionSequence('Ds_Seq', TopSelection=recDs)
+Lc_seq = SelectionSequence('Lc_Seq', TopSelection=recLc)
 D02K3pi_seq = SelectionSequence('D2K3pi0_Seq', TopSelection=recD02K3pi)
 
 ##########################
@@ -447,7 +498,7 @@ DaVinci().Lumi = True
 DaVinci().TupleFile = "LumiTuple.root"
 #DaVinci().appendToMainSequence([genPF, genJB, recPF, recJB])
 #DaVinci().appendToMainSequence([recPF, recJB])
-DaVinci().appendToMainSequence([recPF, recJB, recSVs_seq.sequence(), recMus_seq.sequence(), D0_seq.sequence(), Dp_seq.sequence(), Ds_seq.sequence(), D02K3pi_seq.sequence()])
+DaVinci().appendToMainSequence([recPF, recJB, recSVs_seq.sequence(), recMus_seq.sequence(), D0_seq.sequence(), Dp_seq.sequence(), Ds_seq.sequence(), Lc_seq.sequence(), D02K3pi_seq.sequence()])
 ##TODO adding recSVs and recMus changes the daughters of jet objects from smart poniters to Particles
 DaVinci().DataType = '2016'
 DaVinci().EventPreFilters = fltrs.filters ('Filters')
@@ -555,7 +606,7 @@ class Ntuple:
         self.init('pvr', pos + cov)
         self.init('svr', ['idx_pvr', 'idx_jet'] + [
                 'idx_trk%i' % i for i in range(0, 10)] + 
-                  mom + pos + ['m', 'm_cor', 'pt', 'fd_min', 'fd_chi2', 'chi2', 'ip_chi2_sum', 'abs_q_sum', 'tau', 'ntrk', 'ntrk_jet', 'jet_dr', 'jet_pt', 'pass', 'bdt0', 'bdt1'])
+                  mom + pos + ['m', 'm_cor', 'm_cor_err', 'm_cor_err_full', 'pt', 'fd_min', 'fd_chi2', 'chi2', 'ip_chi2_sum', 'abs_q_sum', 'tau', 'ntrk', 'ntrk_jet', 'jet_dr', 'jet_pt', 'pass', 'bdt0', 'bdt1'])
         self.init('jet', ['idx_pvr', 'ntrk', 'nneu'] + mom) #+ ['idx_trk%i' % i for i in range(0, 40)] + [
         #'%s_%s' % (i,j) for i in ['DiJet','DiJetSV','DiJetSVSV','DiJetSVMu','DiJetMuMu'] for j in ['Dec','pRatio1','pRatio2','neuMultRatio1','neuMultRatio2','chrgMultRatio1','chrgMultRatio2','dR1','dR2'] 
         #])
@@ -568,6 +619,7 @@ class Ntuple:
         self.init('d0', ['idx_pvr','idx_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 2)]) 
         self.init('dp', ['idx_pvr','idx_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 3)]) 
         self.init('ds', ['idx_pvr','idx_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 3)]) 
+        self.init('lc', ['idx_pvr','idx_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 3)]) 
         self.init('d02k3pi', ['idx_pvr','idx_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 4)]) 
         self.init('evt', ['dec'] + ['%s_%s' % (k,l) for k in ['j1', 'j2'] for l in ['idx','dR','nsv','nmu','ntrk','nneu'] + mom ] )
         self.ntuple['evt_pvr_n'] = array.array('d', [-1])
@@ -1080,6 +1132,8 @@ class Ntuple:
                 vrs[vr] = tags['Tag%i_%s' % (itag, vr)]
             vrs['m']  = tags['Tag%i_m' % itag]
             vrs['m_cor']  = tags['Tag%i_mCor' % itag]
+            vrs['m_cor_err']  = tags['Tag%i_mCorErr' % itag]
+            vrs['m_cor_err_full']  = tags['Tag%i_mCorErrFull' % itag]
             vrs['pt']  = tags['Tag%i_pt' % itag]
             vrs['fd_min'] = tags['Tag%i_fdrMin' % itag]
             vrs['fd_chi2']  = tags['Tag%i_fdChi2' % itag]
@@ -1222,6 +1276,9 @@ while evtmax < 0 or evtnum < evtmax:
         dss = tes[recDs.algorithm().Output]
         for ds in dss:
             ntuple.addDHad(ds,"ds")
+        lcs = tes[recLc.algorithm().Output]
+        for lc in lcs:
+            ntuple.addDHad(lc,"lc")
         d0s = tes[recD02K3pi.algorithm().Output]
         for d0 in d0s:
             ntuple.addDHad(d0,"d02k3pi")

@@ -59,3 +59,8 @@ void filterLight::Loop()
    newtree->AutoSave();
    newfile->Close();
 }
+
+int main() {
+	filterLight fl;
+	fl.Loop();
+}
