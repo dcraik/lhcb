@@ -338,7 +338,7 @@ dcD0 = { }
 for child in ['pi+','K+'] :
     dcD0[child] = "(PT > 250*MeV)" \
                   "& (P > 2*GeV)" \
-                  "& (MIPCHI2DV(PRIMARY) > 4)"#16)"
+                  "& (MIPCHI2DV(PRIMARY) > 4)" #16)"
 #                  "& (TRCHI2 < 3)" \
 
 combcutsD0 = "in_range(1784*MeV,  AM, 1944*MeV)" \

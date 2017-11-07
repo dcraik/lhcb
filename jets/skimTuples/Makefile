@@ -5,7 +5,7 @@ ROOTFLAGS = `root-config --cflags` # --libs` `gsl-config --cflags` -lThread -lMi
 ROOTLIBS  = `root-config --glibs` -lRooFit -lThread -lMinuit -lMathCore -lRooStats -lRooFit -lRooFitCore -lFoam -lTreePlayer
 INCPATH   = -I.
 
-all : 	skim_for_yandex	skim_for_yandex_data skim_for_yandex_data_z0 skim_for_yandex_data_light skim_for_yandex_DMC skimD0s skimD0sFromB skimCharm charmEfficiencies weightCharmEffs fit fitD0 fitD fitDs fitLc fit2d tagEvents skimZs
+all : 	skim_for_yandex	skim_for_yandex_data skim_for_yandex_data_z0 skim_for_yandex_data_light skim_for_yandex_DMC skimD0s skimD0sFromB skimCharm charmEfficiencies weightCharmEffs fit fitD0 fitD fitDs fitLc fit2d tagEvents skimZs fitD0withZ getTotalCharmYields
 
 skim_for_yandex.o : skim_for_yandex.cc
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
@@ -128,4 +128,16 @@ skimZs.o : skimZs.C skimZs.h
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
 
 skimZs : skimZs.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
+
+fitD0withZ.o : fitD0withZ.C 
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
+
+fitD0withZ : fitD0withZ.o RooPromptShape.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
+
+getTotalCharmYields.o : getTotalCharmYields.C 
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
+
+getTotalCharmYields : getTotalCharmYields.o RooPromptShape.o
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)

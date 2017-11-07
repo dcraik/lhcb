@@ -9,7 +9,7 @@ job_name = "RIIJ_test" + str(polarity) + str(mode)
 print job_name
 print script
 
-DV = GaudiExec(directory="~/DaVinciDev_v42r3")
+DV = GaudiExec(directory="~/DaVinciDev_v42r6p1")
 DV.options = [script]
 DV.useGaudiRun = False
 

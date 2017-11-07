@@ -69,13 +69,12 @@ double calcDocaPoint(const TVector3 &pa, const TVector3 &da, const TVector3 &pb)
 
 int main(int argc, char *argv[]){
 
-	//  int type = atoi(argv[1]);
+	TString type = argv[1];
 	TRandom3 rand;
 
 	char str[1000];
-	sprintf(str,"/tmp/dcraik/for_yandex_data.root");
-	TFile fout(str,"recreate");
 
+	TFile* fout = TFile::Open("/tmp/dcraik/for_yandex_data_"+type+".root","recreate");
 	TTree *tout = new TTree("T","");
 	int e(0);
 	double JPX,JPY,JPZ,JE,JPT,JETA,JS1,JS2,JQ,JN,JNQ,JNN,JPTD,JDIJETDEC,JDIJETSVDEC, JDIJETSVSVDEC, JDIJETSVMUDEC, JDIJETMUMUDEC;
@@ -362,18 +361,23 @@ int main(int argc, char *argv[]){
 	//}
 	//job 289: found 948 of 1050
 	//job 290: found 784 of 950
-	boost::progress_display show_addfile_progress( 1050+950 );
-	for(int i=0; i<1050; ++i) {
-		++show_addfile_progress;
-		sprintf(str,"/eos/lhcb/user/d/dcraik/jets/289/%d/output.root",i);
-		if(gSystem->AccessPathName(str)) continue;
-		t->Add(str);
+	if(type=="MD") {
+		boost::progress_display show_addfile_progress( 1050 );
+		for(int i=0; i<1050; ++i) {
+			++show_addfile_progress;
+			sprintf(str,"/eos/lhcb/user/d/dcraik/jets/289/%d/output.root",i);
+			if(gSystem->AccessPathName(str)) continue;
+			t->Add(str);
+		}
 	}
-	for(int i=0; i<950; ++i) {
-		++show_addfile_progress;
-		sprintf(str,"/eos/lhcb/user/d/dcraik/jets/290/%d/output.root",i);
-		if(gSystem->AccessPathName(str)) continue;
-		t->Add(str);
+	if(type=="MU") {
+		boost::progress_display show_addfile_progress( 950 );
+		for(int i=0; i<950; ++i) {
+			++show_addfile_progress;
+			sprintf(str,"/eos/lhcb/user/d/dcraik/jets/290/%d/output.root",i);
+			if(gSystem->AccessPathName(str)) continue;
+			t->Add(str);
+		}
 	}
 
 	//  vector<double> *gen_px = new vector<double>();
@@ -2210,8 +2214,10 @@ int main(int argc, char *argv[]){
 	  << "\t" << nFound2MuForMuMuOffline
 	  << "\t" << nFound2MuForMuMuOnOff << "\t" << (double)nFound2MuForMuMuOnline/nFoundBothMuMuTOS << "\t" << (double)nFound2MuForMuMuOffline/nFoundBothMuMuTOS << std::endl;
 
-	fout.cd();
-	tout->Write("T",TObject::kOverwrite);
+	//fout.cd();
+	//tout->Write("T",TObject::kOverwrite);
+	tout->AutoSave();
+	fout->Close();
 
 	return 0;
 }

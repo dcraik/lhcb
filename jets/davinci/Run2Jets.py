@@ -1,21 +1,19 @@
 #!/bin/env python
 
-#from PhysConf.Filters import LoKi_Filters
-#fltrs = LoKi_Filters (
-#    STRIP_Code = """
-#   HLT_PASS_RE ( 'StrippingHltQEEJetsDiJet.*'    )
-#   """
-#    )
-
 # Data type configuration.
 from GaudiKernel import SystemOfUnits as Units
 Type     = 'MC'
 JetPtMin = 10 * Units.GeV
 
-## Data.
+# Data.
 #from GaudiConf import IOHelper
-#IOHelper('ROOT').inputFiles(['/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00042952/0000/00042952_00000001_1.ldst'], #/tmp/dcraik/00042952_00000002_1.ldst'], #/data/dst/MC15.MD.49000004.1.00.dst'],
-#                            clear = True)
+#IOHelper('ROOT').inputFiles([
+##'/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00042952/0000/00042952_00000001_1.ldst' #/tmp/dcraik/00042952_00000002_1.ldst' #/data/dst/MC15.MD.49000004.1.00.dst'
+#    '/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00042982/0000/00042982_00000002_1.ldst'#light
+##    '/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00042950/0000/00042950_00000001_1.ldst'#charm
+##    '/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00042972/0000/00042972_00000003_1.ldst'#beauty
+#    ],
+#    clear = True)
 ##Type = 'MC'
 
 # Create the generated jets.

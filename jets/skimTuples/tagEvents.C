@@ -17,9 +17,9 @@ void tagEvents(TString dir="./") {
 	//TFile* f = TFile::Open(dir+"for_yandex_data_SV.root");
 	//TTree* t = dynamic_cast<TTree*>(f->Get("T"));
 	TChain* t = new TChain("T");
-	t->Add("/tmp/dcraik/for_yandex_data.root");
-	//t->Add("/tmp/dcraik/for_yandex_data_MD.root");
-	//t->Add("/tmp/dcraik/for_yandex_data_MU.root");
+	//t->Add("/tmp/dcraik/for_yandex_data.root");
+	t->Add("/tmp/dcraik/for_yandex_data_MD.root");
+	t->Add("/tmp/dcraik/for_yandex_data_MU.root");
 
 	TFile* f0 = TFile::Open(dir+"for_yandex_data_SV_0tag.root","RECREATE");
 	TTree* t0 = t->CloneTree(0);
