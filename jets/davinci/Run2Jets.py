@@ -5,7 +5,7 @@ from GaudiKernel import SystemOfUnits as Units
 Type     = 'MC'
 JetPtMin = 10 * Units.GeV
 
-# Data.
+### Data.
 #from GaudiConf import IOHelper
 #IOHelper('ROOT').inputFiles([
 ##'/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00042952/0000/00042952_00000001_1.ldst' #/tmp/dcraik/00042952_00000002_1.ldst' #/data/dst/MC15.MD.49000004.1.00.dst'
@@ -430,7 +430,7 @@ class Ntuple:
         self.init('svr', ['idx_pvr', 'idx_jet'] + [
                 'idx_trk%i' % i for i in range(0, 10)] + 
                   mom + pos + ['m', 'm_cor', 'm_cor_err', 'm_cor_err_full', 'pt', 'fd_min', 'fd_chi2', 'chi2', 'ip_chi2_sum', 'abs_q_sum', 'tau', 'ntrk', 'ntrk_jet', 'jet_dr', 'jet_pt', 'pass', 'bdt0', 'bdt1'])
-        self.init('jet', ['idx_pvr', 'ntrk', 'nneu'] + mom) #+ ['idx_trk%i' % i for i in range(0, 40)])
+        self.init('jet', ['idx_pvr', 'ntrk', 'nneu'] + mom)
         self.init('trk', ['idx_gen', 'idx_pvr', 'idx_jet'] + mom +
                   ['pid', 'q', 'ip', 'ip_chi2', 'pnn_e', 'pnn_mu', 'pnn_pi',
                    'pnn_k', 'pnn_p', 'pnn_ghost', 'ecal', 'hcal', 'prb_ghost', 'type', 'is_mu',
@@ -737,18 +737,15 @@ class Ntuple:
             vrs['idx_trk%i' % (len(trks) - 1)] = trks[-1][0]
         self.fill(pre, vrs = vrs)
     def addTags(self, obj, jet = -1, pre = 'svr'):
-#        stash.append(pre)
         tags = STD.map('string', 'double')()
         if not self.tagTool.calculateJetProperty(obj, tags): return
         ntag = int(tags['Tag'])
         for itag in range(0, ntag):
-#            stash.append("tag")
             vrs = {}
             vrs['idx_pvr'] = self.addPvr(self.tes['Rec/Vertex/Primary']
                                          [int(tags['Tag%i_idx_pvr' % itag])])
             vrs['idx_jet'] = jet
             ntrk = int(tags['Tag%i_nTrk' % itag])
-#            stash.append(ntrk)
             for itrk in range(0, ntrk): vrs['idx_trk%i' % itrk] = self.addTrk(
                 self.tes['Phys/StdAllNoPIDsPions/Particles']
                 [int(tags['Tag%i_idx_trk%i' % (itag, itrk)])]);
@@ -795,7 +792,6 @@ class Ntuple:
                 nneu+=1
             else:
                 trks += [[self.addTrk(dtr, idx), dtr.proto().track()]]
-                #vrs['idx_trk%i' % (len(trks) - 1)] = trks[-1][0]
         vrs['ntrk'] = len(trks)
         vrs['nneu'] = nneu
         self.addTags(obj, idx)
@@ -808,11 +804,7 @@ class Ntuple:
         vrs['idx_jet'] = jet
         self.fill(pre, vrs = vrs)
     def addTrk(self, obj, jet = -1, pre = 'trk'):
-#        printStash=False
-#        if stash[-2] == "trk": printStash=True
         key = self.key(obj)
-#        if printStash: stash.append("addTrk")
-#        if printStash: stash.append(key)
         if key in self.saved[pre]: return self.saved[pre][key]
         vrs = {}
         idx = len(self.saved[pre])
@@ -827,8 +819,6 @@ class Ntuple:
         vrs['idx_jet'] = jet
         self.saved[pre][key] = idx
         self.fill(pre, vrs = vrs)
-#        if printStash: stash.append(vrs)
-#        if printStash: stash.append("endTrk")
         return idx
 
 # GaudiPython configuration.
@@ -838,14 +828,12 @@ tes   = gaudi.evtsvc()
 # Run.
 import sys, ROOT
 from math import floor
-#stash = []
 evtmax = -1
 #try: evtmax = int(sys.argv[1])
 #except: evtmax = float('inf')
 evtnum = 0
 ntuple = Ntuple('output.root', tes, gaudi.toolsvc(), gaudi.detSvc())
 while evtmax < 0 or evtnum < evtmax:
-#    stash.append("...")
     gaudi.run(1)
     if not bool(tes['/Event']): break
     evtnum += 1

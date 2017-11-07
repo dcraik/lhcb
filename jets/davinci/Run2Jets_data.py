@@ -2,15 +2,6 @@
 
 from PhysConf.Filters import LoKi_Filters
 fltrs = LoKi_Filters (
-#    HLT_Code = """
-#    HLT_PASS_RE ( 'L0DiMuonDecision' )
-#    & HLT_PASS_RE ( 'Hlt1DiMuonHighMassDecision' )
-#    & HLT_PASS_RE ( 'Hlt2DiMuonB.*Decision' )
-#   """,
-#    STRIP_Code = """
-#   HLT_PASS_RE ( 'StrippingHltQEEJetsDiJet.*'    )
-#   """
-#    )
 ####DiJet*
 #    STRIP_Code = """
 #   HLT_PASS_RE ( 'StrippingHltQEEJetsDiJet.*LineDecision'    )
@@ -121,119 +112,14 @@ kaons = SimpleSelection (
             "& (TRGHOSTPROB<0.2)")
     )
 
-#THESE MATCH STDPARTICLES
-#KSLL = SimpleSelection (
-#    'KSLL',
-#    CombineParticles,
-#    [longpions],
-#    DecayDescriptor = "KS0 -> pi+ pi-",
-#    DaughtersCuts = {
-#        "pi+" : "(P > 2.*GeV) & (MIPCHI2DV(PRIMARY) > 9.)"
-#        },
-#    CombinationCut = ("(ADAMASS('KS0') < 50.*MeV) & (ADOCACHI2CUT(25, ''))"),
-#    MotherCut      =  ("(ADMASS('KS0') < 35.*MeV) & (VFASPF(VCHI2) < 25.)"),
-#)
-#
-#KSDD = SimpleSelection (
-#    'KSDD',
-#    CombineParticles,
-#    [downpions],
-#    DecayDescriptor = "KS0 -> pi+ pi-",
-#    DaughtersCuts = {
-#        "pi+" : "(P > 2.*GeV) & (MIPCHI2DV(PRIMARY) > 4.)"
-#        },
-#    CombinationCut = ("(ADAMASS('KS0') < 80.*MeV) & (ADOCACHI2CUT(25, ''))"),
-#    MotherCut      =  ("(ADMASS('KS0') < 64.*MeV) & (VFASPF(VCHI2) < 25.)"),
-#)
-#
-#LambdaLL = SimpleSelection (
-#    'LambdaLL',
-#    CombineParticles,
-#    [longpions,longprotons],
-#    DecayDescriptor = "[Lambda0 -> p+ pi-]cc",
-#    DaughtersCuts = {
-#        "p+" : "(P > 2.*GeV) & (MIPCHI2DV(PRIMARY) > 9.)",
-#        "pi+" : "(P > 2.*GeV) & (MIPCHI2DV(PRIMARY) > 9.)"
-#        },
-#    CombinationCut = ("(ADAMASS('Lambda0') < 50.*MeV) & (ADOCACHI2CUT(30, ''))"),
-#    MotherCut      =  ("(ADMASS('Lambda0') < 35.*MeV) & (VFASPF(VCHI2) < 30.)"),
-#)
-#
-#LambdaDD = SimpleSelection (
-#    'LambdaDD',
-#    CombineParticles,
-#    [downpions,downprotons],
-#    DecayDescriptor = "[Lambda0 -> p+ pi-]cc",
-#    DaughtersCuts = {
-#        "p+" : "(P > 2.*GeV) & (MIPCHI2DV(PRIMARY) > 4.)",
-#        "pi+" : "(P > 2.*GeV) & (MIPCHI2DV(PRIMARY) > 4.)"
-#        },
-#    CombinationCut = ("(ADAMASS('Lambda0') < 80.*MeV) & (ADOCACHI2CUT(25, ''))"),
-#    MotherCut      =  ("(ADMASS('Lambda0') < 64.*MeV) & (VFASPF(VCHI2) < 25.)"),
-#)
-
-##THESE MATCH Hlt/Hlt2SharedParticles/python/Hlt2SharedParticles
-#KSLL = SimpleSelection (
-#    'KSLL',
-#    CombineParticles,
-#    [longpions],
-#    DecayDescriptor = "KS0 -> pi+ pi-",
-#    DaughtersCuts = {
-#        "pi+" : "(TRCHI2DOF<3.)& (MIPCHI2DV(PRIMARY)>36)"
-#        },
-#    CombinationCut = ("(ADAMASS('KS0') < 50.*MeV)"),
-#    MotherCut      =  ("(ADMASS('KS0') < 35.*MeV) & (VFASPF(VCHI2PDOF)<30) & (BPVLTIME() > 2.0*ps)"),
-#)
-#
-#KSDD = SimpleSelection (
-#    'KSDD',
-#    CombineParticles,
-#    [downpions],
-#    DecayDescriptor = "KS0 -> pi+ pi-",
-#    DaughtersCuts = {
-#        "pi+" : "(TRCHI2DOF<4) & (P>3000*MeV) & (PT > 175.*MeV)"
-#        },
-#    CombinationCut = ("(ADAMASS('KS0') < 80.*MeV)"),
-#    MotherCut      =  ("(ADMASS('KS0') < 64.*MeV) & (VFASPF(VCHI2PDOF)<30)  & (BPVVDZ > 400.0*mm)"),
-#)
-#
-#LambdaLL = SimpleSelection (
-#    'LambdaLL',
-#    CombineParticles,
-#    [longpions,longprotons],
-#    DecayDescriptor = "[Lambda0 -> p+ pi-]cc",
-#    DaughtersCuts = {
-#        "p+" : "BPVVALID() & (TRCHI2DOF<4) & (MIPCHI2DV(PRIMARY)>36)",
-#        "pi+" : "BPVVALID() & (TRCHI2DOF<4) & (MIPCHI2DV(PRIMARY)>36)"
-#        },
-#    CombinationCut = ("(ADAMASS('Lambda0') < 50.*MeV)"),
-#    MotherCut      =  ("(ADMASS('Lambda0') < 20.*MeV) & (CHI2VXNDOF<30) & (BPVLTIME() > 2.0*ps)"),
-#)
-#
-#LambdaDD = SimpleSelection (
-#    'LambdaDD',
-#    CombineParticles,
-#    [downpions,downprotons],
-#    DecayDescriptor = "[Lambda0 -> p+ pi-]cc",
-#    DaughtersCuts = {
-#        "p+" : "(TRCHI2DOF<4)& (P>3000*MeV)  & (PT>175.*MeV)",
-#        "pi+" : "(TRCHI2DOF<4)& (P>3000*MeV)  & (PT>175.*MeV)"
-#        },
-#    CombinationCut = ("(ADAMASS('Lambda0') < 80.*MeV)"),
-#    MotherCut      =  ("in_range(1095*MeV, M, 1140*MeV) & (CHI2VXNDOF<30) & (BPVVDZ > 400.0*mm)"),
-#)
-
 combKS = MergedSelection (
     'combKS',
-    #RequiredSelections =  [KSLL, KSDD]
     RequiredSelections =  [looseKSLL, looseKSDD]
     )
 
 combLambda = MergedSelection (
     'combLambda',
-    #RequiredSelections =  [LambdaLL, LambdaDD]
     RequiredSelections =  [vlooseLambdaLL, looseLambdaDD]
-#    RequiredSelections =  [looseLambdaLL, vlooseLambdaLL, looseLambdaDD]
     )
 
 allSVs = []
@@ -284,16 +170,6 @@ recSVs = SimpleSelection (
             "& (HASVERTEX) & (VFASPF(VCHI2PDOF) < 10) "
             "& (BPVVDCHI2 > 25)")
     )
-
-
-#recSVs = SimpleSelection (
-#    'recSVs',
-#    CombineParticles,
-#    [ kaons ],
-#    DecayDescriptor = "K*(892)0 -> K+ K-",
-##    CombinationCut  = "ALL",
-#    MotherCut       = "(VFASPF(VCHI2PDOF) < 10.) & (BPVVDCHI2 > 25.)",
-#)
 
 
 recMus = SimpleSelection (
@@ -497,8 +373,9 @@ DaVinci().Simulation = False
 DaVinci().Lumi = True
 DaVinci().TupleFile = "LumiTuple.root"
 #DaVinci().appendToMainSequence([genPF, genJB, recPF, recJB])
-#DaVinci().appendToMainSequence([recPF, recJB])
-DaVinci().appendToMainSequence([recPF, recJB, recSVs_seq.sequence(), recMus_seq.sequence(), D0_seq.sequence(), Dp_seq.sequence(), Ds_seq.sequence(), Lc_seq.sequence(), D02K3pi_seq.sequence()])
+DaVinci().appendToMainSequence([recPF, recJB])
+DaVinci().appendToMainSequence([recSVs_seq.sequence(), recMus_seq.sequence()])
+DaVinci().appendToMainSequence([D0_seq.sequence(), Dp_seq.sequence(), Ds_seq.sequence(), Lc_seq.sequence(), D02K3pi_seq.sequence()])
 ##TODO adding recSVs and recMus changes the daughters of jet objects from smart poniters to Particles
 DaVinci().DataType = '2016'
 DaVinci().EventPreFilters = fltrs.filters ('Filters')
@@ -577,21 +454,6 @@ class Ntuple:
         self.hlt2Tool = toolSvc.create(
                  'TriggerTisTos/Hlt2TriggerTisTos',
                  interface = 'ITriggerTisTos')
-        #self.hlt2Tool.setProperty('HltDecReportsLocation', '/Event/Hlt2/DecReports')
-        #self.hlt2Tool.setProperty('HltSelReportsLocation', '/Event/Hlt2/SelReports')
-        #print self.hlt2Tool.HltDecReportsLocation, self.hlt2Tool.HltSelReportsLocation
-        #from Configurables import ToolSvc, TriggerTisTos
-        #for stage in ('Hlt1', 'Hlt2', 'Strip/Phys'):
-        #    toolSvc.addTool(TriggerTisTos, stage + "TriggerTisTos")
-        #    tool = getattr(toolSvc, stage + "TriggerTisTos")
-        #    tool.HltDecReportsLocation = '/Event/' + stage + '/DecReports'
-        #    tool.HltSelReportsLocation = '/Event/' + stage + '/SelReports'
-        #from Configurables import ToolSvc, TriggerTisTos
-        #ToolSvc().addTool(TriggerTisTos, "Hlt2TriggerTisTos")
-        #tool = getattr(ToolSvc(), "Hlt2TriggerTisTos")
-        #tool.HltDecReportsLocation = '/Event/Hlt2/DecReports'
-        #tool.HltSelReportsLocation = '/Event/Hlt2/SelReports'
-        #self.hlt2Tool = tool
 
         self.tes     = tes
         self.saved   = {}
@@ -607,9 +469,7 @@ class Ntuple:
         self.init('svr', ['idx_pvr', 'idx_jet'] + [
                 'idx_trk%i' % i for i in range(0, 10)] + 
                   mom + pos + ['m', 'm_cor', 'm_cor_err', 'm_cor_err_full', 'pt', 'fd_min', 'fd_chi2', 'chi2', 'ip_chi2_sum', 'abs_q_sum', 'tau', 'ntrk', 'ntrk_jet', 'jet_dr', 'jet_pt', 'pass', 'bdt0', 'bdt1'])
-        self.init('jet', ['idx_pvr', 'ntrk', 'nneu'] + mom) #+ ['idx_trk%i' % i for i in range(0, 40)] + [
-        #'%s_%s' % (i,j) for i in ['DiJet','DiJetSV','DiJetSVSV','DiJetSVMu','DiJetMuMu'] for j in ['Dec','pRatio1','pRatio2','neuMultRatio1','neuMultRatio2','chrgMultRatio1','chrgMultRatio2','dR1','dR2'] 
-        #])
+        self.init('jet', ['idx_pvr', 'ntrk', 'nneu'] + mom)
         self.init('trk', ['idx_gen', 'idx_pvr', 'idx_jet'] + mom +
                   ['pid', 'q', 'ip', 'ip_chi2', 'pnn_e', 'pnn_mu', 'pnn_pi',
                    'pnn_k', 'pnn_p', 'pnn_ghost', 'ecal', 'hcal', 'prb_ghost', 'type', 'is_mu',
@@ -680,52 +540,20 @@ class Ntuple:
                  634 : 48, 636 : 49, 648 : 50, 651 : 51, 684 : 52, 686 : 53,
                  699 : 54, 701 : 55, 734 : 56, 736 : 57, 748 : 58, 751 : 59
                }.get(int(floor(z)),-1)
-    #def getFirstState(self, obj):
-    #    if not obj: return
-    #    print 0
-    #    vids = []
-    #    for vid in obj.lhcbIDs():
-    #        if vid.isVelo():
-    #            vrs['vid'] *= float(vid.veloID().channelID())/1000000.0
-    #            vids += [(self.detTool.sensor(vid.veloID()).z(), 
-    #                      vid.veloID().channelID())]
-    #    print 1
-    #    vids.sort()
-    #    print 2
-    #    sta = LHCB.StateVector()
-    #    print 3
-    #    if len(vids) > 0: self.trkTool.propagate(obj, vids[0][0], sta, pid)
-    #    print 4
-    #    return sta
     def getJetMult(self, summary, nNeu=0, nChrg=0):
         if summary.summarizedObjectCLID() == 801:
-            #if not ROOT.TMath.Abs(summary.numericalInfo()["0#Particle.particleID.pid"]) in [22,111,211,321,2212]:
-            #    if not ROOT.TMath.Abs(summary.numericalInfo()["0#Particle.particleID.pid"]) in [98,111,310,3122]:
-            #        print "A", summary.numericalInfo()["0#Particle.particleID.pid"]
-            #        self.processHltSummary(summary)
-            #    for ss in summary.substructure():
-            #        nNeu,nChrg = self.getJetMult(ss, nNeu, nChrg)
             if 801 in [ss.summarizedObjectCLID() for ss in summary.substructure()]:##do any of the substructures contain a particle class
-            #if 801 in [summary.substructure()[i].summarizedObjectCLID() for i in range(summary.substructure().size())]:
                 for ss in summary.substructure():
-                    #if not ROOT.TMath.Abs(summary.numericalInfo()["0#Particle.particleID.pid"]) in [98,111,310,3122]:
-                    #    print "A", summary.numericalInfo()["0#Particle.particleID.pid"]
-                    #    self.processHltSummary(summary)
                     nNeu,nChrg = self.getJetMult(ss, nNeu, nChrg)
             else:
                 if summary.numericalInfo()["0#Particle.particleID.pid"] in [22,111]:
                     nNeu+=1
                 else:
-                    #if not ROOT.TMath.Abs(summary.numericalInfo()["0#Particle.particleID.pid"]) in [211,321,2212]:
-                    #    print "B", summary.numericalInfo()["0#Particle.particleID.pid"]
                     nChrg+=1
         return nNeu,nChrg
     def processHltSummary(self, summary, indent=""):
-        #print summary.summarizedObjectCLID()
         if summary.summarizedObjectCLID() == 801:
             print indent+str(summary.numericalInfo()["0#Particle.particleID.pid"])
-        #else:
-        #    print summary.summarizedObjectCLID()
         if not summary.substructure().empty():
             for ss in summary.substructure():
                 self.processHltSummary(ss,indent+" ")
@@ -824,104 +652,6 @@ class Ntuple:
         gen = None; wgt = 0; rels = self.genTool.relatedMCPs(obj)
         for rel in rels: gen = rel.to() if rel.weight() > wgt else gen
         if gen: vrs['idx_gen'] = self.addGen(gen) 
-#    def fillJetTISTOS(self, obj, vrs, dtrs, pre = 'jet'):
-#        if not obj: return
-#        #print "foo"
-#        for dec in ['DiJet','DiJetSV','DiJetSVSV','DiJetSVMu','DiJetMuMu']:
-#            summaries = self.hlt2Tool.hltObjectSummaries(obj,'Hlt2Jets'+dec+'Decision')
-#            if summaries.size()>0:
-#                #print 1
-#                vrs[dec+'_Dec'] = 1
-#            else:
-#                #print 0
-#                vrs[dec+'_Dec'] = 0
-#                continue
-#            #print "foo"
-#            nNeu=0
-#            nChrg=0
-#            for dtr in dtrs:
-#                try:
-#                    dtr = dtr.target()
-#                except:
-#                    pass
-#                if not dtr.proto() or not dtr.proto().track(): nNeu+=1
-#                else: nChrg+=1
-#            #print nNeu, nChrg
-#            #print dec, vrs[dec]
-#            for summary in summaries:
-#                if summary.numericalInfo()["0#Particle.particleID.pid"] != 97: return
-#                jet1 = summary.substructure().at(0)
-#                jet2 = summary.substructure().at(1)
-#                if jet1.numericalInfo()["0#Particle.particleID.pid"] != 98 or jet2.numericalInfo()["0#Particle.particleID.pid"] != 98: return
-#                j1tx = jet1.numericalInfo()["5#Particle.slopes.x"]
-#                j1ty = jet1.numericalInfo()["6#Particle.slopes.y"]
-#                j1p  = 1./jet1.numericalInfo()["7#Particle.1/p"]
-#                j1Denom = (1. + j1tx**2. + j1ty**2.)**.5 
-#                j1px = j1p * j1tx / j1Denom
-#                j1py = j1p * j1ty / j1Denom
-#                j1pz = j1p  / j1Denom
-#                j1pt = j1p * (j1tx**2. + j1ty**2.)**.5 / j1Denom
-#                j2tx = jet2.numericalInfo()["5#Particle.slopes.x"]
-#                j2ty = jet2.numericalInfo()["6#Particle.slopes.y"]
-#                j2p  = 1./jet2.numericalInfo()["7#Particle.1/p"]
-#                j2Denom = (1. + j2tx**2. + j2ty**2.)**.5 
-#                j2px = j2p * j2tx / j2Denom
-#                j2py = j2p * j2ty / j2Denom
-#                j2pz = j2p  / j2Denom
-#                j2pt = j2p * (j2tx**2. + j2ty**2.)**.5 / j2Denom
-#                nNeu1=0
-#                nChrg1=0
-#                #self.processHltSummary(jet1)
-#                nNeu1,nChrg1 = self.getJetMult(jet1)
-#                nNeu2,nChrg2 = self.getJetMult(jet2)
-#                #print nNeu1, nChrg1
-#                #matchFact1=0.
-#                #matchFact2=0.
-#                #if obj.p() > j1p:
-#                #    matchFact1 += j1p/obj.p()
-#                #else :
-#                #    matchFact1 += obj.p()/j1p
-#                ##if obj.pt() > j1pt:
-#                ##    matchFact1 += 0.5*j1pt/obj.pt()
-#                ##else :
-#                ##    matchFact1 += 0.5*obj.pt()/j1pt
-#                #if obj.p() > j2p:
-#                #    matchFact2 += j2p/obj.p()
-#                #else :
-#                #    matchFact2 += obj.p()/j2p
-#                ##if obj.pt() > j2pt:
-#                ##    matchFact2 += 0.5*j2pt/obj.pt()
-#                ##else :
-#                ##    matchFact2 += 0.5*obj.pt()/j2pt
-#                vrs[dec+"_pRatio1"] = obj.p()/j1p #matchFact1
-#                vrs[dec+"_pRatio2"] = obj.p()/j2p #matchFact2
-#                vrs[dec+"_neuMultRatio1"] = nNeu/float(nNeu1)
-#                vrs[dec+"_neuMultRatio2"] = nNeu/float(nNeu2)
-#                vrs[dec+"_chrgMultRatio1"] = nChrg/float(nChrg1)
-#                vrs[dec+"_chrgMultRatio2"] = nChrg/float(nChrg2)
-#                vrs[dec+"_dR1"] = ROOT.TLorentzVector(obj.momentum().px(),obj.momentum().py(),obj.momentum().pz(),0.).DeltaR(ROOT.TLorentzVector(j1px,j1py,j1pz,0.))
-#                vrs[dec+"_dR2"] = ROOT.TLorentzVector(obj.momentum().px(),obj.momentum().py(),obj.momentum().pz(),0.).DeltaR(ROOT.TLorentzVector(j2px,j2py,j2pz,0.))
-#                #print "bar"
-#                #if obj.p() > j1p*0.9 and obj.p() < j1p*1.1 and obj.pt() > j1pt*0.9 and obj.pt() < j1pt*1.1:
-#                #    vrs["match1"] = 1
-#                #if obj.p() > j2p*0.9 and obj.p() < j2p*1.1 and obj.pt() > j2pt*0.9 and obj.pt() < j2pt*1.1:
-#                #    vrs["match2"] = 1
-#                #print obj.p(), j1p, j2p
-#                #print obj.pt(), j1pt, j2pt
-#                #print obj.p(), 1./summary.substructure().at(0).numericalInfo()["7#Particle.1/p"], 1./summary.substructure().at(1).numericalInfo()["7#Particle.1/p"]
-#                #print obj.momentum().Px()/obj.momentum().Pz(), summary.substructure().at(0).numericalInfo()["5#Particle.slopes.x"], summary.substructure().at(0).numericalInfo()["5#Particle.slopes.x"]
-#                #print obj.momentum().Py()/obj.momentum().Pz(), summary.substructure().at(0).numericalInfo()["6#Particle.slopes.y"], summary.substructure().at(0).numericalInfo()["6#Particle.slopes.y"]
-#                #print summary.summarizedObjectCLID()
-#                #self.processHltSummary(summary)
-#                #print summary.summarizedObjectCLID()
-#                #sumobj = summary.summarizedObject()
-#                #stash.append(sumobj)
-#                #print sumobj.tes()
-#                #print sumobj.tesLocation()
-#                #print dir(sumobj)
-#                #print sumobj.momentum().Px() #, sumobj.momentum.Py(), sumobj.momentum().Pz(), sumobj.momentum.Pt()
-#        #summaries = self.hlt2Tool.hltObjectSummaries(".*")
-#        #print summaries
 
     def addDHad(self, obj, pre="d0"):
         vrs = {}
@@ -966,7 +696,6 @@ class Ntuple:
             pass
 
     def addTrigger(self, pre = 'evt'):
-        #self.init('evt', ['%s_%s' % (i,j) for i in ['DiJet','DiJetSV','DiJetSVSV','DiJetSVMu','DiJetMuMu'] for j in ['Dec', 'jet1', 'jet2'] + ['%s_%s' % (k,l) for k in ['j1', 'j2'] for l in ['nsv','nmu','ntrk','nneu'] + mom ] ] )
         for idec, dec in enumerate(['DiJet','DiJetSV','DiJetSVSV','DiJetSVMu','DiJetMuMu']):
             vrs = {}
             summaries = self.hlt2Tool.hltObjectSummaries('Hlt2Jets'+dec+'Decision')
@@ -1113,18 +842,15 @@ class Ntuple:
             vrs['idx_trk%i' % (len(trks) - 1)] = trks[-1][0]
         self.fill(pre, vrs = vrs)
     def addTags(self, obj, jet = -1, pre = 'svr'):
-#        stash.append(pre)
         tags = STD.map('string', 'double')()
         if not self.tagTool.calculateJetProperty(obj, tags): return
         ntag = int(tags['Tag'])
         for itag in range(0, ntag):
-#            stash.append("tag")
             vrs = {}
             vrs['idx_pvr'] = self.addPvr(self.tes['Rec/Vertex/Primary']
                                          [int(tags['Tag%i_idx_pvr' % itag])])
             vrs['idx_jet'] = jet
             ntrk = int(tags['Tag%i_nTrk' % itag])
-#            stash.append(ntrk)
             for itrk in range(0, ntrk): vrs['idx_trk%i' % itrk] = self.addTrk(
                 self.tes['Phys/StdAllNoPIDsPions/Particles']
                 [int(tags['Tag%i_idx_trk%i' % (itag, itrk)])]);
@@ -1171,11 +897,8 @@ class Ntuple:
                 nneu+=1
             else:
                 trks += [[self.addTrk(dtr, idx), dtr.proto().track()]]
-                #stash.append(trks[-1])
-                #vrs['idx_trk%i' % (len(trks) - 1)] = trks[-1][0]
         vrs['ntrk'] = len(trks)
         vrs['nneu'] = nneu
-        #self.fillJetTISTOS(obj, vrs, obj.daughters())
         self.addTags(obj, idx)
         self.fill(pre, vrs = vrs)
     def addNeu(self, obj, jet = -1, pre = 'neu'):
@@ -1186,11 +909,7 @@ class Ntuple:
         vrs['idx_jet'] = jet
         self.fill(pre, vrs = vrs)
     def addTrk(self, obj, jet = -1, pre = 'trk'):
-#        printStash=False
-#        if stash[-2] == "trk": printStash=True
         key = self.key(obj)
-#        if printStash: stash.append("addTrk")
-#        if printStash: stash.append(key)
         if key in self.saved[pre]: return self.saved[pre][key]
         vrs = {}
         idx = len(self.saved[pre])
@@ -1205,8 +924,6 @@ class Ntuple:
         vrs['idx_jet'] = jet
         self.saved[pre][key] = idx
         self.fill(pre, vrs = vrs)
-#        if printStash: stash.append(vrs)
-#        if printStash: stash.append("endTrk")
         return idx
 
 # GaudiPython configuration.
@@ -1216,14 +933,12 @@ tes   = gaudi.evtsvc()
 # Run.
 import sys, ROOT
 from math import floor
-#stash = []
 evtmax = -1
 #try: evtmax = int(sys.argv[1])
 #except: evtmax = float('inf')
 evtnum = 0
 ntuple = Ntuple('output.root', tes, gaudi.toolsvc(), gaudi.detSvc())
 while evtmax < 0 or evtnum < evtmax:
-#    stash.append("...")
     gaudi.run(1)
     if not bool(tes['/Event']): break
     evtnum += 1
