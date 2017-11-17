@@ -9342,6 +9342,7 @@ j = Job(
   application    = DV,
   inputdata      = data,
   #do_auto_resubmit = True,
+  inputfiles = [LocalFile('commonSelections.py'), LocalFile('Ntuple.py')]
 
 #  splitter       = SplitByFiles(filesPerJob = 5, maxFiles = -1, ignoremissing=True),
 #  backend        = Dirac(),
