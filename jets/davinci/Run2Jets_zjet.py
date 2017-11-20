@@ -1,4 +1,6 @@
 #!/bin/env python
+import sys
+sys.path.append('.')
 
 from PhysConf.Filters import LoKi_Filters
 
@@ -12,6 +14,7 @@ fltrs = LoKi_Filters (
 from GaudiKernel import SystemOfUnits as Units
 ##Type     = 'MC'
 JetPtMin = 10 * Units.GeV
+
 
 ## Data.
 #from GaudiConf import IOHelper

@@ -1,5 +1,8 @@
 import sys
 
+if len(sys.argv)<4:
+    print "Usage: ", sys.argv[0], "<MagUp|MagDown> <D0|Dp|Ds|Lc|K3pi> <note>"
+    sys.exit()
 polarity = str(sys.argv[1]) #MagDown, MagUp
 mode = str(sys.argv[2]) #490000XX
 note = str(sys.argv[3])
@@ -12,6 +15,7 @@ print script
 
 DV = GaudiExec(directory="~/DaVinciDev_v42r6p1")
 DV.options = [script]
+#DV.options = ['commonSelections.py','Ntuple.py','Run2Jets_DMC.py']
 DV.useGaudiRun = False
 
 #path = '/afs/cern.ch/user/d/dcraik/jets/MC_Dev_'+mode+'_Beam6500GeVRunII'+polarity+'Nu1.625nsPythia8_Sim08f_Reco15DEV_LDST.py'
@@ -9284,38 +9288,6 @@ elif mode == "25103000":
                  'LFN:/lhcb/MC/2016/ALLSTREAMS.DST/00061396/0000/00061396_00000831_7.AllStreams.dst']
 
 
-#                 MC_2015_21263010_Beam6500GeVJun2015MagDownNu1.6Pythia8_Sim08h_Trig0x40f9014e_Reco15em_Turbo01em_DST.py
-#                 MC_2015_21263010_Beam6500GeVJun2015MagDownNu1.6Pythia8_Sim09b_Trig0x40f9014e_Reco15em_Turbo01aEM_DST.py
-#                 MC_2015_21263010_Beam6500GeVJun2015MagUpNu1.6Pythia8_Sim08h_Trig0x40f9014e_Reco15em_Turbo01em_DST.py
-
-#elif mode == "49000042":
-#    if polarity == "MagDown":
-#        files = ['LFN:/lhcb/MC/Dev/LDST/00042978/0000/00042978_00000001_1.ldst',
-#        'LFN:/lhcb/MC/Dev/LDST/00042978/0000/00042978_00000002_1.ldst',
-#        'LFN:/lhcb/MC/Dev/LDST/00042978/0000/00042978_00000003_1.ldst',
-#        'LFN:/lhcb/MC/Dev/LDST/00042978/0000/00042978_00000004_1.ldst',
-#        'LFN:/lhcb/MC/Dev/LDST/00042978/0000/00042978_00000005_1.ldst',
-#        'LFN:/lhcb/MC/Dev/LDST/00042978/0000/00042978_00000006_1.ldst',
-#        'LFN:/lhcb/MC/Dev/LDST/00042978/0000/00042978_00000007_1.ldst',
-#        'LFN:/lhcb/MC/Dev/LDST/00042978/0000/00042978_00000008_1.ldst',
-#        'LFN:/lhcb/MC/Dev/LDST/00042978/0000/00042978_00000009_1.ldst']
-#    elif polarity == "MagUp":
-#        files = []
-#elif mode == "49000052":
-#    if polarity == "MagDown":
-#        files = ['LFN:/lhcb/MC/Dev/LDST/00042968/0000/00042968_00000001_1.ldst',
-#        'LFN:/lhcb/MC/Dev/LDST/00042968/0000/00042968_00000002_1.ldst',
-#        'LFN:/lhcb/MC/Dev/LDST/00042968/0000/00042968_00000003_1.ldst',
-#        'LFN:/lhcb/MC/Dev/LDST/00042968/0000/00042968_00000004_1.ldst',
-#        'LFN:/lhcb/MC/Dev/LDST/00042968/0000/00042968_00000005_1.ldst',
-#        'LFN:/lhcb/MC/Dev/LDST/00042968/0000/00042968_00000006_1.ldst',
-#        'LFN:/lhcb/MC/Dev/LDST/00042968/0000/00042968_00000007_1.ldst',
-#        'LFN:/lhcb/MC/Dev/LDST/00042968/0000/00042968_00000008_1.ldst',
-#        'LFN:/lhcb/MC/Dev/LDST/00042968/0000/00042968_00000009_1.ldst',
-#        'LFN:/lhcb/MC/Dev/LDST/00042968/0000/00042968_00000010_1.ldst']
-#    elif polarity == "MagUp":
-#        files = []
-#
 import sys
 if len(files) < 1:
     sys.exit()
@@ -9343,15 +9315,20 @@ j = Job(
   inputdata      = data,
   #do_auto_resubmit = True,
   inputfiles = [LocalFile('commonSelections.py'), LocalFile('Ntuple.py')]
-
-#  splitter       = SplitByFiles(filesPerJob = 5, maxFiles = -1, ignoremissing=True),
-#  backend        = Dirac(),
-#  outputfiles    = [DiracFile("*.root")],
- 
-  splitter       = SplitByFiles(filesPerJob = 1, maxFiles = 2),
-  backend        = Local(),
-  outputfiles     = [LocalFile("*.root")],
   )
+
+if note=="test":
+    j.splitter       = SplitByFiles(filesPerJob = 1, maxFiles = 2)
+    j.backend        = Local()
+    j.outputfiles     = [LocalFile("*.root")]
+elif note=="testgrid":
+    j.splitter       = SplitByFiles(filesPerJob = 1, maxFiles = 2)
+    j.backend        = Dirac()
+else:
+    j.splitter       = SplitByFiles(filesPerJob = 5, maxFiles = -1, ignoremissing=True)
+    j.backend        = Dirac()
+    j.outputfiles    = [DiracFile("*.root")]
+
 #j.application.readInputData(path)
 j.parallel_submit = True
 

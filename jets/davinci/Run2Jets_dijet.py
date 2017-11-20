@@ -1,4 +1,6 @@
 #!/bin/env python
+import sys
+sys.path.append('.')
 
 from PhysConf.Filters import LoKi_Filters
 fltrs = LoKi_Filters (
@@ -19,11 +21,12 @@ fltrs = LoKi_Filters (
 #    )
 
 
-## Data type configuration.
-#from GaudiKernel import SystemOfUnits as Units
-###Type     = 'MC'
-#JetPtMin = 10 * Units.GeV
-#
+# Data type configuration.
+from GaudiKernel import SystemOfUnits as Units
+##Type     = 'MC'
+JetPtMin = 10 * Units.GeV
+
+
 ## Data.
 #from GaudiConf import IOHelper
 #IOHelper('ROOT').inputFiles(['/eos/lhcb/grid/prod/lhcb/LHCb/Collision16/BHADRONCOMPLETEEVENT.DST/00059907/0001/00059907_00010184_1.bhadroncompleteevent.dst'],#/tmp/dcraik/00042952_00000002_1.ldst'], #/data/dst/MC15.MD.49000004.1.00.dst'],

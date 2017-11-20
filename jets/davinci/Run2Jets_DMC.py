@@ -1,4 +1,6 @@
 #!/bin/env python
+import sys
+sys.path.append('.')
 
 #from PhysConf.Filters import LoKi_Filters
 #fltrs = LoKi_Filters (
