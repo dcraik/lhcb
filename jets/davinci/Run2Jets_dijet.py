@@ -9,9 +9,9 @@ fltrs = LoKi_Filters (
 #   HLT_PASS_RE ( 'StrippingHltQEEJetsDiJet.*LineDecision'    )
 #   """
 #    )
-####DiJetSV
+####DiJetSV*
     STRIP_Code = """
-   HLT_PASS_RE ( 'StrippingHltQEEJetsDiJetSVLineDecision'    )
+   HLT_PASS_RE ( 'StrippingHltQEEJetsDiJetSV.*LineDecision'    )
    """
     )
 ####DiJet
@@ -39,8 +39,7 @@ genPF = McParticleFlow('genPF')
 genPF.Inputs = [
     ['PID',        'ban',       '12,-12,14,-14,16,-16'],
     ['PID',        'particle',  '321,211,130,3222,310,3122,3112,3312,3322,'
-     '30221,9010221,-321,-211,-130,-3222,-310,-3122,-3112,-3312,-3322,-30221,'
-     '-9010221,443,-443'],
+     '-321,-211,-130,-3222,-310,-3122,-3112,-3312,-3322'],
     ['MCParticle', 'daughters', 'MC/Particles']
     ]
 genPF.Output = 'Phys/PF/MCParticles'

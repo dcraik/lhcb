@@ -386,7 +386,7 @@ class Ntuple:
             pass
 
     def addTrigger(self, pre = 'evt'):
-        for idec, dec in enumerate(['DiJet','DiJetSV','DiJetSVSV','DiJetSVMu','DiJetMuMu']):
+        for idec, dec in enumerate(['DiJet','DiJetSV','DiJetSVSV','DiJetSVMu','DiJetMuMu','DiJetLowPt','DiJetSVLowPt','DiJetSVSVLowPt','DiJetSVMuLowPt','DiJetMuMuLowPt','DiJetHighPt','DiJetSVHighPt','DiJetSVSVHighPt','DiJetSVMuHighPt','DiJetMuMuHighPt']):
             vrs = {}
             summaries = self.hlt2Tool.hltObjectSummaries('Hlt2Jets'+dec+'Decision')
             if summaries.size()>0:
