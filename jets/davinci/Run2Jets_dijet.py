@@ -9,11 +9,18 @@ fltrs = LoKi_Filters (
 #   HLT_PASS_RE ( 'StrippingHltQEEJetsDiJet.*LineDecision'    )
 #   """
 #    )
-####DiJetSV*
+####DiJetSV{,HighPt,LowPt}
     STRIP_Code = """
-   HLT_PASS_RE ( 'StrippingHltQEEJetsDiJetSV.*LineDecision'    )
+   HLT_PASS_RE ( 'StrippingHltQEEJetsDiJetSVLineDecision' )
+   | HLT_PASS_RE ( 'StrippingHltQEEJetsDiJetSVHighPtLineDecision' )
+   | HLT_PASS_RE ( 'StrippingHltQEEJetsDiJetSVLowPtLineDecision' )
    """
     )
+####DiJetSV*
+#    STRIP_Code = """
+#   HLT_PASS_RE ( 'StrippingHltQEEJetsDiJetSV.*LineDecision' )
+#   """
+#    )
 ####DiJet
 #    STRIP_Code = """
 #   HLT_PASS_RE ( 'StrippingHltQEEJetsDiJetLineDecision'    )

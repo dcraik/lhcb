@@ -195,15 +195,15 @@ for child in ['pi+','K+'] :
 
 combcutsDp = "in_range(1789*MeV,  AM, 1949*MeV)" \
              "& (ANUM(PT > 400*MeV) > 1)" \
-             "& (ANUM(PT > 1000*MeV) > 0)" #\
-#             "& (ANUM(MIPCHI2DV(PRIMARY) > 10) > 1)" \
-#             "& (ANUM(MIPCHI2DV(PRIMARY) > 50) > 0)"
+             "& (ANUM(PT > 1000*MeV) > 0)" \
+             "& (ANUM(MIPCHI2DV(PRIMARY) > 10) > 1)" \
+             "& (ANUM(MIPCHI2DV(PRIMARY) > 50) > 0)"
 
-parentcutsDp = "(VFASPF(VCHI2PDOF) < 25)" \
+parentcutsDp = "(VFASPF(VCHI2PDOF) < 6)" \
                "& BPVVALID()" \
                "& (BPVVDCHI2 > 16 )" \
+               "& (BPVLTIME() > 0.150*ps )" \
                "& (BPVDIRA > 0.9994 )"
-#               "& (BPVLTIME() > 0.150*ps )" \
 
 recDp = SimpleSelection (
     'recDp',
@@ -224,15 +224,15 @@ for child in ['pi+','K+'] :
 
 combcutsDs = "in_range(1889*MeV,  AM, 2049*MeV)" \
              "& (ANUM(PT > 400*MeV) > 1)" \
-             "& (ANUM(PT > 1000*MeV) > 0)" #\
-#             "& (ANUM(MIPCHI2DV(PRIMARY) > 10) > 1)" \
-#             "& (ANUM(MIPCHI2DV(PRIMARY) > 50) > 0)"
+             "& (ANUM(PT > 1000*MeV) > 0)" \
+             "& (ANUM(MIPCHI2DV(PRIMARY) > 10) > 1)" \
+             "& (ANUM(MIPCHI2DV(PRIMARY) > 50) > 0)"
 
-parentcutsDs = "(VFASPF(VCHI2PDOF) < 25)" \
+parentcutsDs = "(VFASPF(VCHI2PDOF) < 6)" \
                "& BPVVALID()" \
                "& (BPVVDCHI2 > 16 )" \
+               "& (BPVLTIME() > 0.150*ps )" \
                "& (BPVDIRA > 0.9994 )"
-#               "& (BPVLTIME() > 0.150*ps )" \
 
 recDs = SimpleSelection (
     'recDs',
@@ -247,20 +247,24 @@ recDs = SimpleSelection (
 dcLc = { }
 for child in ['pi+','K+','p+'] :
     dcLc[child] = "(PT > 200*MeV)" \
-                  "& (P > 2*GeV)" \
+                  "& (P > 3*GeV)" \
                   "& (MIPCHI2DV(PRIMARY) > 4)"
 #                  "& (TRCHI2 < 3)" \
+#                  "& (P > 2*GeV)" \
 
 combcutsLc = "in_range(2206*MeV,  AM, 2366*MeV)" \
              "& (ANUM(PT > 400*MeV) > 1)" \
-             "& (ANUM(PT > 1000*MeV) > 0)" #\
-#             "& (ANUM(MIPCHI2DV(PRIMARY) > 10) > 1)" \
-#             "& (ANUM(MIPCHI2DV(PRIMARY) > 50) > 0)"
+             "& (ANUM(PT > 1000*MeV) > 0)" \
+             "& (AMINDOCA('') < 0.5*mm )" \
+             "& (ANUM(MIPCHI2DV(PRIMARY) > 4) > 1)" \
+             "& (ANUM(MIPCHI2DV(PRIMARY) > 6) > 0)"
+#             "& (AMINDOCA('') < 0.1*mm )" \
 
 parentcutsLc = "(VFASPF(VCHI2PDOF) < 25)" \
                "& BPVVALID()" \
-               "& (BPVVDCHI2 > 16 )" \
+               "& ((BPVVDCHI2 > 4.0) | (BPVLTIME() > 0.075*ps))" \
                "& (BPVDIRA > 0.9994 )"
+               #"& (BPVVDCHI2 > 16 )" \
 
 recLc = SimpleSelection (
     'recLc',
