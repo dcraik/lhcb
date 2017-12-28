@@ -1,9 +1,9 @@
 void makeReducedDTuple(int sample) {
 	TString file1, file2, fileout;
-	file1 = "for_yandex_data_SV_"; file1+=sample; file1+="tag_testC1k.root";
+	file1 = "for_yandex_data_SV_"; file1+=sample; file1+="tag_testE1k.root";
 	//file1 = "for_yandex_data_SV_"; file1+=sample; file1+="tag_MD.root";
 	//file2 = "for_yandex_data_SV_"; file2+=sample; file2+="tag_MU.root";
-	fileout = "for_yandex_data_SV_"; fileout+=sample; fileout+="tag_testC1k_DsOnly.root";
+	fileout = "for_yandex_data_SV_"; fileout+=sample; fileout+="tag_testE1k_DsOnly.root";
 
 	TChain* c = new TChain("T");
 	c->AddFile(file1);

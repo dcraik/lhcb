@@ -137,6 +137,18 @@ bool getFittedYield(TString file, TString dType, double& yield, double& error,
 		fracVal=0.90;
 		alphaVal=3.0;
 		nVal=1.0;
+	} else if(dType=="LC") {
+		massVal=2286.;
+		ratioVal=3.04;
+		fracVal=0.69;
+		alphaVal=2.7;
+		nVal=1.0;
+	} else if(dType=="D2K3PI") {
+		massVal=1864.;
+		ratioVal=2.85;
+		fracVal=0.89;
+		alphaVal=3.0;
+		nVal=1.0;
 	}
 
 	// -- variables from datasets
@@ -192,7 +204,7 @@ bool getFittedYield(TString file, TString dType, double& yield, double& error,
 	if(dType=="DS") obs.add(DSPHIM);
 
 	// -- load dataset for data
-	TFile* df = TFile::Open("for_yandex_data_SV_"+file+"tag_testC1k_DsOnly_forFit.root");
+	TFile* df = TFile::Open("for_yandex_data_SV_"+file+"tag_testE1k_DsOnly_forFit.root");
 	if(!df) return false;
 	TTree* dt = dynamic_cast<TTree*>(df->Get("T"));
 	if(!dt) return false;
@@ -347,7 +359,7 @@ bool getFittedYield(TString file, TString dType, double& yield, double& error,
 bool getEffCorrection(TString file, TString dType, double& totalEff, double& totalErr) {
 	bool status(true);
 
-	TFile* f = TFile::Open("for_yandex_data_SV_"+file+"tag_testC1k_DsOnly_forFit.root");
+	TFile* f = TFile::Open("for_yandex_data_SV_"+file+"tag_testE1k_DsOnly_forFit.root");
 	if(!f) return false;
 
 	TTree* t = dynamic_cast<TTree*>(f->Get("T"));
@@ -371,6 +383,12 @@ bool getEffCorrection(TString file, TString dType, double& totalEff, double& tot
 	} else if(dType=="DS") {
 		dType="Ds"; // efficiency histograms use "Ds" not "DS"
 		massVal=1968.;
+	} else if(dType=="LC") {
+		dType="Lc"; // efficiency histograms use "Lc" not "LC"
+		massVal=2286.;
+	} else if(dType=="D2K3PI") {
+		dType="K3pi"; // efficiency histograms use "K3pi" not "D2K3PI"
+		massVal=1864.;
 	}
 
 	TFile* fh = TFile::Open("efficiencies50_4.root");
@@ -448,6 +466,16 @@ TString getYields(TString dType) {
 		valPromptAsym = -0.31;
 		valPromptRhoL = 1.34;
 		valPromptRhoR = 1.35;
+	} else if(dType=="LC") {
+		bfD = 0.0635;
+		errBFD = 0.0033;
+		ffD = 0.057;
+		errFFD = TMath::Sqrt(.006*.006 + .003*.003);
+	} else if(dType=="D2K3PI") {
+		bfD = 0.0811;
+		errBFD = 0.0015;
+		ffD = 0.542;
+		errFFD = TMath::Sqrt(.024*.024 + .007*.007);
 	}
 	double scaleD = 1./(bfD*ffD);
 	double errScaleD = scaleD*TMath::Sqrt(errBFD*errBFD/bfD/bfD + errFFD*errFFD/ffD/ffD);
@@ -481,8 +509,12 @@ int main() {
 	TString resD0=getYields("D0");
 	TString resDp=getYields("D");
 	TString resDs=getYields("DS");
+	TString resLc=getYields("LC");
+	TString resK3=getYields("D2K3PI");
 
 	std::cout << resD0 << std::endl;
 	std::cout << resDp << std::endl;
 	std::cout << resDs << std::endl;
+	std::cout << resLc << std::endl;
+	std::cout << resK3 << std::endl;
 }

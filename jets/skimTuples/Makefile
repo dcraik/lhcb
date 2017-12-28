@@ -19,6 +19,12 @@ skim_for_yandex_data.o : skim_for_yandex_data.cc
 skim_for_yandex_data : skim_for_yandex_data.o
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
 
+skim_for_yandex_data_new.o : skim_for_yandex_data_new.cc
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
+
+skim_for_yandex_data_new : skim_for_yandex_data_new.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
+
 skim_for_yandex_data_z0.o : skim_for_yandex_data_z0.cc
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
 

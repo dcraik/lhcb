@@ -17,20 +17,20 @@ void tagEvents(TString dir="./") {
 	//TFile* f = TFile::Open(dir+"for_yandex_data_SV.root");
 	//TTree* t = dynamic_cast<TTree*>(f->Get("T"));
 	TChain* t = new TChain("T");
-	t->Add("/tmp/dcraik/for_yandex_data_testC1k.root");
+	t->Add("/tmp/dcraik/for_yandex_data_testE1k.root");
 	//t->Add("/tmp/dcraik/for_yandex_data_MD.root");
 	//t->Add("/tmp/dcraik/for_yandex_data_MU.root");
 
-	TFile* fX = TFile::Open(dir+"for_yandex_data_SV_Xtag_testC1k.root","RECREATE");
+	TFile* fX = TFile::Open(dir+"for_yandex_data_SV_Xtag_testE1k.root","RECREATE");
 	TTree* tX = t->CloneTree(0);
 
-	//TFile* f0 = TFile::Open(dir+"for_yandex_data_SV_0tag_testC1k.root","RECREATE");
+	//TFile* f0 = TFile::Open(dir+"for_yandex_data_SV_0tag_testE1k.root","RECREATE");
 	//TTree* t0 = t->CloneTree(0);
 
-	//TFile* f4 = TFile::Open(dir+"for_yandex_data_SV_4tag_testC1k.root","RECREATE");
+	//TFile* f4 = TFile::Open(dir+"for_yandex_data_SV_4tag_testE1k.root","RECREATE");
 	//TTree* t4 = t->CloneTree(0);
 
-	//TFile* f5 = TFile::Open(dir+"for_yandex_data_SV_5tag_testC1k.root","RECREATE");
+	//TFile* f5 = TFile::Open(dir+"for_yandex_data_SV_5tag_testE1k.root","RECREATE");
 	//TTree* t5 = t->CloneTree(0);
 
 	//	TFile* fU = TFile::Open(dir+"for_yandex_data_SV_notag.root","RECREATE");
