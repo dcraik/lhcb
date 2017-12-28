@@ -15,6 +15,16 @@
 
 using namespace std;
 
+bool pidCut(double pnn, double px, double py) {
+	return true;
+	//if(pnn>0.3) return true;
+	//double pt2 = px*px + py*py;
+	////if(pt2> 9000000. && pnn>0.1) return true;
+	//if(pt2>36000000. && pnn>0.1) return true;
+	//if(pt2>81000000.) return true;
+	//return false;
+}
+
 //Calculate distance of closest approach between two lines A and B (each given by a point and a direction vector)
 // Use this one! Verified against the second method and documented here:
 // http://geomalgorithms.com/a07-_distance.html
@@ -361,6 +371,51 @@ int main(int argc, char *argv[]){
 	//}
 	//job 289: found 948 of 1050
 	//job 290: found 784 of 950
+	if(type=="testA") {
+		boost::progress_display show_addfile_progress( 1 );
+		for(int i=0; i<1; ++i) {
+			++show_addfile_progress;
+			sprintf(str,"/eos/lhcb/user/d/dcraik/jets/289/%d/output.root",i);
+			if(gSystem->AccessPathName(str)) continue;
+			t->Add(str);
+		}
+	}
+	if(type=="testA1k") {
+		boost::progress_display show_addfile_progress( 1050 );
+		for(int i=0; i<1050; ++i) {
+			++show_addfile_progress;
+			sprintf(str,"/eos/lhcb/user/d/dcraik/jets/289/%d/output.root",i);
+			if(gSystem->AccessPathName(str)) continue;
+			t->Add(str);
+		}
+	}
+	if(type=="testB") {
+		boost::progress_display show_addfile_progress( 1 );
+		for(int i=0; i<1; ++i) {
+			++show_addfile_progress;
+			sprintf(str,"/eos/lhcb/user/d/dcraik/jets/361/%d/output.root",i);
+			if(gSystem->AccessPathName(str)) continue;
+			t->Add(str);
+		}
+	}
+	if(type=="testB1k") {
+		boost::progress_display show_addfile_progress( 1050 );
+		for(int i=0; i<1050; ++i) {
+			++show_addfile_progress;
+			sprintf(str,"/eos/lhcb/user/d/dcraik/jets/361/%d/output.root",i);
+			if(gSystem->AccessPathName(str)) continue;
+			t->Add(str);
+		}
+	}
+	if(type=="testC1k") {
+		boost::progress_display show_addfile_progress( 1050 );
+		for(int i=0; i<1050; ++i) {
+			++show_addfile_progress;
+			sprintf(str,"/eos/lhcb/user/d/dcraik/jets/379/%d/output.root",i);
+			if(gSystem->AccessPathName(str)) continue;
+			t->Add(str);
+		}
+	}
 	if(type=="MD") {
 		boost::progress_display show_addfile_progress( 1050 );
 		for(int i=0; i<1050; ++i) {
@@ -545,122 +600,122 @@ int main(int argc, char *argv[]){
 	t->SetBranchAddress("dp_m",&d_mass);  
 	t->SetBranchAddress("ds_m",&ds_mass);  
 	t->SetBranchAddress("lc_m",&lc_mass);  
-	t->SetBranchAddress("d02k3pi_m",&d2k3pi_mass);  
+	t->SetBranchAddress("k3pi_m",&d2k3pi_mass);  
 
 	t->SetBranchAddress("d0_idx_jet",&d0_j);  
 	t->SetBranchAddress("dp_idx_jet",&d_j);  
 	t->SetBranchAddress("ds_idx_jet",&ds_j);  
 	t->SetBranchAddress("lc_idx_jet",&lc_j);  
-	t->SetBranchAddress("d02k3pi_idx_jet",&d2k3pi_j);  
+	t->SetBranchAddress("k3pi_idx_jet",&d2k3pi_j);  
 
 	t->SetBranchAddress("d0_ntrk_jet",&d0_nj);  
 	t->SetBranchAddress("dp_ntrk_jet",&d_nj);  
 	t->SetBranchAddress("ds_ntrk_jet",&ds_nj);  
 	t->SetBranchAddress("lc_ntrk_jet",&lc_nj);  
-	t->SetBranchAddress("d02k3pi_ntrk_jet",&d2k3pi_nj);  
+	t->SetBranchAddress("k3pi_ntrk_jet",&d2k3pi_nj);  
 
 	t->SetBranchAddress("d0_idx_trk0",&d0_trk0);  
 	t->SetBranchAddress("dp_idx_trk0",&d_trk0);  
 	t->SetBranchAddress("ds_idx_trk0",&ds_trk0);  
 	t->SetBranchAddress("lc_idx_trk0",&lc_trk0);  
-	t->SetBranchAddress("d02k3pi_idx_trk0",&d2k3pi_trk0);  
+	t->SetBranchAddress("k3pi_idx_trk0",&d2k3pi_trk0);  
 
 	t->SetBranchAddress("d0_idx_trk1",&d0_trk1);  
 	t->SetBranchAddress("dp_idx_trk1",&d_trk1);  
 	t->SetBranchAddress("ds_idx_trk1",&ds_trk1);  
 	t->SetBranchAddress("lc_idx_trk1",&lc_trk1);  
-	t->SetBranchAddress("d02k3pi_idx_trk1",&d2k3pi_trk1);  
+	t->SetBranchAddress("k3pi_idx_trk1",&d2k3pi_trk1);  
 
 	t->SetBranchAddress("dp_idx_trk2",&d_trk2);  
 	t->SetBranchAddress("ds_idx_trk2",&ds_trk2);  
 	t->SetBranchAddress("lc_idx_trk2",&lc_trk2);  
-	t->SetBranchAddress("d02k3pi_idx_trk2",&d2k3pi_trk2);  
+	t->SetBranchAddress("k3pi_idx_trk2",&d2k3pi_trk2);  
 
-	t->SetBranchAddress("d02k3pi_idx_trk3",&d2k3pi_trk3);  
+	t->SetBranchAddress("k3pi_idx_trk3",&d2k3pi_trk3);  
 
 	t->SetBranchAddress(     "d0_px",     &d0_px);  
 	t->SetBranchAddress(     "dp_px",      &d_px);  
 	t->SetBranchAddress(     "ds_px",     &ds_px);  
 	t->SetBranchAddress(     "lc_px",     &lc_px);  
-	t->SetBranchAddress("d02k3pi_px", &d2k3pi_px);  
+	t->SetBranchAddress("k3pi_px", &d2k3pi_px);  
 
 	t->SetBranchAddress(     "d0_py",     &d0_py);  
 	t->SetBranchAddress(     "dp_py",      &d_py);  
 	t->SetBranchAddress(     "ds_py",     &ds_py);  
 	t->SetBranchAddress(     "lc_py",     &lc_py);  
-	t->SetBranchAddress("d02k3pi_py", &d2k3pi_py);  
+	t->SetBranchAddress("k3pi_py", &d2k3pi_py);  
 
 	t->SetBranchAddress(     "d0_pz",     &d0_pz);  
 	t->SetBranchAddress(     "dp_pz",      &d_pz);  
 	t->SetBranchAddress(     "ds_pz",     &ds_pz);  
 	t->SetBranchAddress(     "lc_pz",     &lc_pz);  
-	t->SetBranchAddress("d02k3pi_pz", &d2k3pi_pz);  
+	t->SetBranchAddress("k3pi_pz", &d2k3pi_pz);  
 
 	t->SetBranchAddress(     "d0_e",     &d0_e);  
 	t->SetBranchAddress(     "dp_e",      &d_e);  
 	t->SetBranchAddress(     "ds_e",     &ds_e);  
 	t->SetBranchAddress(     "lc_e",     &lc_e);  
-	t->SetBranchAddress("d02k3pi_e", &d2k3pi_e);  
+	t->SetBranchAddress("k3pi_e", &d2k3pi_e);  
 
 	t->SetBranchAddress(     "d0_x",     &d0_x);  
 	t->SetBranchAddress(     "dp_x",      &d_x);  
 	t->SetBranchAddress(     "ds_x",     &ds_x);  
 	t->SetBranchAddress(     "lc_x",     &lc_x);  
-	t->SetBranchAddress("d02k3pi_x", &d2k3pi_x);  
+	t->SetBranchAddress("k3pi_x", &d2k3pi_x);  
 
 	t->SetBranchAddress(     "d0_y",     &d0_y);  
 	t->SetBranchAddress(     "dp_y",      &d_y);  
 	t->SetBranchAddress(     "ds_y",     &ds_y);  
 	t->SetBranchAddress(     "lc_y",     &lc_y);  
-	t->SetBranchAddress("d02k3pi_y", &d2k3pi_y);  
+	t->SetBranchAddress("k3pi_y", &d2k3pi_y);  
 
 	t->SetBranchAddress(     "d0_z",     &d0_z);  
 	t->SetBranchAddress(     "dp_z",      &d_z);  
 	t->SetBranchAddress(     "ds_z",     &ds_z);  
 	t->SetBranchAddress(     "lc_z",     &lc_z);  
-	t->SetBranchAddress("d02k3pi_z", &d2k3pi_z);  
+	t->SetBranchAddress("k3pi_z", &d2k3pi_z);  
 
 	t->SetBranchAddress(     "d0_ip",     &d0_ip);  
 	t->SetBranchAddress(     "dp_ip",      &d_ip);  
 	t->SetBranchAddress(     "ds_ip",     &ds_ip);  
 	t->SetBranchAddress(     "lc_ip",     &lc_ip);  
-	t->SetBranchAddress("d02k3pi_ip", &d2k3pi_ip);  
+	t->SetBranchAddress("k3pi_ip", &d2k3pi_ip);  
 
 	t->SetBranchAddress(     "d0_ip_chi2",     &d0_ipchi2);  
 	t->SetBranchAddress(     "dp_ip_chi2",      &d_ipchi2);  
 	t->SetBranchAddress(     "ds_ip_chi2",     &ds_ipchi2);  
 	t->SetBranchAddress(     "lc_ip_chi2",     &lc_ipchi2);  
-	t->SetBranchAddress("d02k3pi_ip_chi2", &d2k3pi_ipchi2);  
+	t->SetBranchAddress("k3pi_ip_chi2", &d2k3pi_ipchi2);  
 
 	t->SetBranchAddress(     "d0_fd",     &d0_fd);  
 	t->SetBranchAddress(     "dp_fd",      &d_fd);  
 	t->SetBranchAddress(     "ds_fd",     &ds_fd);  
 	t->SetBranchAddress(     "lc_fd",     &lc_fd);  
-	t->SetBranchAddress("d02k3pi_fd", &d2k3pi_fd);  
+	t->SetBranchAddress("k3pi_fd", &d2k3pi_fd);  
 
 	t->SetBranchAddress(     "d0_fd_chi2",     &d0_fdchi2);  
 	t->SetBranchAddress(     "dp_fd_chi2",      &d_fdchi2);  
 	t->SetBranchAddress(     "ds_fd_chi2",     &ds_fdchi2);  
 	t->SetBranchAddress(     "lc_fd_chi2",     &lc_fdchi2);  
-	t->SetBranchAddress("d02k3pi_fd_chi2", &d2k3pi_fdchi2);  
+	t->SetBranchAddress("k3pi_fd_chi2", &d2k3pi_fdchi2);  
 
 	t->SetBranchAddress(     "d0_tau",     &d0_tau);  
 	t->SetBranchAddress(     "dp_tau",      &d_tau);  
 	t->SetBranchAddress(     "ds_tau",     &ds_tau);  
 	t->SetBranchAddress(     "lc_tau",     &lc_tau);  
-	t->SetBranchAddress("d02k3pi_tau", &d2k3pi_tau);  
+	t->SetBranchAddress("k3pi_tau", &d2k3pi_tau);  
 
 	t->SetBranchAddress(     "d0_vtx_chi2",     &d0_vtxchi2);  
 	t->SetBranchAddress(     "dp_vtx_chi2",      &d_vtxchi2);  
 	t->SetBranchAddress(     "ds_vtx_chi2",     &ds_vtxchi2);  
 	t->SetBranchAddress(     "lc_vtx_chi2",     &lc_vtxchi2);  
-	t->SetBranchAddress("d02k3pi_vtx_chi2", &d2k3pi_vtxchi2);  
+	t->SetBranchAddress("k3pi_vtx_chi2", &d2k3pi_vtxchi2);  
 
 	t->SetBranchAddress(     "d0_vtx_ndof",     &d0_vtxndof);  
 	t->SetBranchAddress(     "dp_vtx_ndof",      &d_vtxndof);  
 	t->SetBranchAddress(     "ds_vtx_ndof",     &ds_vtxndof);  
 	t->SetBranchAddress(     "lc_vtx_ndof",     &lc_vtxndof);  
-	t->SetBranchAddress("d02k3pi_vtx_ndof", &d2k3pi_vtxndof);  
+	t->SetBranchAddress("k3pi_vtx_ndof", &d2k3pi_vtxndof);  
 
 	double npv;
 	t->SetBranchAddress("evt_pvr_n",&npv); 
@@ -798,294 +853,14 @@ int main(int argc, char *argv[]){
 			//std::cout << evt_dec->at(itrig) << std::endl << evt_j1_idx->at(itrig) << "\t" << evt_j2_idx->at(itrig) << std::endl;
 		}
 
-		//    int tosJ1DiJet(-1),     tosJ2DiJet(-1);
-		//    int tosJ1DiJetSV(-1),   tosJ2DiJetSV(-1);
-		//    int tosJ1DiJetSVSV(-1), tosJ2DiJetSVSV(-1);
-		//    int tosJ1DiJetSVMu(-1), tosJ2DiJetSVMu(-1);
-		//    int tosJ1DiJetMuMu(-1), tosJ2DiJetMuMu(-1);
-		//    double dR1DiJet(0.5),     dR2DiJet(0.5);
-		//    double dR1DiJetSV(0.5),   dR2DiJetSV(0.5);
-		//    double dR1DiJetSVSV(0.5), dR2DiJetSVSV(0.5);
-		//    double dR1DiJetSVMu(0.5), dR2DiJetSVMu(0.5);
-		//    double dR1DiJetMuMu(0.5), dR2DiJetMuMu(0.5);
-		////    double pt1(0.), pt2(0.);
-		//    
-		//    //first find TOS jets
-		////    if(jet_DiJetSVMu->at(0)==0) continue;
-		////    std::cout << nj << " jets" << std::endl;
-		//    for(int j=0; j<nj; j++){
-		//////	    std::cout << "j" << j << std::endl;
-		////	    if(jet_DiJetSVMu_dR1->at(j)<0.5) {
-		//////		    std::cout << j << " close to jet1: dR=" << jet_DiJetSVMu_dR1->at(j) << std::endl;
-		////		    double pt=TMath::Sqrt(jet_px->at(j)*jet_px->at(j) + jet_py->at(j)*jet_py->at(j));
-		////		    if(pt>pt1) {
-		//////			std::cout << j << " has highest pT so far: " << pt << ">" << pt1 << std::endl;
-		////		    	tosJ1A=j;
-		////			pt1=pt;
-		////		    }
-		////	    }
-		////	    if(jet_DiJetSVMu_dR2->at(j)<0.5) {
-		//////		    std::cout << j << " close to jet2: dR=" << jet_DiJetSVMu_dR2->at(j) << std::endl;
-		////		    double pt=TMath::Sqrt(jet_px->at(j)*jet_px->at(j) + jet_py->at(j)*jet_py->at(j));
-		////		    if(pt>pt2) {
-		//////			std::cout << j << " has highest pT so far: " << pt << ">" << pt2 << std::endl;
-		////		    	tosJ2A=j;
-		////			pt2=pt;
-		////		    }
-		////	    }
-		//	    if(jet_DiJet->at(0)!=0) {
-		//	    	if(jet_DiJet_dR1->at(j)<dR1DiJet) {
-		//	    	        tosJ1DiJet=j;
-		//	    	        dR1DiJet=jet_DiJet_dR1->at(j);
-		//	    	}
-		//	    	if(jet_DiJet_dR2->at(j)<dR2DiJet) {
-		//	    	        tosJ2DiJet=j;
-		//	    	        dR2DiJet=jet_DiJet_dR2->at(j);
-		//	    	}
-		//	    }
-		//	
-		//	    if(jet_DiJetSV->at(0)!=0) {
-		//	    	if(jet_DiJetSV_dR1->at(j)<dR1DiJetSV) {
-		//	    	        tosJ1DiJetSV=j;
-		//	    	        dR1DiJetSV=jet_DiJet_dR1->at(j);
-		//	    	}
-		//	    	if(jet_DiJetSV_dR2->at(j)<dR2DiJetSV) {
-		//	    	        tosJ2DiJetSV=j;
-		//	    	        dR2DiJetSV=jet_DiJet_dR2->at(j);
-		//	    	}
-		//	    }
-		//	
-		//	    if(jet_DiJetSVSV->at(0)!=0) {
-		//	    	if(jet_DiJetSVSV_dR1->at(j)<dR1DiJetSVSV) {
-		//	    	        tosJ1DiJetSVSV=j;
-		//	    	        dR1DiJetSVSV=jet_DiJet_dR1->at(j);
-		//	    	}
-		//	    	if(jet_DiJetSVSV_dR2->at(j)<dR2DiJetSVSV) {
-		//	    	        tosJ2DiJetSVSV=j;
-		//	    	        dR2DiJetSVSV=jet_DiJet_dR2->at(j);
-		//	    	}
-		//	    }
-		//	
-		//	    if(jet_DiJetSVMu->at(0)!=0) {
-		//	    	if(jet_DiJetSVMu_dR1->at(j)<dR1DiJetSVMu) {
-		//	    	        tosJ1DiJetSVMu=j;
-		//	    	        dR1DiJetSVMu=jet_DiJet_dR1->at(j);
-		//	    	}
-		//	    	if(jet_DiJetSVMu_dR2->at(j)<dR2DiJetSVMu) {
-		//	    	        tosJ2DiJetSVMu=j;
-		//	    	        dR2DiJetSVMu=jet_DiJet_dR2->at(j);
-		//	    	}
-		//	    }
-		//	
-		//	    if(jet_DiJetMuMu->at(0)!=0) {
-		//	    	if(jet_DiJetMuMu_dR1->at(j)<dR1DiJetMuMu) {
-		//	    	        tosJ1DiJetMuMu=j;
-		//	    	        dR1DiJetMuMu=jet_DiJet_dR1->at(j);
-		//	    	}
-		//	    	if(jet_DiJetMuMu_dR2->at(j)<dR2DiJetMuMu) {
-		//	    	        tosJ2DiJetMuMu=j;
-		//	    	        dR2DiJetMuMu=jet_DiJet_dR2->at(j);
-		//	    	}
-		//	    }
-		//	
-		//    }
-		//    if(jet_DiJet->at(0)!=0) {
-		//    	if(tosJ1DiJet==-1 && tosJ2DiJet==-1) ++noTOSFoundA;
-		//    	else if(tosJ1DiJet==-1 || tosJ2DiJet==-1) ++oneTOSFoundA;
-		//    	else if(tosJ1DiJet==tosJ2DiJet) ++sameTOSFoundA;
-		//    	else ++okTOSA;
-		//    }
-		//    if(jet_DiJetSV->at(0)!=0) {
-		//    	if(tosJ1DiJetSV==-1 && tosJ2DiJetSV==-1) ++noTOSFoundA;
-		//    	else if(tosJ1DiJetSV==-1 || tosJ2DiJetSV==-1) ++oneTOSFoundA;
-		//    	else if(tosJ1DiJetSV==tosJ2DiJetSV) ++sameTOSFoundA;
-		//    	else ++okTOSA;
-		//    }
-		//    if(jet_DiJetSVSV->at(0)!=0) {
-		//    	if(tosJ1DiJetSVSV==-1 && tosJ2DiJetSVSV==-1) ++noTOSFoundA;
-		//    	else if(tosJ1DiJetSVSV==-1 || tosJ2DiJetSVSV==-1) ++oneTOSFoundA;
-		//    	else if(tosJ1DiJetSVSV==tosJ2DiJetSVSV) ++sameTOSFoundA;
-		//    	else ++okTOSA;
-		//    }
-		//    if(jet_DiJetSVMu->at(0)!=0) {
-		//    	if(tosJ1DiJetSVMu==-1 && tosJ2DiJetSVMu==-1) ++noTOSFoundA;
-		//    	else if(tosJ1DiJetSVMu==-1 || tosJ2DiJetSVMu==-1) {
-		//		//std::cout << std::endl;
-		//		//for(int j=0; j<nj; ++j) {
-		//		//	std::cout << jet_DiJetSVMu_dR1->at(j) << "\t";
-		//		//}
-		//		//std::cout << std::endl;
-		//		//for(int j=0; j<nj; ++j) {
-		//		//	std::cout << jet_DiJetSVMu_dR2->at(j) << "\t";
-		//		//}
-		//		//std::cout << std::endl;
-		//		//std::cout << std::endl;
-		//		++oneTOSFoundA;
-		//	}
-		//    	else if(tosJ1DiJetSVMu==tosJ2DiJetSVMu) ++sameTOSFoundA;
-		//    	else ++okTOSA;
-		//    }
-		//    if(jet_DiJetMuMu->at(0)!=0) {
-		//    	if(tosJ1DiJetMuMu==-1 && tosJ2DiJetMuMu==-1) ++noTOSFoundA;
-		//    	else if(tosJ1DiJetMuMu==-1 || tosJ2DiJetMuMu==-1) ++oneTOSFoundA;
-		//    	else if(tosJ1DiJetMuMu==tosJ2DiJetMuMu) ++sameTOSFoundA;
-		//    	else ++okTOSA;
-		//    }
-
-		//if(tosJ1B==-1 && tosJ2B==-1) ++noTOSFoundB;
-		//else if(tosJ1B==-1 || tosJ2B==-1) ++oneTOSFoundB;
-		//else if(tosJ1B==tosJ2B) ++sameTOSFoundB;
-		//else ++okTOSB;
-
-		//if(!(tosJ1A==-1 || tosJ2A==-1 || tosJ1B==-1 || tosJ2B==-1)) {
-		//	if(tosJ1B==tosJ1A && tosJ2B==tosJ2A) ++methodsMatch;
-		//	else ++methodsDiffer;
-		//}
-		//continue;//TODO
-
 		for(int j=0; j<nj; j++){
 			TLorentzVector p4j(jet_px->at(j),jet_py->at(j),jet_pz->at(j),
 					jet_e->at(j));
-			//for(int itrig=0; itrig<ntrig; ++itrig) {//TODO
-			//	std::cout << p4j.DeltaR(p4j1.at(itrig)) << "\t" << p4j.DeltaR(p4j2.at(itrig)) << std::endl;//TODO
-			//}//TODO
 			if(p4j.Pt() < 10e3) continue;
-			//      TLorentzVector p4mcj;
-			//
-			//      // match to true jet
-			//      for(int g=0; g<ng; g++){
-			//	if(fabs(gen_pid->at(g)) != 98) continue;
-			//	TLorentzVector p4g(gen_px->at(g),gen_py->at(g),gen_pz->at(g),gen_e->at(g));
-			//	if(p4g.DeltaR(p4j) < 0.4 && p4g.Pt() > p4mcj.Pt())
-			//	  p4mcj = p4g;
-			//      }
-			//      if(p4mcj.Pt() < 10e3) continue;
-			//      if(p4mcj.Eta() < 2.2 || p4mcj.Eta() > 4.2) continue;      
-			//
-			//      double parton=-1000;
-			//      TLorentzVector p4g0(gen_px->at(0),gen_py->at(0),gen_pz->at(0),gen_e->at(0));
-			//      if(p4g0.DeltaR(p4j) < 0.5){
-			//	parton = gen_pid->at(0);
-			//      }
-			//      for(int g=1; g<ng; g++){
-			//	TLorentzVector p4g1(gen_px->at(g),gen_py->at(g),gen_pz->at(g),gen_e->at(g));
-			//	if(p4g1.DeltaR(p4j) < 0.5 && (parton == -1000 || p4g1.Pt() > p4g0.Pt())){
-			//	  parton = gen_pid->at(1);
-			//	  p4g0 = p4g1;
-			//	}
-			//      }
-
-			//      if(type == 4 && gen_pid->at(0) == 5) continue;
-			//      if(type == 4 && gen_pid->at(1) == 5) continue;
-			//      if(type == 4 && fabs(parton) == 5) continue;
-			//      if(type == 5 && fabs(parton) != 5) continue;
-			//      if(type == 0 && (gen_pid->at(0) == 4 || gen_pid->at(0) == 5)) continue;
-			//      if(type == 0 && (gen_pid->at(1) == 4 || gen_pid->at(1) == 5)) continue;
-			//      if(type == 0 && fabs(parton) == 4) continue;
-			//      if(type == 0 && fabs(parton) == 5) continue;
-
-			//      double bpt=0,cpt=0;
-			//      for(int g=0; g<ng; g++){
-			//	double pid = fabs(gen_pid->at(g));
-			//	bool isb = (pid==511 || pid==521 || pid==531 || pid==5122);
-			//	bool isc = (pid==411 || pid==421 || pid==431 || pid==4122);
-			//	if(!isb && !isc) continue;
-			//	TLorentzVector p4g(gen_px->at(g),gen_py->at(g),gen_pz->at(g),gen_e->at(g));
-			//	if(p4g.DeltaR(p4j) > 0.5) continue;
-			//	if(isb && p4g.Pt() > bpt) bpt = p4g.Pt();
-			//	if(isc && p4g.Pt() > cpt) cpt = p4g.Pt();
-			//      }
-
-			//      if(type == 5 && bpt < 2000) continue;
-			//      if(type == 4 && bpt > 0) continue;
-			//      if(type == 4 && cpt < 2000) continue;
-			//      if(type == 0 && (bpt > 0 || cpt > 0)) continue;
-
-			//cout << parton << " " << ng << " " << bpt << " " << cpt << endl;
 
 			njtot++;
 			int ipv = jet_pv->at(j);
 			TVector3 pv(pvx->at(ipv),pvy->at(ipv),pvz->at(ipv)); 
-
-			//double D0ptmax(0), Dptmax(0), Dsptmax(0), Lcptmax(0), D2K3piptmax(0);
-			//int bestD0(0), bestD(0), bestDs(0), bestLc(0), bestD2K3pi(0);
-
-			//int countD0(0);
-			//vector<double> d0_m;
-			//vector<double> d0_px;
-			//vector<double> d0_py;
-			//vector<double> d0_pz;
-			//vector<double> d0_e;
-			//vector<double> d0_x;
-			//vector<double> d0_y;
-			//vector<double> d0_z;
-			//vector<double> d0_fd;
-			//vector<double> d0_dira;
-			//vector<double> d0_doca;
-			//vector<double> d0_ipmin;
-			//vector<double> d0_docaKpi;
-			//vector<double> d0_vtxchi2;
-
-			//int countDpm(0);
-			//vector<double> d_m;
-			//vector<double> d_px;
-			//vector<double> d_py;
-			//vector<double> d_pz;
-			//vector<double> d_e;
-			//vector<double> d_x;
-			//vector<double> d_y;
-			//vector<double> d_z;
-			//vector<double> d_fd;
-			//vector<double> d_dira;
-			//vector<double> d_doca;
-			//vector<double> d_ipmin;
-			//vector<double> d_docamax;
-
-			//int countDs(0);
-			//vector<double> ds_m;
-			//vector<double> ds_px;
-			//vector<double> ds_py;
-			//vector<double> ds_pz;
-			//vector<double> ds_e;
-			//vector<double> ds_x;
-			//vector<double> ds_y;
-			//vector<double> ds_z;
-			//vector<double> ds_fd;
-			//vector<double> ds_dira;
-			//vector<double> ds_doca;
-			//vector<double> ds_ipmin;
-			//vector<double> ds_docamax;
-
-			//int countLc(0);
-			//vector<double> lc_m;
-			//vector<double> lc_px;
-			//vector<double> lc_py;
-			//vector<double> lc_pz;
-			//vector<double> lc_e;
-			//vector<double> lc_x;
-			//vector<double> lc_y;
-			//vector<double> lc_z;
-			//vector<double> lc_fd;
-			//vector<double> lc_dira;
-			//vector<double> lc_doca;
-			//vector<double> lc_ipmin;
-			//vector<double> lc_docamax;
-
-			//int countD2K3pi(0);
-			//vector<double> d2k3pi_m;
-			//vector<double> d2k3pi_px;
-			//vector<double> d2k3pi_py;
-			//vector<double> d2k3pi_pz;
-			//vector<double> d2k3pi_e;
-			//vector<double> d2k3pi_x;
-			//vector<double> d2k3pi_y;
-			//vector<double> d2k3pi_z;
-			//vector<double> d2k3pi_fd;
-			//vector<double> d2k3pi_dira;
-			//vector<double> d2k3pi_doca;
-			//vector<double> d2k3pi_ipmin;
-			//vector<double> d2k3pi_docamax;
-
 
 			int ihard = -1, imu = -1, nmu = 0, jnchr = 0, jnneu = 0, ndispl6 = 0, ndispl9 = 0, ndispl16 = 0;
 			double ptd = 0, jetq = 0, ry = 0, rp = 0, m11 = 0, m12 = 0, m22 = 0, sumpt2 = 0, pnnmu_best = 0;
@@ -1117,257 +892,7 @@ int main(int argc, char *argv[]){
 					if(trk_ipchi2->at(i) > 9) ndispl9++;
 					if(trk_ipchi2->at(i) > 16) ndispl16++;
 				}
-				//all of the combinations we're going to try have opp charged Kpi pair so start with that
-				//if(trk_pnnk->at(i)>0.3 /*&& TMath::Abs(trk_pid->at(i))==321*/ && trk_ipchi2->at(i)>16. && trk_type->at(i)==3) {
-				//	TVector3 xtrk1 = TVector3(trk_x->at(i),trk_y->at(i),trk_z->at(i));
-				//	TLorentzVector p4trk1(trk_px->at(i),trk_py->at(i),trk_pz->at(i),trk_e->at(i));
-				//	p4trk1.SetE(TMath::Sqrt(p4trk1.P()*p4trk1.P() + 493.7*493.7));
-				//	//make D0 candidates
-				//	for(int ii=0; ii<ntrk; ++ii) {//try every pair twice as first picked is the kaon
-				//		if(trk_j->at(ii) != j) continue;
-				//		if(ii==i) continue;
-				//		if(trk_pid->at(i)*trk_pid->at(ii) > 0) continue;
-				//		if(trk_pnnpi->at(ii)>0.3 /*&& TMath::Abs(trk_pid->at(ii))==211*/ && trk_ipchi2->at(ii)>16. && trk_type->at(ii)==3) {
-				//			TVector3 xtrk2 = TVector3(trk_x->at(ii),trk_y->at(ii),trk_z->at(ii));
-				//			TLorentzVector p4trk2(trk_px->at(ii),trk_py->at(ii),trk_pz->at(ii),trk_e->at(ii));
-				//			p4trk2.SetE(TMath::Sqrt(p4trk2.P()*p4trk2.P() + 139.6*139.6));
-
-				//			//also try to make D+ candidates
-				//			for(int iii=ii+1; iii<ntrk; ++iii) {
-				//				if(trk_j->at(iii) != j) continue;
-				//				if(iii==i) continue;
-				//				if(trk_pid->at(i)*trk_pid->at(iii) > 0) continue;//same charge pions
-				//				if(trk_pnnpi->at(iii)>0.3 /*&& TMath::Abs(trk_pid->at(iii))==211*/ && trk_ipchi2->at(iii)>16. && trk_type->at(iii)==3) {
-				//					TVector3 xtrk3 = TVector3(trk_x->at(iii),trk_y->at(iii),trk_z->at(iii));
-				//					TLorentzVector p4trk3(trk_px->at(iii),trk_py->at(iii),trk_pz->at(iii),trk_e->at(iii));
-				//					p4trk3.SetE(TMath::Sqrt(p4trk3.P()*p4trk3.P() + 139.6*139.6));
-				//					TLorentzVector p4Dpm = p4trk1 + p4trk2 + p4trk3;
-				//					if(TMath::Abs(p4Dpm.M()-1870.) > 160.) continue;
-				//					TVector3 sv12, sv13, sv23, sv123;
-				//					double doca12 = calcDoca(sv12, xtrk1, p4trk1.Vect(), xtrk2, p4trk2.Vect());
-				//					double doca13 = calcDoca(sv13, xtrk1, p4trk1.Vect(), xtrk3, p4trk3.Vect());
-				//					double doca23 = calcDoca(sv23, xtrk2, p4trk2.Vect(), xtrk3, p4trk3.Vect());
-				//					double docamax = TMath::Max(doca12, TMath::Max(doca13,doca23));
-				//					double ipmin = TMath::Min(trk_ipchi2->at(i), TMath::Min(trk_ipchi2->at(ii),trk_ipchi2->at(iii)));
-				//					if(docamax>0.1) continue;
-				//					sv123 = sv12 + sv13 + sv23;
-				//					sv123 *= (1./3.);
-				//					double docaDpm = calcDocaPoint(sv123, p4Dpm.Vect(), pv);
-				//					TVector3 fvDpm = sv123-pv;
-				//					double diraDpm = fvDpm.Unit().Dot(p4Dpm.Vect().Unit());
-				//					//printf("found D+: mass=%.2f, docamax=%.3f, dira=%.4f\n", p4Dpm.M(), docamax, diraDpm);
-				//					++countDpm;
-				//					d_m.push_back(p4Dpm.M());
-				//					d_px.push_back(p4Dpm.Px());
-				//					d_py.push_back(p4Dpm.Py());
-				//					d_pz.push_back(p4Dpm.Pz());
-				//					d_e.push_back(p4Dpm.E());
-				//					d_x.push_back(sv123.X());
-				//					d_y.push_back(sv123.Y());
-				//					d_z.push_back(sv123.Z());
-				//					d_fd.push_back(fvDpm.Mag());
-				//					d_dira.push_back(diraDpm);
-				//					d_doca.push_back(docaDpm);
-				//					d_ipmin.push_back(ipmin);
-				//					d_docamax.push_back(docamax);
-
-				//					if(p4Dpm.Pt() > Dptmax) {
-				//						Dptmax = p4Dpm.Pt();
-				//						bestD = d_m.size()-1;
-				//					}
-				//				}
-				//			}
-
-				//			//also try to make Ds+ candidates
-				//			for(int iii=0; iii<ntrk; ++iii) {
-				//				if(trk_j->at(iii) != j) continue;
-				//				if(iii==i || iii==ii) continue;
-				//				if(trk_pid->at(i)*trk_pid->at(iii) > 0) continue;//opp charged kaons
-				//				if(trk_pnnk->at(iii)>0.3 /*&& TMath::Abs(trk_pid->at(iii))==321*/ && trk_ipchi2->at(iii)>16. && trk_type->at(iii)==3) {
-				//					TVector3 xtrk3 = TVector3(trk_x->at(iii),trk_y->at(iii),trk_z->at(iii));
-				//					TLorentzVector p4trk3(trk_px->at(iii),trk_py->at(iii),trk_pz->at(iii),trk_e->at(iii));
-				//					p4trk3.SetE(TMath::Sqrt(p4trk3.P()*p4trk3.P() + 493.7*493.7));
-				//					TLorentzVector p4Ds = p4trk1 + p4trk2 + p4trk3;
-				//					if(TMath::Abs(p4Ds.M()-1968.) > 160.) continue;
-				//					TVector3 sv12, sv13, sv23, sv123;
-				//					double doca12 = calcDoca(sv12, xtrk1, p4trk1.Vect(), xtrk2, p4trk2.Vect());
-				//					double doca13 = calcDoca(sv13, xtrk1, p4trk1.Vect(), xtrk3, p4trk3.Vect());
-				//					double doca23 = calcDoca(sv23, xtrk2, p4trk2.Vect(), xtrk3, p4trk3.Vect());
-				//					double docamax = TMath::Max(doca12, TMath::Max(doca13,doca23));
-				//					double ipmin = TMath::Min(trk_ipchi2->at(i), TMath::Min(trk_ipchi2->at(ii),trk_ipchi2->at(iii)));
-				//					if(docamax>0.1) continue;
-				//					sv123 = sv12 + sv13 + sv23;
-				//					sv123 *= (1./3.);
-				//					double docaDs = calcDocaPoint(sv123, p4Ds.Vect(), pv);
-				//					TVector3 fvDs = sv123-pv;
-				//					double diraDs = fvDs.Unit().Dot(p4Ds.Vect().Unit());
-				//					//printf("found Ds+: mass=%.2f, docamax=%.3f, dira=%.4f\n", p4Ds.M(), docamax, diraDs);
-				//					++countDs;
-				//					ds_m.push_back(p4Ds.M());
-				//					ds_px.push_back(p4Ds.Px());
-				//					ds_py.push_back(p4Ds.Py());
-				//					ds_pz.push_back(p4Ds.Pz());
-				//					ds_e.push_back(p4Ds.E());
-				//					ds_x.push_back(sv123.X());
-				//					ds_y.push_back(sv123.Y());
-				//					ds_z.push_back(sv123.Z());
-				//					ds_fd.push_back(fvDs.Mag());
-				//					ds_dira.push_back(diraDs);
-				//					ds_doca.push_back(docaDs);
-				//					ds_ipmin.push_back(ipmin);
-				//					ds_docamax.push_back(docamax);
-
-				//					if(p4Ds.Pt() > Dsptmax) {
-				//						Dsptmax = p4Ds.Pt();
-				//						bestDs = ds_m.size()-1;
-				//					}
-				//				}
-				//			}
-
-				//			//also try to make Lc+ candidates
-				//			for(int iii=0; iii<ntrk; ++iii) {
-				//				if(trk_j->at(iii) != j) continue;
-				//				if(iii==i || iii==ii) continue;
-				//				if(trk_pid->at(i)*trk_pid->at(iii) > 0) continue;//opp charged kaon and proton
-				//				if(trk_pnnp->at(iii)>0.3 /*&& TMath::Abs(trk_pid->at(iii))==2212*/ && trk_ipchi2->at(iii)>16. && trk_type->at(iii)==3) {
-				//					TVector3 xtrk3 = TVector3(trk_x->at(iii),trk_y->at(iii),trk_z->at(iii));
-				//					TLorentzVector p4trk3(trk_px->at(iii),trk_py->at(iii),trk_pz->at(iii),trk_e->at(iii));
-				//					p4trk3.SetE(TMath::Sqrt(p4trk3.P()*p4trk3.P() + 938.3*938.3));
-				//					TLorentzVector p4Lc = p4trk1 + p4trk2 + p4trk3;
-				//					if(TMath::Abs(p4Lc.M()-2286.) > 160.) continue;
-				//					TVector3 sv12, sv13, sv23, sv123;
-				//					double doca12 = calcDoca(sv12, xtrk1, p4trk1.Vect(), xtrk2, p4trk2.Vect());
-				//					double doca13 = calcDoca(sv13, xtrk1, p4trk1.Vect(), xtrk3, p4trk3.Vect());
-				//					double doca23 = calcDoca(sv23, xtrk2, p4trk2.Vect(), xtrk3, p4trk3.Vect());
-				//					double docamax = TMath::Max(doca12, TMath::Max(doca13,doca23));
-				//					double ipmin = TMath::Min(trk_ipchi2->at(i), TMath::Min(trk_ipchi2->at(ii),trk_ipchi2->at(iii)));
-				//					if(docamax>0.1) continue;
-				//					sv123 = sv12 + sv13 + sv23;
-				//					sv123 *= (1./3.);
-				//					double docaLc = calcDocaPoint(sv123, p4Lc.Vect(), pv);
-				//					TVector3 fvLc = sv123-pv;
-				//					double diraLc = fvLc.Unit().Dot(p4Lc.Vect().Unit());
-				//					//printf("found Lc+: mass=%.2f, docamax=%.3f, dira=%.4f\n", p4Lc.M(), docamax, diraLc);
-				//					++countLc;
-				//					lc_m.push_back(p4Lc.M());
-				//					lc_px.push_back(p4Lc.Px());
-				//					lc_py.push_back(p4Lc.Py());
-				//					lc_pz.push_back(p4Lc.Pz());
-				//					lc_e.push_back(p4Lc.E());
-				//					lc_x.push_back(sv123.X());
-				//					lc_y.push_back(sv123.Y());
-				//					lc_z.push_back(sv123.Z());
-				//					lc_fd.push_back(fvLc.Mag());
-				//					lc_dira.push_back(diraLc);
-				//					lc_doca.push_back(docaLc);
-				//					lc_ipmin.push_back(ipmin);
-				//					lc_docamax.push_back(docamax);
-
-				//					if(p4Lc.Pt() > Lcptmax) {
-				//						Lcptmax = p4Lc.Pt();
-				//						bestLc = lc_m.size()-1;
-				//					}
-				//				}
-				//			}
-
-				//			//also try to make D0->Kpipipi candidates
-				//			for(int iii=0; iii<ntrk; ++iii) {
-				//				if(trk_j->at(iii) != j) continue;
-				//				if(iii==i || iii==ii) continue;
-				//				if(trk_pnnpi->at(iii)>0.3 /*&& TMath::Abs(trk_pid->at(iii))==321*/ && trk_ipchi2->at(iii)>16. && trk_type->at(iii)==3) {
-				//					TVector3 xtrk3 = TVector3(trk_x->at(iii),trk_y->at(iii),trk_z->at(iii));
-				//					TLorentzVector p4trk3(trk_px->at(iii),trk_py->at(iii),trk_pz->at(iii),trk_e->at(iii));
-				//					p4trk3.SetE(TMath::Sqrt(p4trk3.P()*p4trk3.P() + 139.6*139.6));
-				//					for(int iv=iii+1; iv<ntrk; ++iv) {
-				//						if(trk_j->at(iv) != j) continue;
-				//						if(iv==i || iv==ii) continue;
-				//						if(trk_pid->at(iv)*trk_pid->at(iii) > 0) continue;//adding an opp charged pion pair
-				//						if(trk_pnnpi->at(iv)>0.3 /*&& TMath::Abs(trk_pid->at(iii))==321*/ && trk_ipchi2->at(iv)>16. && trk_type->at(iv)==3) {
-				//							TVector3 xtrk4 = TVector3(trk_x->at(iv),trk_y->at(iv),trk_z->at(iv));
-				//							TLorentzVector p4trk4(trk_px->at(iv),trk_py->at(iv),trk_pz->at(iv),trk_e->at(iv));
-				//							p4trk4.SetE(TMath::Sqrt(p4trk4.P()*p4trk4.P() + 139.6*139.6));
-				//							TLorentzVector p4D2K3pi = p4trk1 + p4trk2 + p4trk3 + p4trk4;
-				//							if(TMath::Abs(p4D2K3pi.M()-1864.) > 160.) continue;
-				//							TVector3 sv12, sv13, sv14, sv23, sv24, sv34, sv1234;
-				//							double doca12 = calcDoca(sv12, xtrk1, p4trk1.Vect(), xtrk2, p4trk2.Vect());
-				//							double doca13 = calcDoca(sv13, xtrk1, p4trk1.Vect(), xtrk3, p4trk3.Vect());
-				//							double doca14 = calcDoca(sv14, xtrk1, p4trk1.Vect(), xtrk4, p4trk4.Vect());
-				//							double doca23 = calcDoca(sv23, xtrk2, p4trk2.Vect(), xtrk3, p4trk3.Vect());
-				//							double doca24 = calcDoca(sv24, xtrk2, p4trk2.Vect(), xtrk4, p4trk4.Vect());
-				//							double doca34 = calcDoca(sv34, xtrk3, p4trk3.Vect(), xtrk4, p4trk4.Vect());
-				//							double docamax = TMath::Max(TMath::Max(doca12, TMath::Max(doca13,doca14)),TMath::Max(doca23, TMath::Max(doca24,doca34)));
-				//							double ipmin = TMath::Min(TMath::Min(trk_ipchi2->at(i),trk_ipchi2->at(ii)), TMath::Min(trk_ipchi2->at(iii),trk_ipchi2->at(iv)));
-				//							if(docamax>0.1) continue;
-				//							sv1234 = sv12 + sv13 + sv14 + sv23 + sv24 + sv34;
-				//							sv1234 *= (1./6.);
-				//							double docaD2K3pi = calcDocaPoint(sv1234, p4D2K3pi.Vect(), pv);
-				//							TVector3 fvD2K3pi = sv1234-pv;
-				//							double diraD2K3pi = fvD2K3pi.Unit().Dot(p4D2K3pi.Vect().Unit());
-				//							//printf("found D0->K3pi: mass=%.2f, docamax=%.3f, dira=%.4f\n", p4D2K3pi.M(), docamax, diraD2K3pi);
-				//							++countD2K3pi;
-				//							d2k3pi_m.push_back(p4D2K3pi.M());
-				//							d2k3pi_px.push_back(p4D2K3pi.Px());
-				//							d2k3pi_py.push_back(p4D2K3pi.Py());
-				//							d2k3pi_pz.push_back(p4D2K3pi.Pz());
-				//							d2k3pi_e.push_back(p4D2K3pi.E());
-				//							d2k3pi_x.push_back(sv1234.X());
-				//							d2k3pi_y.push_back(sv1234.Y());
-				//							d2k3pi_z.push_back(sv1234.Z());
-				//							d2k3pi_fd.push_back(fvD2K3pi.Mag());
-				//							d2k3pi_dira.push_back(diraD2K3pi);
-				//							d2k3pi_doca.push_back(docaD2K3pi);
-				//							d2k3pi_ipmin.push_back(ipmin);
-				//							d2k3pi_docamax.push_back(docamax);
-
-				//							if(p4D2K3pi.Pt() > D2K3piptmax) {
-				//								D2K3piptmax = p4D2K3pi.Pt();
-				//								bestD2K3pi = d2k3pi_m.size()-1;
-				//							}
-				//						}
-				//					}
-				//				}
-				//			}
-
-				//			//D0 candidates
-				//			TLorentzVector p4D0 = p4trk1 + p4trk2;
-				//			if(TMath::Abs(p4D0.M()-1864.) > 160.) continue;
-				//			TVector3 sv;
-				//			double docaKpi = calcDoca(sv, xtrk1, p4trk1.Vect(), xtrk2, p4trk2.Vect());
-				//			double ipmin = TMath::Min(trk_ipchi2->at(i), trk_ipchi2->at(ii));
-				//			if(docaKpi>0.1) continue;
-				//			double sigma2i = trk_ip->at(i)*trk_ip->at(i) / trk_ipchi2->at(i);
-				//			double sigma2j = trk_ip->at(ii)*trk_ip->at(ii) / trk_ipchi2->at(ii);
-				//			double vtxchi2 = docaKpi*docaKpi/(sigma2i+sigma2j);
-				//			if(vtxchi2>10.) continue;
-				//			double docaD0 = calcDocaPoint(sv, p4D0.Vect(), pv);
-				//			TVector3 fv = sv-pv;
-				//			double dira = fv.Unit().Dot(p4D0.Vect().Unit());
-				//			//printf("found D0: mass=%.2f, doca=%.3f, dira=%.4f, vtxchi2=%.1f, KID=%.0f, pNNk=%.2f, piID=%.0f, pNNpi=%.2f\n", p4D0.M(), docaKpi, dira, vtxchi2, trk_pid->at(i), trk_pnnk->at(i), trk_pid->at(ii), trk_pnnpi->at(ii));
-				//			++countD0;
-				//			d0_m.push_back(p4D0.M());
-				//			d0_px.push_back(p4D0.Px());
-				//			d0_py.push_back(p4D0.Py());
-				//			d0_pz.push_back(p4D0.Pz());
-				//			d0_e.push_back(p4D0.E());
-				//			d0_x.push_back(sv.X());
-				//			d0_y.push_back(sv.Y());
-				//			d0_z.push_back(sv.Z());
-				//			d0_fd.push_back(fv.Mag());
-				//			d0_dira.push_back(dira);
-				//			d0_doca.push_back(docaD0);
-				//			d0_docaKpi.push_back(docaKpi);
-				//			d0_vtxchi2.push_back(vtxchi2);
-				//			d0_ipmin.push_back(ipmin);
-
-				//			if(p4D0.Pt() > D0ptmax) {
-				//				D0ptmax = p4D0.Pt();
-				//				bestD0 = d0_m.size()-1;
-				//			}
-				//		}
-				//	}
-				//}
 			}
-			//TODO
 			D0M = -1000.;
 			D0PX      = -1000.;
 			D0PY      = -1000.;
@@ -1388,6 +913,9 @@ int main(int argc, char *argv[]){
 			for(uint iD=0; iD<d0_mass->size(); ++iD) {
 				if(d0_j->at(iD) == j && d0_nj->at(iD)==2) {
 					if(!(trk_pnnpi->at(d0_trk1->at(iD))>0.2 && trk_pnnk->at( d0_trk0->at(iD))>0.3)) continue;
+					//if(!pidCut(trk_pnnpi->at(d0_trk1->at(iD)),trk_px->at(d0_trk1->at(iD)),trk_py->at(d0_trk1->at(iD))) ||
+					//   !pidCut(trk_pnnk->at( d0_trk0->at(iD)),trk_px->at(d0_trk0->at(iD)),trk_py->at(d0_trk0->at(iD))) )
+					//	continue;
 					D0M = d0_mass->at(iD);
 					D0PX      = d0_px->at(iD);
 					D0PY      = d0_py->at(iD);
@@ -1429,6 +957,10 @@ int main(int argc, char *argv[]){
 			for(uint iD=0; iD<d_mass->size(); ++iD) {
 				if(d_j->at(iD) == j && d_nj->at(iD)==3) {
 					if(!(trk_pnnpi->at(d_trk1->at(iD))>0.2 && trk_pnnpi->at(d_trk2->at(iD))>0.2 && trk_pnnk->at( d_trk0->at(iD))>0.3)) continue;
+					//if(!pidCut(trk_pnnpi->at(d_trk2->at(iD)),trk_px->at(d_trk2->at(iD)),trk_py->at(d_trk2->at(iD))) ||
+					//   !pidCut(trk_pnnpi->at(d_trk1->at(iD)),trk_px->at(d_trk1->at(iD)),trk_py->at(d_trk1->at(iD))) ||
+					//   !pidCut(trk_pnnk->at( d_trk0->at(iD)),trk_px->at(d_trk0->at(iD)),trk_py->at(d_trk0->at(iD))) )
+					//	continue;
 					DPMM = d_mass->at(iD);
 					DPMPX      = d_px->at(iD);
 					DPMPY      = d_py->at(iD);
@@ -1472,6 +1004,10 @@ int main(int argc, char *argv[]){
 			for(uint iD=0; iD<ds_mass->size(); ++iD) {
 				if(ds_j->at(iD) == j && ds_nj->at(iD)==3) {
 					if(!(trk_pnnk->at(ds_trk0->at(iD))>0.3 && trk_pnnk->at(ds_trk1->at(iD))>0.3 && trk_pnnpi->at( ds_trk2->at(iD))>0.2)) continue;
+					//if(!pidCut(trk_pnnpi->at(ds_trk2->at(iD)),trk_px->at(ds_trk2->at(iD)),trk_py->at(ds_trk2->at(iD))) ||
+					//   !pidCut(trk_pnnk->at( ds_trk1->at(iD)),trk_px->at(ds_trk1->at(iD)),trk_py->at(ds_trk1->at(iD))) ||
+					//   !pidCut(trk_pnnk->at( ds_trk0->at(iD)),trk_px->at(ds_trk0->at(iD)),trk_py->at(ds_trk0->at(iD))) )
+					//	continue;
 					TLorentzVector phi(trk_px->at(ds_trk0->at(iD))+trk_px->at(ds_trk1->at(iD)),
 							   trk_py->at(ds_trk0->at(iD))+trk_py->at(ds_trk1->at(iD)),
 							   trk_pz->at(ds_trk0->at(iD))+trk_pz->at(ds_trk1->at(iD)),
@@ -1519,6 +1055,10 @@ int main(int argc, char *argv[]){
 			for(uint iD=0; iD<lc_mass->size(); ++iD) {
 				if(lc_j->at(iD) == j && lc_nj->at(iD)==3) {
 					if(!(trk_pnnp->at(lc_trk0->at(iD))>0.3 && trk_pnnk->at(lc_trk1->at(iD))>0.3 && trk_pnnpi->at( lc_trk2->at(iD))>0.2)) continue;
+					//if(!pidCut(trk_pnnpi->at(lc_trk2->at(iD)),trk_px->at(lc_trk2->at(iD)),trk_py->at(lc_trk2->at(iD))) ||
+					//   !pidCut(trk_pnnk->at( lc_trk1->at(iD)),trk_px->at(lc_trk1->at(iD)),trk_py->at(lc_trk1->at(iD))) ||
+					//   !pidCut(trk_pnnp->at( lc_trk0->at(iD)),trk_px->at(lc_trk0->at(iD)),trk_py->at(lc_trk0->at(iD))) )
+					//	continue;
 					LCM       = lc_mass->at(iD);
 					LCPX      = lc_px->at(iD);
 					LCPY      = lc_py->at(iD);
@@ -1562,6 +1102,11 @@ int main(int argc, char *argv[]){
 			for(uint iD=0; iD<d2k3pi_mass->size(); ++iD) {
 				if(d2k3pi_j->at(iD) == j && d2k3pi_nj->at(iD)==4) {
 					if(!(trk_pnnk->at(d2k3pi_trk0->at(iD))>0.3 && trk_pnnk->at(d2k3pi_trk1->at(iD))>0.2 && trk_pnnk->at(d2k3pi_trk2->at(iD))>0.2 && trk_pnnpi->at( d2k3pi_trk3->at(iD))>0.2)) continue;
+					//if(!pidCut(trk_pnnpi->at(d2k3pi_trk3->at(iD)),trk_px->at(d2k3pi_trk3->at(iD)),trk_py->at(d2k3pi_trk3->at(iD))) ||
+					//   !pidCut(trk_pnnpi->at(d2k3pi_trk2->at(iD)),trk_px->at(d2k3pi_trk2->at(iD)),trk_py->at(d2k3pi_trk2->at(iD))) ||
+					//   !pidCut(trk_pnnpi->at(d2k3pi_trk1->at(iD)),trk_px->at(d2k3pi_trk1->at(iD)),trk_py->at(d2k3pi_trk1->at(iD))) ||
+					//   !pidCut(trk_pnnk->at( d2k3pi_trk0->at(iD)),trk_px->at(d2k3pi_trk0->at(iD)),trk_py->at(d2k3pi_trk0->at(iD))) )
+					//	continue;
 					D2K3PIM = d2k3pi_mass->at(iD);
 					D2K3PIPX      = d2k3pi_px->at(iD);
 					D2K3PIPY      = d2k3pi_py->at(iD);
@@ -1584,167 +1129,7 @@ int main(int argc, char *argv[]){
 					break;
 				}
 			}
-			//TODO
-			//pick a random D0
-			//if(!d0_px.empty()) {
-			//	int whichD0 = bestD0;//rand.Integer(d0_px.size());
-			//	D0M       = d0_m[whichD0];
-			//	D0PX      = d0_px[whichD0];
-			//	D0PY      = d0_py[whichD0];
-			//	D0PZ      = d0_pz[whichD0];
-			//	D0E       = d0_e[whichD0];
-			//	D0X       = d0_x[whichD0];
-			//	D0Y       = d0_y[whichD0];
-			//	D0Z       = d0_z[whichD0];
-			//	D0FD      = d0_fd[whichD0];
-			//	D0DIRA    = d0_dira[whichD0];
-			//	D0IPCHI2MIN= d0_ipmin[whichD0];
-			//	D0DOCA    = d0_doca[whichD0];
-			//	D0DOCAKPI = d0_docaKpi[whichD0];
-			//	D0VTXCHI2 = d0_vtxchi2[whichD0];
-			//	//if(D0PX==0.) std::cout << D0M << "\t" << D0PX << "\t" << D0PY << "\t" << D0PZ << std::endl;
-			//} else {
-			//	D0M       = -1000.;
-			//	D0PX      = -1000.;
-			//	D0PY      = -1000.;
-			//	D0PZ      = -1000.;
-			//	D0E       = -1000.;
-			//	D0X       = -1000.;
-			//	D0Y       = -1000.;
-			//	D0Z       = -1000.;
-			//	D0FD      = -1000.;
-			//	D0DIRA    = -1000.;
-			//	D0IPCHI2MIN= -1000;
-			//	D0DOCA    = -1000.;
-			//	D0DOCAKPI = -1000.;
-			//	D0VTXCHI2 = -1000.;
-			//}
-			////pick a random D+
-			//if(!d_px.empty()) {
-			//	int whichD = bestD;//rand.Integer(d_px.size());
-			//	DPMM       = d_m[whichD];
-			//	DPMPX      = d_px[whichD];
-			//	DPMPY      = d_py[whichD];
-			//	DPMPZ      = d_pz[whichD];
-			//	DPME       = d_e[whichD];
-			//	DPMX       = d_x[whichD];
-			//	DPMY       = d_y[whichD];
-			//	DPMZ       = d_z[whichD];
-			//	DPMFD      = d_fd[whichD];
-			//	DPMDIRA    = d_dira[whichD];
-			//	DPMIPCHI2MIN= d_ipmin[whichD];
-			//	DPMDOCA    = d_doca[whichD];
-			//	DPMDOCAMAX = d_docamax[whichD];
-			//} else {
-			//	DPMM       = -1000.;
-			//	DPMPX      = -1000.;
-			//	DPMPY      = -1000.;
-			//	DPMPZ      = -1000.;
-			//	DPME       = -1000.;
-			//	DPMX       = -1000.;
-			//	DPMY       = -1000.;
-			//	DPMZ       = -1000.;
-			//	DPMFD      = -1000.;
-			//	DPMDIRA    = -1000.;
-			//	DPMIPCHI2MIN= -1000;
-			//	DPMDOCA    = -1000.;
-			//	DPMDOCAMAX = -1000.;
-			//}
-			////pick a random Ds+
-			//if(!ds_px.empty()) {
-			//	int whichDs = bestDs;//rand.Integer(ds_px.size());
-			//	DSM       = ds_m[whichDs];
-			//	DSPX      = ds_px[whichDs];
-			//	DSPY      = ds_py[whichDs];
-			//	DSPZ      = ds_pz[whichDs];
-			//	DSE       = ds_e[whichDs];
-			//	DSX       = ds_x[whichDs];
-			//	DSY       = ds_y[whichDs];
-			//	DSZ       = ds_z[whichDs];
-			//	DSFD      = ds_fd[whichDs];
-			//	DSDIRA    = ds_dira[whichDs];
-			//	DSIPCHI2MIN= ds_ipmin[whichDs];
-			//	DSDOCA    = ds_doca[whichDs];
-			//	DSDOCAMAX = ds_docamax[whichDs];
-			//} else {
-			//	DSM       = -1000.;
-			//	DSPX      = -1000.;
-			//	DSPY      = -1000.;
-			//	DSPZ      = -1000.;
-			//	DSE       = -1000.;
-			//	DSX       = -1000.;
-			//	DSY       = -1000.;
-			//	DSZ       = -1000.;
-			//	DSFD      = -1000.;
-			//	DSDIRA    = -1000.;
-			//	DSIPCHI2MIN= -1000;
-			//	DSDOCA    = -1000.;
-			//	DSDOCAMAX = -1000.;
-			//}
-			////pick a random Lc+
-			//if(!lc_px.empty()) {
-			//	int whichLc = bestLc;//rand.Integer(lc_px.size());
-			//	LCM       = lc_m[whichLc];
-			//	LCPX      = lc_px[whichLc];
-			//	LCPY      = lc_py[whichLc];
-			//	LCPZ      = lc_pz[whichLc];
-			//	LCE       = lc_e[whichLc];
-			//	LCX       = lc_x[whichLc];
-			//	LCY       = lc_y[whichLc];
-			//	LCZ       = lc_z[whichLc];
-			//	LCFD      = lc_fd[whichLc];
-			//	LCDIRA    = lc_dira[whichLc];
-			//	LCIPCHI2MIN= lc_ipmin[whichLc];
-			//	LCDOCA    = lc_doca[whichLc];
-			//	LCDOCAMAX = lc_docamax[whichLc];
-			//} else {
-			//	LCM       = -1000.;
-			//	LCPX      = -1000.;
-			//	LCPY      = -1000.;
-			//	LCPZ      = -1000.;
-			//	LCE       = -1000.;
-			//	LCX       = -1000.;
-			//	LCY       = -1000.;
-			//	LCZ       = -1000.;
-			//	LCFD      = -1000.;
-			//	LCDIRA    = -1000.;
-			//	LCIPCHI2MIN= -1000;
-			//	LCDOCA    = -1000.;
-			//	LCDOCAMAX = -1000.;
-			//}
-			////pick a random D0->K3pi
-			//if(!d2k3pi_px.empty()) {
-			//	int whichD0 = bestD2K3pi;//rand.Integer(d2k3pi_px.size());
-			//	D2K3PIM       = d2k3pi_m[whichD0];
-			//	D2K3PIPX      = d2k3pi_px[whichD0];
-			//	D2K3PIPY      = d2k3pi_py[whichD0];
-			//	D2K3PIPZ      = d2k3pi_pz[whichD0];
-			//	D2K3PIE       = d2k3pi_e[whichD0];
-			//	D2K3PIX       = d2k3pi_x[whichD0];
-			//	D2K3PIY       = d2k3pi_y[whichD0];
-			//	D2K3PIZ       = d2k3pi_z[whichD0];
-			//	D2K3PIFD      = d2k3pi_fd[whichD0];
-			//	D2K3PIDIRA    = d2k3pi_dira[whichD0];
-			//	D2K3PIIPCHI2MIN= d2k3pi_ipmin[whichD0];
-			//	D2K3PIDOCA    = d2k3pi_doca[whichD0];
-			//	D2K3PIDOCAMAX = d2k3pi_docamax[whichD0];
-			//} else {
-			//	D2K3PIM       = -1000.;
-			//	D2K3PIPX      = -1000.;
-			//	D2K3PIPY      = -1000.;
-			//	D2K3PIPZ      = -1000.;
-			//	D2K3PIE       = -1000.;
-			//	D2K3PIX       = -1000.;
-			//	D2K3PIY       = -1000.;
-			//	D2K3PIZ       = -1000.;
-			//	D2K3PIFD      = -1000.;
-			//	D2K3PIDIRA    = -1000.;
-			//	D2K3PIIPCHI2MIN= -1000;
-			//	D2K3PIDOCA    = -1000.;
-			//	D2K3PIDOCAMAX = -1000.;
-			//}
 
-			//std::cout << countDpm << std::endl;
 			jetq /= p4j.Pt();
 			ptd = sqrt(ptd) / p4j.Pt();      
 			for(int i=0; i<nneu; i++){

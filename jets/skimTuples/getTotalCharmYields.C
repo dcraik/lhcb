@@ -7,6 +7,7 @@
 
 #include "RooAddPdf.h"
 #include "RooArgSet.h"
+#include "RooCBShape.h"
 #include "RooDataSet.h"
 #include "RooFitResult.h"
 #include "RooFormulaVar.h"
@@ -117,12 +118,25 @@ bool getFittedYield(TString file, TString dType, double& yield, double& error,
 	bool status(true);
 
 	double massVal(0.);
+	double ratioVal(3.), fracVal(0.9), alphaVal(3.), nVal(1.);
 	if(dType=="D0") {
 		massVal=1864.;
+		ratioVal=2.85;
+		fracVal=0.89;
+		alphaVal=3.0;
+		nVal=1.0;
 	} else if(dType=="D") {
 		massVal=1870.;
+		ratioVal=2.90;
+		fracVal=0.89;
+		alphaVal=2.8;
+		nVal=1.0;
 	} else if(dType=="DS") {
 		massVal=1968.;
+		ratioVal=3.12;
+		fracVal=0.90;
+		alphaVal=3.0;
+		nVal=1.0;
 	}
 
 	// -- variables from datasets
@@ -131,10 +145,25 @@ bool getFittedYield(TString file, TString dType, double& yield, double& error,
 	RooRealVar DLOGIPCHI2(  dType+"LOGIPCHI2",  dType+"LOGIPCHI2",  -5.,  15.,  ""); 
 	DLOGIPCHI2.setBins(20);
 	RooRealVar DSPHIM(  "DSPHIM",  "DSPHIM",  990.,  1050.,  ""); 
+	//RooRealVar JetPT(  "JetPT",  "JetPT",  50.e3,  100.e3,  ""); 
 
 	RooRealVar dMass("dMass","mass mean",massVal,massVal-20.,massVal+20.);
 	RooRealVar dWidth("dWidth","mass width",20.,5.,50.);
-	RooGaussian sigMass("sigMass","",DM,dMass,dWidth);
+	//RooGaussian sigMass("sigMass","",DM,dMass,dWidth);
+	RooRealVar dRatio("dRatio","ratio of widths", ratioVal, 1.0, 5);
+	RooFormulaVar dWidthG("dWidthG","","@0*@1",RooArgList(dWidth,dRatio));
+	RooRealVar dAlpha("dAlpha", "dAlpha", alphaVal, 0.5, 5.0);
+	RooRealVar dN(    "dN",     "dN",     nVal);//2.0, 0.0, 5.0);
+	RooRealVar dFrac("dFrac","fraction in CB", fracVal, 0., 1.);
+
+	dRatio.setConstant();
+	dFrac.setConstant();
+	dAlpha.setConstant();
+	dN.setConstant();
+
+	RooGaussian sigMass_gauss("sigMass_gauss","",DM,dMass,dWidthG);
+	RooCBShape  sigMass_cb("sigMass_cb", "", DM, dMass, dWidth, dAlpha, dN); 
+	RooAddPdf sigMass( "sigMass", "", RooArgList(sigMass_cb,sigMass_gauss), RooArgList(dFrac) );
 
 	RooRealVar p0("p0","p0",0., -0.1, 0.1);
 	RooPolynomial bkgMass("bkgMass","",DM, RooArgList(p0));
@@ -159,10 +188,11 @@ bool getFittedYield(TString file, TString dType, double& yield, double& error,
 	obs.add(DPX);
 	obs.add(DPY);
 	obs.add(DPZ);
+	//obs.add(JetPT);
 	if(dType=="DS") obs.add(DSPHIM);
 
 	// -- load dataset for data
-	TFile* df = TFile::Open("for_yandex_data_SV_"+file+"tag_DsOnly_forFit.root");
+	TFile* df = TFile::Open("for_yandex_data_SV_"+file+"tag_testC1k_DsOnly_forFit.root");
 	if(!df) return false;
 	TTree* dt = dynamic_cast<TTree*>(df->Get("T"));
 	if(!dt) return false;
@@ -229,9 +259,9 @@ bool getFittedYield(TString file, TString dType, double& yield, double& error,
 	if(fix) {
 		//promptMean.setConstant();
 		//promptWidth.setConstant();
-		//promptAsym.setConstant();
-		//promptRhoL.setConstant();
-		//promptRhoR.setConstant();
+		promptAsym.setConstant();
+		promptRhoL.setConstant();
+		promptRhoR.setConstant();
 		//displacedMean.setConstant();
 		//displacedWidth.setConstant();
 	}
@@ -277,9 +307,9 @@ bool getFittedYield(TString file, TString dType, double& yield, double& error,
 	params.add(p0);
 	params.add(promptMean);
 	params.add(promptWidth);
-	params.add(promptAsym);
-	params.add(promptRhoL);
-	params.add(promptRhoR);
+	//params.add(promptAsym);
+	//params.add(promptRhoL);
+	//params.add(promptRhoR);
 	params.add(displacedMean);
 	params.add(displacedWidth);
 	print(dType+"params_"+file+".dat",params);
@@ -317,7 +347,7 @@ bool getFittedYield(TString file, TString dType, double& yield, double& error,
 bool getEffCorrection(TString file, TString dType, double& totalEff, double& totalErr) {
 	bool status(true);
 
-	TFile* f = TFile::Open("for_yandex_data_SV_"+file+"tag_DsOnly_forFit.root");
+	TFile* f = TFile::Open("for_yandex_data_SV_"+file+"tag_testC1k_DsOnly_forFit.root");
 	if(!f) return false;
 
 	TTree* t = dynamic_cast<TTree*>(f->Get("T"));
@@ -343,10 +373,10 @@ bool getEffCorrection(TString file, TString dType, double& totalEff, double& tot
 		massVal=1968.;
 	}
 
-	TFile* fh = TFile::Open("efficiencies40_4.root");
+	TFile* fh = TFile::Open("efficiencies50_4.root");
 	if(!fh) return false;
 	TH2D* effD = dynamic_cast<TH2D*>(fh->Get("efficiency"+dType));
-	TH2D* pidD = dynamic_cast<TH2D*>(fh->Get("pid"+dType));
+	TH2D* pidD = dynamic_cast<TH2D*>(fh->Get("pid"+dType+"C"));
 	if(!effD || !pidD) return false;
 
 	//std::cout << t->GetEntries() << std::endl;
@@ -393,22 +423,37 @@ TString getYields(TString dType) {
 		errBFD = 0.0004;
 		ffD = 0.542;
 		errFFD = TMath::Sqrt(.024*.024 + .007*.007);
+		valPromptMean = 0.87;
+		valPromptWidth = 1.09;
+		valPromptAsym = -0.29;
+		valPromptRhoL = 1.30;
+		valPromptRhoR = 1.69;
 	} else if(dType=="D") {
 		bfD = 0.0898;
 		errBFD = 0.0028;
 		ffD = 0.225;
 		errFFD = TMath::Sqrt(.010*.010 + .005*.005);
+		valPromptMean = 1.04;
+		valPromptWidth = 1.10;
+		valPromptAsym = -0.30;
+		valPromptRhoL = 1.32;
+		valPromptRhoR = 1.43;
 	} else if(dType=="DS") {
-		bfD = 0.045;
-		errBFD = 0.004;
+		bfD = 0.0227;
+		errBFD = 0.0008;
 		ffD = 0.092;
 		errFFD = TMath::Sqrt(.008*.008 + .005*.005);
+		valPromptMean = 1.03;
+		valPromptWidth = 1.11;
+		valPromptAsym = -0.31;
+		valPromptRhoL = 1.34;
+		valPromptRhoR = 1.35;
 	}
 	double scaleD = 1./(bfD*ffD);
 	double errScaleD = scaleD*TMath::Sqrt(errBFD*errBFD/bfD/bfD + errFFD*errFFD/ffD/ffD);
 	//std::cout << scaleD << "\t" << errScaleD << std::endl;
 	
-	if(!getFittedYield("0", dType, yield0, error0, valPromptMean, valPromptWidth, valPromptAsym, valPromptRhoL, valPromptRhoR, valDisplacedMean, valDisplacedWidth)) std::cout << "getFittedYield had warnings" << std::endl;
+	if(!getFittedYield("0", dType, yield0, error0, valPromptMean, valPromptWidth, valPromptAsym, valPromptRhoL, valPromptRhoR, valDisplacedMean, valDisplacedWidth,true)) std::cout << "getFittedYield had warnings" << std::endl;
 	if(!getEffCorrection("0",dType,eff0,err0)) std::cout << "getEffCorrection had warnings" << std::endl;
 	
 	if(!getFittedYield("4", dType, yield4, error4, valPromptMean, valPromptWidth, valPromptAsym, valPromptRhoL, valPromptRhoR, valDisplacedMean, valDisplacedWidth,true)) std::cout << "getFittedYield had warnings" << std::endl;
@@ -426,7 +471,7 @@ TString getYields(TString dType) {
 	//std::cout << nCharm0 << "+/-" << errnCharm0 << "\t" << nCharm4 << "+/-" << errnCharm4 << std::endl;
 
 	TString result;
-	result.Form("%s:\t% 6.0f +/- % 5.0f\t% 6.0f +/- % 5.0f\t%.0f\t%.2f\t%.1f", dType.Data(), nCharm0, errnCharm0, nCharm4, errnCharm4,yield4,eff4,scaleD);
+	result.Form("%s:\t% 6.0f +/- % 5.0f\t% 6.0f +/- % 5.0f\n%.0f +/- %.0f\t%.2f +/- %.2f\t%.1f +/- %.1f\n%.0f +/- %.0f\t%.2f +/- %.2f\t%.1f +/- %.1f", dType.Data(), nCharm0, errnCharm0, nCharm4, errnCharm4, yield0, error0, eff0, err0, scaleD, errScaleD, yield4, error4, eff4, err4, scaleD, errScaleD);
 	return result;
 
 }

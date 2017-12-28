@@ -1,5 +1,5 @@
 void addLogIPChi2(int flavour) {
-	TString name = "for_yandex_data_SV_"; name+=flavour; name+="tag_DsOnly.root";
+	TString name = "for_yandex_data_SV_"; name+=flavour; name+="tag_testC1k_DsOnly.root";
 	TFile* fin = TFile::Open(name);
 	TTree* tin = dynamic_cast<TTree*>(fin->Get("T"));
 
@@ -12,7 +12,7 @@ void addLogIPChi2(int flavour) {
 	tin->SetBranchAddress("LCIPCHI2",     &LCIPCHI2);
 	tin->SetBranchAddress("D2K3PIIPCHI2", &D2K3PIIPCHI2);
 
-	name = "for_yandex_data_SV_"; name+=flavour; name+="tag_DsOnly_forFit.root";
+	name = "for_yandex_data_SV_"; name+=flavour; name+="tag_testC1k_DsOnly_forFit.root";
 	TFile* fout = new TFile(name, "RECREATE");
 	TTree* tout = tin->CloneTree(0);
 
