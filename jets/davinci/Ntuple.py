@@ -532,6 +532,9 @@ class Ntuple:
             else:
                 for part in self.children(obj):
                     self.addGen(part)
+        if pid.pid() == 23:
+            for part in self.children(obj):
+                self.addGen(part)
             #for vtx in obj.endVertices():
             #    for part in vtx.products():
             #        self.addGen(part)

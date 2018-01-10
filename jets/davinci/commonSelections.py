@@ -2,7 +2,7 @@
 from StandardParticles import StdAllNoPIDsKaons    as loosekaons
 from StandardParticles import StdAllNoPIDsPions    as loosepions
 from StandardParticles import StdAllNoPIDsProtons  as looseprotons
-from StandardParticles import StdAllNoPIDsMuons as loosemuons
+from StandardParticles import StdAllLooseMuons as looseZmuons
 
 #inputs for HLT-like SVs and muons
 from StandardParticles import StdLoosePions        as longpions
@@ -114,7 +114,36 @@ recMus = SimpleSelection (
 ###########################
 ###### Z candidates #######
 
-looseZs = DataOnDemand('/Event/EW/Phys/Z02MuMuLine/Particles')
+ZMuons = SimpleSelection (
+    'ZMuons'         ,
+    FilterDesktop   ,
+    [ looseZmuons ]    ,
+    DecayDescriptor = "[mu+]cc",
+    Code = (
+            "(PT>3*GeV)"
+           )
+    )
+
+dcZ = { }
+for child in ['mu+'] :
+    dcZ[child] = "(PT > 3000*MeV)"
+
+combcutsZ = "in_range(40000*MeV,  AM, 200000*MeV)" \
+
+parentcutsZ = "MM > 40000*MeV"
+
+looseZs = SimpleSelection (
+    'looseZ',
+    CombineParticles,
+    [ZMuons],
+    DecayDescriptor = "Z0 -> mu+ mu-",
+    DaughtersCuts   = dcZ,
+    CombinationCut = (combcutsZ),
+    MotherCut      =  (parentcutsZ),
+)
+
+
+#looseZs = DataOnDemand('/Event/EW/Phys/Z02MuMuLine/Particles')
 
 Zs = SimpleSelection (
     'Zs'           ,

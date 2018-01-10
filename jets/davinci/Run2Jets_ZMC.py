@@ -18,6 +18,15 @@ JetPtMin = 10 * Units.GeV
 #    clear = True)
 ##Type = 'MC'
 
+from StandardParticles import StdAllNoPIDsMuons as loosemuons
+from PhysSelPython.Wrappers import SimpleSelection, MergedSelection, DataOnDemand, Selection
+from GaudiConfUtils.ConfigurableGenerators import FilterDesktop, CombineParticles
+
+from commonSelections import *
+
+from PhysSelPython.Wrappers import SelectionSequence
+Z_seq = SelectionSequence('Z_Seq', TopSelection=Zs)
+
 # Create the generated jets.
 from Configurables import McParticleFlow, McJetBuilder
 genPF = McParticleFlow('genPF')
@@ -43,6 +52,7 @@ from StandardParticles import (StdLooseKsDD, StdLooseKsLL, StdLooseKsLD,
                                StdLooseLambdaLD)
 recPF = HltParticleFlow('recPF')
 recPF.Inputs = [
+    ['Particle',       'daughters', Zs.outputLocation()],
     ['Particle',       'particle', StdLooseKsDD.outputLocation()],
     ['Particle',       'particle', StdLooseKsLL.outputLocation()],
     ['Particle',       'particle', StdLooseKsLD.outputLocation()],
@@ -82,6 +92,7 @@ D02K3pi_seq = SelectionSequence('D2K3pi0_Seq', TopSelection=recD02K3pi)
 # Turbo/DaVinci configuration.
 from Configurables import DstConf, TurboConf, DaVinci
 DaVinci().Simulation = True
+DaVinci().appendToMainSequence([Z_seq.sequence()])
 DaVinci().appendToMainSequence([genPF, genJB, recPF, recJB])
 #DaVinci().appendToMainSequence([recSVs_seq.sequence(), recMus_seq.sequence()])
 DaVinci().appendToMainSequence([D0_seq.sequence(), Dp_seq.sequence(), Ds_seq.sequence(),  Lc_seq.sequence(), D02K3pi_seq.sequence()])
@@ -140,12 +151,18 @@ while evtmax < 0 or evtnum < evtmax:
     try:
         for gen in gens:
             pid = gen.particleID()
+            if pid.pid() == 23:
+                ntuple.addGen(gen)
+    except: pass
+    try:
+        for gen in gens:
+            pid = gen.particleID()
             if pid.isHadron() and (pid.hasCharm() or pid.hasBottom()):
-                ntuple.addGen(gen); fill = True
+                ntuple.addGen(gen);# fill = True
     except: pass
     try:
         jets = tes[genJB.Output]
-        for jet in jets: ntuple.addGen(jet); fill = True
+        for jet in jets: ntuple.addGen(jet);# fill = True
     except: pass
 
     # Fill reconstructed.
@@ -159,6 +176,13 @@ while evtmax < 0 or evtnum < evtmax:
     try:
         for trk in tes['Phys/StdAllNoPIDsPions/Particles']:
             ntuple.addTrk(trk);
+    except: pass
+
+    ## fill Z
+    try:
+        for z in tes[Zs.outputLocation()]:
+            if ntuple.addZ(z):
+                fill = True;
     except: pass
 
     # fill D's
