@@ -128,7 +128,7 @@ dcZ = { }
 for child in ['mu+'] :
     dcZ[child] = "(PT > 3000*MeV)"
 
-combcutsZ = "in_range(40000*MeV,  AM, 200000*MeV)" \
+combcutsZ = "in_range(40000*MeV,  AM, 200000*MeV)"
 
 parentcutsZ = "MM > 40000*MeV"
 
@@ -153,6 +153,43 @@ Zs = SimpleSelection (
     Code = "(MINTREE('mu+'==ABSID,PT) > 10.*GeV)"
     )
 
+
+###########################
+##### J/psi candidates ####
+
+JpsiMuons = SimpleSelection (
+    'JpsiMuons'         ,
+    FilterDesktop   ,
+    [ looseZmuons ]    ,
+    DecayDescriptor = "[mu+]cc",
+    Code = ("(PIDmu > 1)" \
+            "& (PT>500*MeV)" \
+            "& (ISMUON)"
+            #"& (TRGHOSTPROB<0.3)"
+            #"& (MIPCHI2DV(PRIMARY) > 4)"
+           )
+    )
+
+dcJpsi = { }
+for child in ['mu+'] :
+    dcJpsi[child] = "(PT > 500*MeV)" \
+                    "& (P > 3*GeV)"
+
+combcutsJpsi = "(ADAMASS('J/psi(1S)') < 1000*MeV)" \
+                "& (AMINDOCA('') < 0.2*mm )"
+                ##(ADAMASS('J/psi(1S)') < 150*MeV)
+
+parentcutsJpsi = "(VFASPF(VCHI2PDOF) < 25)"
+
+recJpsi = SimpleSelection (
+    'recJpsi',
+    CombineParticles,
+    [JpsiMuons],
+    DecayDescriptor = "J/psi(1S) -> mu+ mu-",
+    DaughtersCuts   = dcJpsi,
+    CombinationCut = (combcutsJpsi),
+    MotherCut      =  (parentcutsJpsi),
+)
 
 ###########################
 ###### D candidates #######

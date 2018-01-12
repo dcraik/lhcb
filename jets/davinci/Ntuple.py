@@ -85,6 +85,7 @@ class Ntuple:
                    #'vz%i' % i for i in range(0, 61)])
         self.init('neu', ['idx_gen', 'idx_jet'] + mom + ['pid'])
         self.init('z0', ['idx_pvr','idx_jet_trk0', 'idx_jet_trk1', 'idx_jet_dr'] + mom + pos + ['m', 'ip', 'ip_chi2','dr_jet'] + ['idx_trk%i' % i for i in range(0, 2)]) 
+        self.init('jpsi', ['idx_pvr','idx_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 2)])
         self.init('d0', ['idx_pvr','idx_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 2)]) 
         self.init('dp', ['idx_pvr','idx_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 3)]) 
         self.init('ds', ['idx_pvr','idx_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 3)]) 

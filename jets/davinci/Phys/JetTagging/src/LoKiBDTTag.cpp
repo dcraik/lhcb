@@ -381,7 +381,7 @@ const vector<LoKi::BDTTag::Svr> *LoKi::BDTTag::nbvs(const Particle *jet) {
       if (deltaR(m_tbvs[tbv].m_trks[trk], jet) <= m_dr)
 	{m_nbvs.push_back(Svr(&m_tbvs[tbv])); break;}
   }
-  //TODO linking is turned off - removing subsets instead
+  //TODO linking is turned off
   //double n(0);
   //while (m_nbvs.size() != n) {
   //  n = m_nbvs.size();
@@ -391,18 +391,19 @@ const vector<LoKi::BDTTag::Svr> *LoKi::BDTTag::nbvs(const Particle *jet) {
   //        m_nbvs.erase(m_nbvs.begin() + nbv2);
   //      else ++nbv2;
   //}
-  double n(0);
-  while (m_nbvs.size() != n) {
-    n = m_nbvs.size();
-    for (int nbv1 = 0; nbv1 < (int)m_nbvs.size(); ++nbv1) {
-      for (int nbv2 = 0; nbv2 < (int)m_nbvs.size();) {
-         if(nbv1==nbv2) ++nbv2;
-         else if (m_nbvs[nbv1].removeSubset(m_nbvs[nbv2]))
-          m_nbvs.erase(m_nbvs.begin() + nbv2);
-        else ++nbv2;
-      }
-    }
-  }
+  //TODO Code below will remove 2-body vertices that are subsets of 3-body vertices
+  //double n(0);
+  //while (m_nbvs.size() != n) {
+  //  n = m_nbvs.size();
+  //  for (int nbv1 = 0; nbv1 < (int)m_nbvs.size(); ++nbv1) {
+  //    for (int nbv2 = 0; nbv2 < (int)m_nbvs.size();) {
+  //       if(nbv1==nbv2) ++nbv2;
+  //       else if (m_nbvs[nbv1].removeSubset(m_nbvs[nbv2]))
+  //        m_nbvs.erase(m_nbvs.begin() + nbv2);
+  //      else ++nbv2;
+  //    }
+  //  }
+  //}
 
   // Sort the n-body SVRs.
   for (int nbv = 0; nbv < (int)m_nbvs.size(); ++nbv) m_nbvs[nbv].calc(jet);

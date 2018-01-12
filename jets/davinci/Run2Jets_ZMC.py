@@ -83,6 +83,7 @@ from PhysSelPython.Wrappers import SelectionSequence
 recSVs_seq = SelectionSequence('recSVs_Seq', TopSelection=recSVs)
 recMus_seq = SelectionSequence('recMus_Seq', TopSelection=recMus)
 
+Jpsi_seq = SelectionSequence('Jpsi_Seq', TopSelection=recJpsi)
 D0_seq = SelectionSequence('D0_Seq', TopSelection=recD0)
 Dp_seq = SelectionSequence('Dp_Seq', TopSelection=recDp)
 Ds_seq = SelectionSequence('Ds_Seq', TopSelection=recDs)
@@ -95,7 +96,7 @@ DaVinci().Simulation = True
 DaVinci().appendToMainSequence([Z_seq.sequence()])
 DaVinci().appendToMainSequence([genPF, genJB, recPF, recJB])
 #DaVinci().appendToMainSequence([recSVs_seq.sequence(), recMus_seq.sequence()])
-DaVinci().appendToMainSequence([D0_seq.sequence(), Dp_seq.sequence(), Ds_seq.sequence(),  Lc_seq.sequence(), D02K3pi_seq.sequence()])
+DaVinci().appendToMainSequence([Jpsi_seq.sequence(), D0_seq.sequence(), Dp_seq.sequence(), Ds_seq.sequence(),  Lc_seq.sequence(), D02K3pi_seq.sequence()])
 DaVinci().DataType = '2015'
 #DaVinci().EventPreFilters = fltrs.filters ('Filters')
 
@@ -187,6 +188,9 @@ while evtmax < 0 or evtnum < evtmax:
 
     # fill D's
     try:
+        jpsis = tes[recJpsi.algorithm().Output]
+        for jpsi in jpsis:
+            ntuple.addDHad(jpsi,"jpsi")
         d0s = tes[recD0.algorithm().Output]
         for d0 in d0s:
             ntuple.addDHad(d0,"d0")
