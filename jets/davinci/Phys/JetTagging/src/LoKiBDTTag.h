@@ -180,6 +180,7 @@ namespace LoKi {
       double m_mCorErrFull; ///< Corrected mass.
       double m_fdChi2;      ///< Chi-squared of the flight distance.
       double m_ipChi2Sum;   ///< Summed minimum IP chi-squared of the tracks.
+      double m_ipChi2MinTrk;///< Minimum IP chi-squared of the tracks.
       double m_ipMin;       ///< Minimum impact parameter to a PVR.
       double m_ipChi2Min;   ///< Minimum IP chi-squared to a PVR.
       double m_docaMin;     ///< Distance of closest approach between the tracks.

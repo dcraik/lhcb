@@ -254,7 +254,7 @@ const vector<LoKi::BDTTag::Svr> *LoKi::BDTTag::tbvs(bool force) {
   // Select and sort the particles.
   // A lower minimum IP chi-squared requirement is applied for MC.
   MCParticles *gens   = getIfExists<MCParticles>(MCParticleLocation::Default);
-  double ipChi2MinCut = !gens ? 9 : 9;
+  double ipChi2MinCut = !gens ? 6 : 6;//TODO lowered from 9
   m_prts.clear();
   for (Particles::iterator prt = prts->begin(); prt != prts->end();
        prt++) {
@@ -381,16 +381,23 @@ const vector<LoKi::BDTTag::Svr> *LoKi::BDTTag::nbvs(const Particle *jet) {
       if (deltaR(m_tbvs[tbv].m_trks[trk], jet) <= m_dr)
 	{m_nbvs.push_back(Svr(&m_tbvs[tbv])); break;}
   }
-  //TODO linking is turned off
-  //double n(0);
-  //while (m_nbvs.size() != n) {
-  //  n = m_nbvs.size();
-  //  for (int nbv1 = 0; nbv1 < (int)m_nbvs.size(); ++nbv1)
-  //    for (int nbv2 = nbv1 + 1; nbv2 < (int)m_nbvs.size();)
-  //      if (m_nbvs[nbv1].link(m_nbvs[nbv2]))
-  //        m_nbvs.erase(m_nbvs.begin() + nbv2);
-  //      else ++nbv2;
-  //}
+  //TODO linking is turned off on but originals also kept
+  double n(0);
+  while (m_nbvs.size() != n) {
+    n = m_nbvs.size();
+    for (int nbv1 = 0; nbv1 < (int)m_nbvs.size(); ++nbv1)
+      for (int nbv2 = nbv1 + 1; nbv2 < (int)m_nbvs.size();)
+        if (m_nbvs[nbv1].link(m_nbvs[nbv2]))
+          m_nbvs.erase(m_nbvs.begin() + nbv2);
+        else ++nbv2;
+  }
+  //Add in the originals
+  for (int tbv = 0; tbv < (int)m_tbvs.size(); ++tbv) {
+    if (deltaR(&m_tbvs[tbv], jet, m_backwards ? -1 : 1) > m_dr) continue;
+    for (int trk = 0; trk < (int)m_tbvs[tbv].m_trks.size(); ++trk)
+      if (deltaR(m_tbvs[tbv].m_trks[trk], jet) <= m_dr)
+	{m_nbvs.push_back(Svr(&m_tbvs[tbv])); break;}
+  }
   //TODO Code below will remove 2-body vertices that are subsets of 3-body vertices
   //double n(0);
   //while (m_nbvs.size() != n) {
@@ -513,7 +520,9 @@ bool LoKi::BDTTag::Svr::info(int idx, const Particle *jet,
   props[pre.str() + "mCorErr"]     = m_mCorErr;
   props[pre.str() + "mCorErrFull"] = m_mCorErrFull;
   props[pre.str() + "fdChi2"]      = m_fdChi2;
+  props[pre.str() + "ipChi2Min"]   = m_ipChi2Min;
   props[pre.str() + "ipChi2Sum"]   = m_ipChi2Sum;
+  props[pre.str() + "ipChi2MinTrk"]= m_ipChi2MinTrk;
 
   // Fill the additional properties.
   props[pre.str() + "bdt0"]      = m_bdt0;
@@ -636,6 +645,7 @@ bool LoKi::BDTTag::Svr::calc(const Particle *jet, bool force) {
 	  distance(m_trks[trk1], m_trks[trk2], doca).isSuccess())
   	if (m_docaMin == -1 || doca < m_docaMin) m_docaMin = doca;
 
+  double minall(-1);
   // IP chi-squared and absolute charge sums.
   for (int trk = 0; trk < (int)m_trks.size(); ++trk) {
     double min(-1), ip, chi2;
@@ -646,7 +656,9 @@ bool LoKi::BDTTag::Svr::calc(const Particle *jet, bool force) {
       if (chi2 >= 0 && (min == -1 || chi2 < min)) min = chi2;
     }
     m_ipChi2Sum += min;
+    if(minall == -1 || min < minall) minall = min;
   }
+  m_ipChi2MinTrk = minall;
   m_absQSum = abs(m_absQSum);
 
   // Corrected mass.

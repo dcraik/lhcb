@@ -76,7 +76,7 @@ class Ntuple:
         self.init('pvr', pos + cov)
         self.init('svr', ['idx_pvr', 'idx_jet'] + [
                 'idx_trk%i' % i for i in range(0, 10)] + 
-                  mom + pos + ['m', 'm_cor', 'm_cor_err', 'm_cor_err_full', 'pt', 'fd_min', 'fd_chi2', 'chi2', 'ip_chi2_sum', 'abs_q_sum', 'tau', 'ntrk', 'ntrk_jet', 'jet_dr', 'jet_pt', 'pass', 'bdt0', 'bdt1'])
+                  mom + pos + ['m', 'm_cor', 'm_cor_err', 'm_cor_err_full', 'fd_min', 'fd_chi2', 'chi2', 'ip_chi2', 'ip_chi2_sum', 'ip_chi2_min_trk', 'abs_q_sum', 'tau', 'ntrk', 'ntrk_jet', 'jet_dr', 'jet_pt', 'pass', 'bdt0', 'bdt1'])
         self.init('jet', ['idx_pvr', 'ntrk', 'nneu'] + mom)
         self.init('trk', ['idx_gen', 'idx_pvr', 'idx_jet'] + mom +
                   ['pid', 'q', 'ip', 'ip_chi2', 'pnn_e', 'pnn_mu', 'pnn_pi',
@@ -587,7 +587,9 @@ class Ntuple:
             vrs['fd_min'] = tags['Tag%i_fdrMin' % itag]
             vrs['fd_chi2']  = tags['Tag%i_fdChi2' % itag]
             vrs['chi2']  = tags['Tag%i_chi2' % itag]
+            vrs['ip_chi2']  = tags['Tag%i_ipChi2Min' % itag]
             vrs['ip_chi2_sum']  = tags['Tag%i_ipChi2Sum' % itag]
+            vrs['ip_chi2_min_trk']  = tags['Tag%i_ipChi2MinTrk' % itag]
             vrs['abs_q_sum']  = tags['Tag%i_absQSum' % itag]
             vrs['tau']  = tags['Tag%i_tau' % itag]
             vrs['ntrk']  = tags['Tag%i_nTrk' % itag]
