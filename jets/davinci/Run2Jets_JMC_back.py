@@ -11,8 +11,8 @@ JetPtMin = 10 * Units.GeV
 #from GaudiConf import IOHelper
 #IOHelper('ROOT').inputFiles([
 ##'/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00042952/0000/00042952_00000001_1.ldst' #/tmp/dcraik/00042952_00000002_1.ldst' #/data/dst/MC15.MD.49000004.1.00.dst'
-##    '/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00042982/0000/00042982_00000002_1.ldst'#light
-#    '/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00042950/0000/00042950_00000001_1.ldst'#charm
+#    '/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00042982/0000/00042982_00000002_1.ldst'#light
+##    '/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00042950/0000/00042950_00000001_1.ldst'#charm
 ##    '/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00042972/0000/00042972_00000003_1.ldst'#beauty
 #    ],
 #    clear = True)
@@ -93,7 +93,7 @@ DaVinci().DataType = '2015'
 from Configurables import LoKi__BDTTag
 tagger = LoKi__BDTTag()
 tagger.NbvSelect = False
-tagger.Backwards = False
+tagger.Backwards = True
 
 # Access to classes.
 from collections import OrderedDict

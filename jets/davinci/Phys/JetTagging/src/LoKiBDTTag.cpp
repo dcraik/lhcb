@@ -254,7 +254,7 @@ const vector<LoKi::BDTTag::Svr> *LoKi::BDTTag::tbvs(bool force) {
   // Select and sort the particles.
   // A lower minimum IP chi-squared requirement is applied for MC.
   MCParticles *gens   = getIfExists<MCParticles>(MCParticleLocation::Default);
-  double ipChi2MinCut = !gens ? 6 : 6;//TODO lowered from 9
+  double ipChi2MinCut = !gens ? 9 : 9;//TODO lowered from 9
   m_prts.clear();
   for (Particles::iterator prt = prts->begin(); prt != prts->end();
        prt++) {
@@ -532,6 +532,7 @@ bool LoKi::BDTTag::Svr::info(int idx, const Particle *jet,
   props[pre.str() + "z"]         = m_vrt.position().Z();
   props[pre.str() + "pt"]        = m_prt.momentum().Pt();
   props[pre.str() + "backwards"] = m_parent->m_backwards;
+  props[pre.str() + "nTBVs"]	 = m_tbvs.size();
 
   // Properties needed for training.
   props[pre.str() + "x"]  = m_vrt.position().X();
@@ -636,6 +637,7 @@ bool LoKi::BDTTag::Svr::calc(const Particle *jet, bool force) {
   // Calculate the pseudo-lifetime.
   m_tz = (svrPos.Z() - pvrPos.Z())*m_prt.momentum().M()/m_prt.momentum().Pz()
     /(3e11)*(1e12);
+  if(m_parent->m_backwards) m_tz = -m_tz;
 
   // DOCA information.
   double doca;

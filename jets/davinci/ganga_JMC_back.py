@@ -7,9 +7,9 @@ polarity = str(sys.argv[1]) #MagDown, MagUp
 mode = str(sys.argv[2]) #490000XX
 note = str(sys.argv[3])
 
-script=str('Run2Jets_JMC.py')
+script=str('Run2Jets_JMC_back.py')
 
-job_name = "RIIJ_JMC" + str(note) + str(polarity) + str(mode)
+job_name = "RIIJ_JMC_back" + str(note) + str(polarity) + str(mode)
 print job_name
 print script
 
