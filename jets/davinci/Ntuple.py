@@ -76,7 +76,7 @@ class Ntuple:
         self.init('pvr', pos + cov)
         self.init('svr', ['idx_pvr', 'idx_jet'] + [
                 'idx_trk%i' % i for i in range(0, 10)] + 
-                  mom + pos + ['m', 'm_cor', 'm_cor_err', 'm_cor_err_full', 'fd_min', 'fd_chi2', 'chi2', 'ip_chi2', 'ip_chi2_sum', 'ip_chi2_min_trk', 'abs_q_sum', 'tau', 'ntrk', 'ntrk_jet', 'jet_dr', 'jet_pt', 'pass', 'bdt0', 'bdt1', 'in_mtr', 'backwards', 'nTBVs'])
+                  mom + pos + ['dx', 'dy', 'dz', 'm', 'm_cor', 'm_cor_err', 'm_cor_err_full', 'fd_min', 'fd_chi2', 'chi2', 'ip_chi2', 'ip_chi2_sum', 'ip_chi2_min_trk', 'abs_q_sum', 'tau', 'ntrk', 'ntrk_jet', 'jet_dr', 'jet_pt', 'pass', 'bdt0', 'bdt1', 'in_mtr', 'backwards', 'nTBVs'])
         self.init('jet', ['idx_pvr', 'ntrk', 'nneu'] + mom)
         self.init('trk', ['idx_gen', 'idx_pvr', 'idx_jet'] + mom +
                   ['pid', 'q', 'ip', 'ip_chi2', 'pnn_e', 'pnn_mu', 'pnn_pi',
@@ -577,7 +577,7 @@ class Ntuple:
             for itrk in range(0, ntrk): vrs['idx_trk%i' % itrk] = self.addTrk(
                 self.tes['Phys/StdAllNoPIDsPions/Particles']
                 [int(tags['Tag%i_idx_trk%i' % (itag, itrk)])]);
-            for vr in ['x', 'y', 'z', 'px', 'py', 'pz', 'e']:
+            for vr in ['x', 'y', 'z', 'dx', 'dy', 'dz', 'px', 'py', 'pz', 'e']:
                 vrs[vr] = tags['Tag%i_%s' % (itag, vr)]
             vrs['m']  = tags['Tag%i_m' % itag]
             vrs['m_cor']  = tags['Tag%i_mCor' % itag]

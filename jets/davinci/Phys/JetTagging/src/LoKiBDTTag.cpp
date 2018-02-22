@@ -537,6 +537,9 @@ bool LoKi::BDTTag::Svr::info(int idx, const Particle *jet,
   // Properties needed for training.
   props[pre.str() + "x"]  = m_vrt.position().X();
   props[pre.str() + "y"]  = m_vrt.position().Y();
+  props[pre.str() + "dx"] = m_vrt.covMatrix()(0,0);
+  props[pre.str() + "dy"] = m_vrt.covMatrix()(1,1);
+  props[pre.str() + "dz"] = m_vrt.covMatrix()(2,2);
   props[pre.str() + "px"] = m_prt.momentum().Px();
   props[pre.str() + "py"] = m_prt.momentum().Py();
   props[pre.str() + "pz"] = m_prt.momentum().Pz();
