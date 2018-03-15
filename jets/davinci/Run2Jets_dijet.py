@@ -200,18 +200,28 @@ while evtmax < 0 or evtnum < evtmax:
         jpsis = tes[recJpsi.algorithm().Output]
         for jpsi in jpsis:
             ntuple.addDHad(jpsi,"jpsi")
+    except: pass
+    try:
         d0s = tes[recD0.algorithm().Output]
         for d0 in d0s:
             ntuple.addDHad(d0,"d0")
+    except: pass
+    try:
         dps = tes[recDp.algorithm().Output]
         for dp in dps:
             ntuple.addDHad(dp,"dp")
+    except: pass
+    try:
         dss = tes[recDs.algorithm().Output]
         for ds in dss:
             ntuple.addDHad(ds,"ds")
+    except: pass
+    try:
         lcs = tes[recLc.algorithm().Output]
         for lc in lcs:
             ntuple.addDHad(lc,"lc")
+    except: pass
+    try:
         d0s = tes[recD02K3pi.algorithm().Output]
         for d0 in d0s:
             ntuple.addDHad(d0,"k3pi")
