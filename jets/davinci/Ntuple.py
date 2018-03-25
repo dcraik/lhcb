@@ -72,25 +72,27 @@ class Ntuple:
         mom = ['p','pt','px', 'py', 'pz', 'e']
         pos = ['x', 'y', 'z']
         cov = ['dx', 'dy', 'dz', 'chi2', 'ndof']
+        l0trig = ['%s_%s' % (line,dec) for line in ['l0_hadron','l0_photon','l0_electron','l0_muon','l0_dimuon'] for dec in ['dec','tis','tos']]
+        hlt1trig = ["%s_%s" % (line,dec) for line in ['hlt1_track','hlt1_ditrack'] for dec in ['dec','tis','tos']]
         self.init('gen', ['idx_pvr', 'idx_jet', 'idx_prnt', 'pid', 'q'] + mom + pos + ['prnt_pid', 'res_pid', 'from_sig'])
         self.init('pvr', pos + cov)
         self.init('svr', ['idx_pvr', 'idx_jet'] + [
                 'idx_trk%i' % i for i in range(0, 10)] + 
-                  mom + pos + ['dx', 'dy', 'dz', 'm', 'm_cor', 'm_cor_err', 'm_cor_err_full', 'fd_min', 'fd_chi2', 'chi2', 'ip_chi2', 'ip_chi2_sum', 'ip_chi2_min_trk', 'abs_q_sum', 'tau', 'ntrk', 'ntrk_jet', 'jet_dr', 'jet_pt', 'pass', 'bdt0', 'bdt1', 'in_mtr', 'backwards', 'nTBVs'])
-        self.init('jet', ['idx_pvr', 'ntrk', 'nneu'] + mom)
+                  mom + pos + ['dx', 'dy', 'dz', 'm', 'm_cor', 'm_cor_err', 'm_cor_err_full', 'fd_min', 'fd_chi2', 'chi2', 'ip_chi2', 'ip_chi2_sum', 'ip_chi2_min_trk', 'abs_q_sum', 'tau', 'ntrk', 'ntrk_jet', 'jet_dr', 'jet_pt', 'pass', 'bdt0', 'bdt1', 'in_mtr', 'backwards', 'nTBVs'] + l0trig + hlt1trig)
+        self.init('jet', ['idx_pvr', 'ntrk', 'nneu'] + mom + l0trig + hlt1trig)
         self.init('trk', ['idx_gen', 'idx_pvr', 'idx_jet'] + mom +
                   ['pid', 'q', 'ip', 'ip_chi2', 'pnn_e', 'pnn_mu', 'pnn_pi',
                    'pnn_k', 'pnn_p', 'pnn_ghost', 'ecal', 'hcal', 'prb_ghost', 'type', 'is_mu',
-                   'vid', 'x', 'y', 'z'])# + ['vhit%i' % i for i in range(0, 61)])# + [
+                   'vid', 'x', 'y', 'z'] + l0trig + hlt1trig)# + ['vhit%i' % i for i in range(0, 61)])# + [
                    #'vz%i' % i for i in range(0, 61)])
-        self.init('neu', ['idx_gen', 'idx_jet'] + mom + ['pid'])
-        self.init('z0', ['idx_pvr','idx_jet_trk0', 'idx_jet_trk1', 'idx_jet_dr'] + mom + pos + ['m', 'ip', 'ip_chi2','dr_jet'] + ['idx_trk%i' % i for i in range(0, 2)]) 
-        self.init('jpsi', ['idx_pvr','idx_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 2)])
-        self.init('d0', ['idx_pvr','idx_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 2)]) 
-        self.init('dp', ['idx_pvr','idx_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 3)]) 
-        self.init('ds', ['idx_pvr','idx_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 3)]) 
-        self.init('lc', ['idx_pvr','idx_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 3)]) 
-        self.init('k3pi', ['idx_pvr','idx_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 4)]) 
+        self.init('neu', ['idx_gen', 'idx_jet'] + mom + ['pid'] + l0trig + hlt1trig)
+        self.init('z0', ['idx_pvr','idx_jet_trk0', 'idx_jet_trk1', 'idx_jet_dr'] + mom + pos + ['m', 'ip', 'ip_chi2','dr_jet'] + ['idx_trk%i' % i for i in range(0, 2)] + l0trig + hlt1trig)
+        self.init('jpsi', ['idx_pvr','idx_jet','idx_jet_trk0', 'idx_jet_trk1', 'idx_jet_dr','dr_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 2)] + l0trig + hlt1trig)
+        self.init('d0', ['idx_pvr','idx_jet','idx_jet_trk0', 'idx_jet_trk1', 'idx_jet_dr','dr_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 2)] + l0trig + hlt1trig)
+        self.init('dp', ['idx_pvr','idx_jet','idx_jet_trk0', 'idx_jet_trk1', 'idx_jet_trk2', 'idx_jet_dr','dr_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 3)] + l0trig + hlt1trig)
+        self.init('ds', ['idx_pvr','idx_jet','idx_jet_trk0', 'idx_jet_trk1', 'idx_jet_trk2', 'idx_jet_dr','dr_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 3)] + l0trig + hlt1trig)
+        self.init('lc', ['idx_pvr','idx_jet','idx_jet_trk0', 'idx_jet_trk1', 'idx_jet_trk2', 'idx_jet_dr','dr_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 3)] + l0trig + hlt1trig)
+        self.init('k3pi', ['idx_pvr','idx_jet','idx_jet_trk0', 'idx_jet_trk1', 'idx_jet_trk2', 'idx_jet_trk3', 'idx_jet_dr','dr_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 4)] + l0trig + hlt1trig)
         self.init('evt', ['dec'] + ['%s_%s' % (k,l) for k in ['j1', 'j2'] for l in ['idx','dR','nsv','nmu','ntrk','nneu'] + mom ] )
         self.ntuple['evt_pvr_n'] = array.array('d', [-1])
         self.ntuple['evt_trk_n'] = array.array('d', [-1])
@@ -298,6 +300,40 @@ class Ntuple:
         gen = None; wgt = 0; rels = self.genTool.relatedMCPs(obj)
         for rel in rels: gen = rel.to() if rel.weight() > wgt else gen
         if gen: vrs['idx_gen'] = self.addGen(gen) 
+    def fillTrig(self, obj, vrs):
+        if not obj: return
+        self.l0Tool.setOfflineInput()
+        self.l0Tool.addToOfflineInput(obj)
+        dec = self.l0Tool.triggerTisTos("L0HadronDecision")
+        vrs['l0_hadron_dec'] = dec.decision()
+        vrs['l0_hadron_tis'] = dec.tis()
+        vrs['l0_hadron_tos'] = dec.tos()
+        dec = self.l0Tool.triggerTisTos("L0PhotonDecision")
+        vrs['l0_photon_dec'] = dec.decision()
+        vrs['l0_photon_tis'] = dec.tis()
+        vrs['l0_photon_tos'] = dec.tos()
+        dec = self.l0Tool.triggerTisTos("L0ElectronDecision")
+        vrs['l0_electron_dec'] = dec.decision()
+        vrs['l0_electron_tis'] = dec.tis()
+        vrs['l0_electron_tos'] = dec.tos()
+        dec = self.l0Tool.triggerTisTos("L0MuonDecision")
+        vrs['l0_muon_dec'] = dec.decision()
+        vrs['l0_muon_tis'] = dec.tis()
+        vrs['l0_muon_tos'] = dec.tos()
+        dec = self.l0Tool.triggerTisTos("L0DiMuonDecision")
+        vrs['l0_dimuon_dec'] = dec.decision()
+        vrs['l0_dimuon_tis'] = dec.tis()
+        vrs['l0_dimuon_tos'] = dec.tos()
+        self.hlt1Tool.setOfflineInput()
+        self.hlt1Tool.addToOfflineInput(obj)
+        dec = self.hlt1Tool.triggerTisTos(obj,"Hlt1TrackMVADecision")
+        vrs['hlt1_track_dec'] = dec.decision()
+        vrs['hlt1_track_tis'] = dec.tis()
+        vrs['hlt1_track_tos'] = dec.tos()
+        dec = self.hlt1Tool.triggerTisTos(obj,"Hlt1TwoTrackMVADecision")
+        vrs['hlt1_ditrack_dec'] = dec.decision()
+        vrs['hlt1_ditrack_tis'] = dec.tis()
+        vrs['hlt1_ditrack_tos'] = dec.tos()
 
     def addZ(self, obj, pre="z0"):
         vrs = {}
@@ -331,6 +367,7 @@ class Ntuple:
             self.fillMom(obj.momentum(), vrs)
             ##self.fillPos(obj.endVertex(), vrs)
             ##self.fillVtx(obj.vertex(), vrs)
+            self.fillTrig(obj, vrs)
             vrs['m'] = obj.momentum().M()
             vrs['idx_jet_trk0'] = trkJets[0]
             vrs['idx_jet_trk1'] = trkJets[1]
@@ -355,6 +392,8 @@ class Ntuple:
             jets = self.tes[self.jetPath]
             nInBest = 0
             bestJet = -1
+            bestJetDr = -1
+            bestDr = 10.0
             for idx, jet in enumerate(jets):
                 jetTrkKeys = [ self.key(dau) for dau in jet.daughters() ]
                 nIn=0
@@ -365,6 +404,10 @@ class Ntuple:
                 if nIn>nInBest:
                     nInBest=nIn
                     bestJet=idx
+                dr = ROOT.TLorentzVector(jet.momentum().Px(),jet.momentum().Py(),jet.momentum().Pz(),0.).DeltaR(ROOT.TLorentzVector(obj.momentum().Px(),obj.momentum().Py(),obj.momentum().Pz(),0.))
+                if bestDr > dr:
+                    bestDr = dr
+                    bestJetDr = idx
             
             for dau in obj.daughters():
                 trks.append(self.addTrk(dau))
@@ -376,9 +419,12 @@ class Ntuple:
             self.fillMom(obj.momentum(), vrs)
             self.fillPos(obj.endVertex(), vrs)
             self.fillVtx(obj.vertex(), vrs)
+            self.fillTrig(obj, vrs)
             vrs['m'] = obj.momentum().M()
             vrs['idx_jet'] = bestJet
             vrs['ntrk_jet'] = nInBest
+            vrs['idx_jet_dr'] = bestJetDr
+            vrs['dr_jet'] = bestDr
             for idx, trk in enumerate(trks):
                 vrs['idx_trk%i' % idx] = trk
 
@@ -601,6 +647,7 @@ class Ntuple:
             vrs['bdt1']  = tags['Tag%i_bdt1' % itag]
             vrs['backwards']  = tags['Tag%i_backwards' % itag]
             vrs['nTBVs']  = tags['Tag%i_nTBVs' % itag]
+            self.fillTrig(obj, vrs)
             self.fill(pre, vrs = vrs)
     def addJet(self, obj, pre = 'jet'):
         vrs = {}
@@ -608,6 +655,7 @@ class Ntuple:
         pvr = self.pvrTool.relatedPV(obj, 'Rec/Vertex/Primary')
         self.fillMom(obj.momentum(), vrs)
         self.fillPvr(pvr, vrs)
+        self.fillTrig(obj, vrs)
         trks = []
         nneu=0
         for dtr in obj.daughters():
@@ -633,6 +681,7 @@ class Ntuple:
         self.fillMom(obj.momentum(), vrs)
         self.fillPid(obj.particleID(), vrs)
         self.fillGen(obj, vrs)
+        self.fillTrig(obj, vrs)
         vrs['idx_jet'] = jet
         self.fill(pre, vrs = vrs)
     def addTrk(self, obj, jet = -1, pre = 'trk'):
@@ -648,6 +697,7 @@ class Ntuple:
         self.fillTrk(obj.proto().track(), obj.particleID(), vrs)
         self.fillPvr(pvr, vrs)
         self.fillGen(obj, vrs)
+        self.fillTrig(obj, vrs)
         vrs['idx_jet'] = jet
         self.saved[pre][key] = idx
         self.fill(pre, vrs = vrs)
