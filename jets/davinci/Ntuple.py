@@ -10,10 +10,11 @@ class Ntuple:
     """
     Class to store an ntuple.
     """
-    def __init__(self, name, tes, toolSvc, detSvc, jetPath, recSvrPath, recMuPath):
+    def __init__(self, name, tes, toolSvc, detSvc, jetPath, recSvrPath, recMuPath, hasL0=True):
         """
         Initialize the ntuple with the needed tools.
         """
+        self.hasL0 = hasL0
         ROOT.gInterpreter.ProcessLine(
             "#include \"/cvmfs/lhcb.cern.ch/lib/lhcb/HLT/"
             "HLT_v25r4/Hlt/HltDisplVertices/Kernel/"
@@ -302,38 +303,45 @@ class Ntuple:
         if gen: vrs['idx_gen'] = self.addGen(gen) 
     def fillTrig(self, obj, vrs):
         if not obj: return
-        self.l0Tool.setOfflineInput()
-        self.l0Tool.addToOfflineInput(obj)
-        dec = self.l0Tool.triggerTisTos("L0HadronDecision")
-        vrs['l0_hadron_dec'] = dec.decision()
-        vrs['l0_hadron_tis'] = dec.tis()
-        vrs['l0_hadron_tos'] = dec.tos()
-        dec = self.l0Tool.triggerTisTos("L0PhotonDecision")
-        vrs['l0_photon_dec'] = dec.decision()
-        vrs['l0_photon_tis'] = dec.tis()
-        vrs['l0_photon_tos'] = dec.tos()
-        dec = self.l0Tool.triggerTisTos("L0ElectronDecision")
-        vrs['l0_electron_dec'] = dec.decision()
-        vrs['l0_electron_tis'] = dec.tis()
-        vrs['l0_electron_tos'] = dec.tos()
-        dec = self.l0Tool.triggerTisTos("L0MuonDecision")
-        vrs['l0_muon_dec'] = dec.decision()
-        vrs['l0_muon_tis'] = dec.tis()
-        vrs['l0_muon_tos'] = dec.tos()
-        dec = self.l0Tool.triggerTisTos("L0DiMuonDecision")
-        vrs['l0_dimuon_dec'] = dec.decision()
-        vrs['l0_dimuon_tis'] = dec.tis()
-        vrs['l0_dimuon_tos'] = dec.tos()
-        self.hlt1Tool.setOfflineInput()
-        self.hlt1Tool.addToOfflineInput(obj)
-        dec = self.hlt1Tool.triggerTisTos(obj,"Hlt1TrackMVADecision")
-        vrs['hlt1_track_dec'] = dec.decision()
-        vrs['hlt1_track_tis'] = dec.tis()
-        vrs['hlt1_track_tos'] = dec.tos()
-        dec = self.hlt1Tool.triggerTisTos(obj,"Hlt1TwoTrackMVADecision")
-        vrs['hlt1_ditrack_dec'] = dec.decision()
-        vrs['hlt1_ditrack_tis'] = dec.tis()
-        vrs['hlt1_ditrack_tos'] = dec.tos()
+        try:
+            self.hlt1Tool.setOfflineInput()
+            self.hlt1Tool.addToOfflineInput(obj)
+            dec = self.hlt1Tool.triggerTisTos(obj,"Hlt1TrackMVADecision")
+            vrs['hlt1_track_dec'] = dec.decision()
+            vrs['hlt1_track_tis'] = dec.tis()
+            vrs['hlt1_track_tos'] = dec.tos()
+            dec = self.hlt1Tool.triggerTisTos(obj,"Hlt1TwoTrackMVADecision")
+            vrs['hlt1_ditrack_dec'] = dec.decision()
+            vrs['hlt1_ditrack_tis'] = dec.tis()
+            vrs['hlt1_ditrack_tos'] = dec.tos()
+        except:
+            pass
+        if not self.hasL0: return
+        try:
+            self.l0Tool.setOfflineInput()
+            self.l0Tool.addToOfflineInput(obj)
+            dec = self.l0Tool.triggerTisTos("L0HadronDecision")
+            vrs['l0_hadron_dec'] = dec.decision()
+            vrs['l0_hadron_tis'] = dec.tis()
+            vrs['l0_hadron_tos'] = dec.tos()
+            dec = self.l0Tool.triggerTisTos("L0PhotonDecision")
+            vrs['l0_photon_dec'] = dec.decision()
+            vrs['l0_photon_tis'] = dec.tis()
+            vrs['l0_photon_tos'] = dec.tos()
+            dec = self.l0Tool.triggerTisTos("L0ElectronDecision")
+            vrs['l0_electron_dec'] = dec.decision()
+            vrs['l0_electron_tis'] = dec.tis()
+            vrs['l0_electron_tos'] = dec.tos()
+            dec = self.l0Tool.triggerTisTos("L0MuonDecision")
+            vrs['l0_muon_dec'] = dec.decision()
+            vrs['l0_muon_tis'] = dec.tis()
+            vrs['l0_muon_tos'] = dec.tos()
+            dec = self.l0Tool.triggerTisTos("L0DiMuonDecision")
+            vrs['l0_dimuon_dec'] = dec.decision()
+            vrs['l0_dimuon_tis'] = dec.tis()
+            vrs['l0_dimuon_tos'] = dec.tos()
+        except:
+            pass
 
     def addZ(self, obj, pre="z0"):
         vrs = {}
