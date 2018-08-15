@@ -38,7 +38,7 @@ if note=="test":
     j.backend        = Local()
     j.outputfiles     = [LocalFile("*.root")]
 elif note=="testgrid":
-    j.splitter       = SplitByFiles(filesPerJob = 1, maxFiles = 4)
+    j.splitter       = SplitByFiles(filesPerJob = 25, maxFiles = 10, ignoremissing=True)
     j.backend        = Dirac()
     j.outputfiles     = [LocalFile("*.root")]
 else:
@@ -48,7 +48,7 @@ else:
 
 if note in ["test","testgrid"]:
     if year=='2016':
-        j.inputdata = LHCbDataset(['LFN:/lhcb/LHCb/Collision16/BHADRONCOMPLETEEVENT.DST/00059907/0001/00059907_00010184_1.bhadroncompleteevent.dst'])
+        j.inputdata = LHCbDataset(['LFN:/lhcb/LHCb/Collision16/BHADRONCOMPLETEEVENT.DST/00069603/0000/00069603_00001488_1.bhadroncompleteevent.dst'])
     if year=='2017A':
         j.inputdata = LHCbDataset(['LFN:/lhcb/LHCb/Collision17/BHADRONCOMPLETEEVENT.DST/00064383/0000/00064383_00000017_1.bhadroncompleteevent.dst'])
     if year=='2017B':

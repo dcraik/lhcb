@@ -14,11 +14,11 @@ do
 		done
 		if [ "$f" != "NOFILE" ]
 		then
-			mkdir -p /eos/lhcb/user/d/dcraik/jets/$jobid/$subdir/
-			if [ ! -f /eos/lhcb/user/d/dcraik/jets/$jobid/$subdir/${f##*/} ]
+			mkdir -p /eos/user/d/dcraik/jets/$jobid/$subdir/
+			if [ ! -f /eos/user/d/dcraik/jets/$jobid/$subdir/${f##*/} ]
 			then
 				echo Downloading subjob $subdir
-				lb-run LHCbDIRAC dirac-dms-get-file LFN:$f -D/eos/lhcb/user/d/dcraik/jets/$jobid/$subdir/ &
+				lb-run LHCbDIRAC dirac-dms-get-file LFN:$f -D/eos/user/d/dcraik/jets/$jobid/$subdir/ &
 			#else
 			#	echo Skipping subjob $subdir, file already exists
 			fi

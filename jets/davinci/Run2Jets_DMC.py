@@ -188,7 +188,7 @@ while evtmax < 0 or evtnum < evtmax:
     try:
         jpsis = tes[recJpsi.algorithm().Output]
         for jpsi in jpsis:
-            ntuple.addDHad(jpsi,"jpsi")
+            ntuple.addDHad(jpsi,"jpsi"); fill = True ##TODO fill was missing here when run! Should be OK because it was there on the gen
     except: pass
     try:
         d0s = tes[recD0.algorithm().Output]

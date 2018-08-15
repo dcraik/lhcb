@@ -61,7 +61,7 @@ genJB.Output = 'Phys/JB/MCParticles'
 # Create the reconstructed jets.
 from Configurables import HltParticleFlow, HltJetBuilder
 from StandardParticles import (StdLooseKsDD, StdLooseKsLL, StdLooseKsLD,
-                               StdLooseLambdaDD, StdLooseLambdaLL, 
+                               StdLooseLambdaDD, StdLooseLambdaLL,
                                StdLooseLambdaLD)
 recPF = HltParticleFlow('recPF')
 recPF.Inputs = [
@@ -148,7 +148,7 @@ tes   = gaudi.evtsvc()
 # Run.
 import sys, ROOT
 from math import floor
-evtmax = -1
+evtmax = -1 #TODO
 #try: evtmax = int(sys.argv[1])
 #except: evtmax = float('inf')
 evtnum = 0

@@ -18,6 +18,8 @@ DV.options = [script]
 DV.useGaudiRun = False
 
 BK_locations = ['/MC/Dev/Beam6500GeV-RunII-'+polarity+'-Nu1.6-25ns-Pythia8/Sim08f/Reco15DEV/'+mode+'/LDST']
+if(mode==30000000):
+    BK_locations = ['/MC/2016/Beam6500GeV-2016-'+polarity+'-Nu1.6-25ns-Pythia8/Sim09c/30000000/XDIGI']
 data = LHCbDataset()
 bk = BKQuery()
 
@@ -41,7 +43,7 @@ j = Job(
   )
 
 if note=="test":
-    j.splitter       = SplitByFiles(filesPerJob = 1, maxFiles = 3, ignoremissing=True)
+    j.splitter       = SplitByFiles(filesPerJob = 1, maxFiles = 1, ignoremissing=True)
     j.backend        = Local()
     j.outputfiles     = [LocalFile("*.root")]
 elif note=="testgrid":
