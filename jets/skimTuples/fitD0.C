@@ -160,7 +160,7 @@ void fit(){
 	obs.add(DPZ);
 
 	// -- load dataset for data
-	TFile* df = TFile::Open("for_yandex_data_SV_0tag_new170911_DsOnly_forFit.root");
+	TFile* df = TFile::Open("for_yandex_data_SV_0tag_DsOnly_forFit.root");
 	TTree* dt = dynamic_cast<TTree*>(df->Get("T"));
 	RooDataSet ds("ds","ds", obs, RooFit::Import(*dt));
 	RooDataSet* dsPeak = dynamic_cast<RooDataSet*>(ds.reduce("D0M>1844 && D0M<1884"));
@@ -179,6 +179,9 @@ void fit(){
         D0M.setRange("sideLo",1784.,1804.);
         D0M.setRange("sideHi",1924.,1944.);
         D0M.setRange("full",1784.,1944.);
+
+        D0LOGIPCHI2.setRange("sigIPCHI2",-5.,3.);
+        D0LOGIPCHI2.setRange("fullIPCHI2",-5.,15.);
 
         double fsig_1 = sigMass.createIntegral(RooArgSet(D0M),RooFit::NormSet(D0M),RooFit::Range("signal"))->getVal();
         double fsig_2 = sigMass.createIntegral(RooArgSet(D0M),RooFit::NormSet(D0M),RooFit::Range("sideLo"))->getVal();
@@ -221,6 +224,18 @@ void fit(){
 	RooAddPdf data_pdf2( "data_pdf2",  "data_pdf2", RooArgList(promptLOGIPCHI2,displacedLOGIPCHI2,bkgLOGIPCHI2), RooArgList(promptYield,displacedYield,bkgInPeakYield) );
 
 	RooFitResult * result2 = data_pdf2.fitTo( *dsPeak, RooFit::Extended(), RooFit::Save(), RooFit::NumCPU(4), RooFit::Range("FIT"));
+
+        double fsigIPCHI2_1 = promptLOGIPCHI2.createIntegral(RooArgSet(D0LOGIPCHI2),RooFit::NormSet(D0LOGIPCHI2),RooFit::Range("sigIPCHI2"))->getVal();
+        double fsigIPCHI2_0 = promptLOGIPCHI2.createIntegral(RooArgSet(D0LOGIPCHI2),RooFit::NormSet(D0LOGIPCHI2),RooFit::Range("fullIPCHI2"))->getVal();
+
+        double f2ndIPCHI2_1 = displacedLOGIPCHI2.createIntegral(RooArgSet(D0LOGIPCHI2),RooFit::NormSet(D0LOGIPCHI2),RooFit::Range("sigIPCHI2"))->getVal();
+        double f2ndIPCHI2_0 = displacedLOGIPCHI2.createIntegral(RooArgSet(D0LOGIPCHI2),RooFit::NormSet(D0LOGIPCHI2),RooFit::Range("fullIPCHI2"))->getVal();
+
+        double fbkgIPCHI2_1 = bkgLOGIPCHI2.createIntegral(RooArgSet(D0LOGIPCHI2),RooFit::NormSet(D0LOGIPCHI2),RooFit::Range("sigIPCHI2"))->getVal();
+        double fbkgIPCHI2_0 = bkgLOGIPCHI2.createIntegral(RooArgSet(D0LOGIPCHI2),RooFit::NormSet(D0LOGIPCHI2),RooFit::Range("fullIPCHI2"))->getVal();
+
+        std::cout << "yields in IP window" << std::endl;
+        std::cout << promptYield.getVal()*fsigIPCHI2_1/fsigIPCHI2_0 << "\t" << displacedYield.getVal()*f2ndIPCHI2_1/f2ndIPCHI2_0 << "\t" << bkgInPeakYield.getVal()*fbkgIPCHI2_1/fbkgIPCHI2_0 << std::endl;
 
 	promptMean.setConstant();
 	promptWidth.setConstant();
@@ -280,7 +295,7 @@ void fit(){
         newFile0->Close();
 	//Finish SPlot
 
-	TFile* df4 = TFile::Open("for_yandex_data_SV_4tag_new170911_DsOnly_forFit.root");
+	TFile* df4 = TFile::Open("for_yandex_data_SV_4tag_DsOnly_forFit.root");
 	TTree* dt4 = dynamic_cast<TTree*>(df4->Get("T"));
 	RooDataSet ds4("ds4","ds4", obs, RooFit::Import(*dt4));
 	RooDataSet* ds4Peak = dynamic_cast<RooDataSet*>(ds4.reduce("D0M>1844 && D0M<1884"));
@@ -316,6 +331,18 @@ void fit(){
 
 	RooFitResult * result4 = data_pdf2.fitTo( *ds4Peak, RooFit::Extended(), RooFit::Save(), RooFit::NumCPU(4), RooFit::Range("FIT"));
 
+        fsigIPCHI2_1 = promptLOGIPCHI2.createIntegral(RooArgSet(D0LOGIPCHI2),RooFit::NormSet(D0LOGIPCHI2),RooFit::Range("sigIPCHI2"))->getVal();
+        fsigIPCHI2_0 = promptLOGIPCHI2.createIntegral(RooArgSet(D0LOGIPCHI2),RooFit::NormSet(D0LOGIPCHI2),RooFit::Range("fullIPCHI2"))->getVal();
+
+        f2ndIPCHI2_1 = displacedLOGIPCHI2.createIntegral(RooArgSet(D0LOGIPCHI2),RooFit::NormSet(D0LOGIPCHI2),RooFit::Range("sigIPCHI2"))->getVal();
+        f2ndIPCHI2_0 = displacedLOGIPCHI2.createIntegral(RooArgSet(D0LOGIPCHI2),RooFit::NormSet(D0LOGIPCHI2),RooFit::Range("fullIPCHI2"))->getVal();
+
+        fbkgIPCHI2_1 = bkgLOGIPCHI2.createIntegral(RooArgSet(D0LOGIPCHI2),RooFit::NormSet(D0LOGIPCHI2),RooFit::Range("sigIPCHI2"))->getVal();
+        fbkgIPCHI2_0 = bkgLOGIPCHI2.createIntegral(RooArgSet(D0LOGIPCHI2),RooFit::NormSet(D0LOGIPCHI2),RooFit::Range("fullIPCHI2"))->getVal();
+
+        std::cout << "yields in IP window" << std::endl;
+        std::cout << promptYield.getVal()*fsigIPCHI2_1/fsigIPCHI2_0 << "\t" << displacedYield.getVal()*f2ndIPCHI2_1/f2ndIPCHI2_0 << "\t" << bkgInPeakYield.getVal()*fbkgIPCHI2_1/fbkgIPCHI2_0 << std::endl;
+
 	plot(D0M, 1784., 1944., ds4, data_pdf, sig_pdfs, bkg_pdfs, "D0M_4", "m_{K#pi}");
 	plot(D0LOGIPCHI2, -5., 15., *ds4Peak, data_pdf2, sig_pdfs2, bkg_pdfs2, "D0IPChi2_4", "log(IP#chi^{2})");
 
@@ -338,7 +365,7 @@ void fit(){
         newFile1->Close();
 	//Finish SPlot
 
-	TFile* df5 = TFile::Open("for_yandex_data_SV_5tag_new170911_DsOnly_forFit.root");
+	TFile* df5 = TFile::Open("for_yandex_data_SV_5tag_DsOnly_forFit.root");
 	TTree* dt5 = dynamic_cast<TTree*>(df5->Get("T"));
 	RooDataSet ds5("ds5","ds5", obs, RooFit::Import(*dt5));
 	RooDataSet* ds5Peak = dynamic_cast<RooDataSet*>(ds5.reduce("D0M>1844 && D0M<1884"));
@@ -373,6 +400,18 @@ void fit(){
 	fBkgInPeak.setVal(fbkg_1/fbkg_0);
 
 	RooFitResult * result6 = data_pdf2.fitTo( *ds5Peak, RooFit::Extended(), RooFit::Save(), RooFit::NumCPU(4), RooFit::Range("FIT"));
+
+        fsigIPCHI2_1 = promptLOGIPCHI2.createIntegral(RooArgSet(D0LOGIPCHI2),RooFit::NormSet(D0LOGIPCHI2),RooFit::Range("sigIPCHI2"))->getVal();
+        fsigIPCHI2_0 = promptLOGIPCHI2.createIntegral(RooArgSet(D0LOGIPCHI2),RooFit::NormSet(D0LOGIPCHI2),RooFit::Range("fullIPCHI2"))->getVal();
+
+        f2ndIPCHI2_1 = displacedLOGIPCHI2.createIntegral(RooArgSet(D0LOGIPCHI2),RooFit::NormSet(D0LOGIPCHI2),RooFit::Range("sigIPCHI2"))->getVal();
+        f2ndIPCHI2_0 = displacedLOGIPCHI2.createIntegral(RooArgSet(D0LOGIPCHI2),RooFit::NormSet(D0LOGIPCHI2),RooFit::Range("fullIPCHI2"))->getVal();
+
+        fbkgIPCHI2_1 = bkgLOGIPCHI2.createIntegral(RooArgSet(D0LOGIPCHI2),RooFit::NormSet(D0LOGIPCHI2),RooFit::Range("sigIPCHI2"))->getVal();
+        fbkgIPCHI2_0 = bkgLOGIPCHI2.createIntegral(RooArgSet(D0LOGIPCHI2),RooFit::NormSet(D0LOGIPCHI2),RooFit::Range("fullIPCHI2"))->getVal();
+
+        std::cout << "yields in IP window" << std::endl;
+        std::cout << promptYield.getVal()*fsigIPCHI2_1/fsigIPCHI2_0 << "\t" << displacedYield.getVal()*f2ndIPCHI2_1/f2ndIPCHI2_0 << "\t" << bkgInPeakYield.getVal()*fbkgIPCHI2_1/fbkgIPCHI2_0 << std::endl;
 
 	plot(D0M, 1784., 1944., ds5, data_pdf, sig_pdfs, bkg_pdfs, "D0M_5", "m_{K#pi}");
 	plot(D0LOGIPCHI2, -5., 15., *ds5Peak, data_pdf2, sig_pdfs2, bkg_pdfs2, "D0IPChi2_5", "log(IP#chi^{2})");

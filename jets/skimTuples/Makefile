@@ -5,7 +5,7 @@ ROOTFLAGS = `root-config --cflags` # --libs` `gsl-config --cflags` -lThread -lMi
 ROOTLIBS  = `root-config --glibs` -lRooFit -lThread -lMinuit -lMathCore -lRooStats -lRooFit -lRooFitCore -lFoam -lTreePlayer
 INCPATH   = -I.
 
-all : 	skim_for_yandex	skim_for_yandex_data skim_for_yandex_data_z0 skim_for_yandex_data_light skim_for_yandex_DMC skimD0s skimD0sFromB skimCharm charmEfficiencies weightCharmEffs fit fitD0 fitD fitDs fitLc fit2d tagEvents skimZs
+all : 	skim_for_yandex	skim_for_yandex_data skim_for_yandex_data_z0 skim_for_yandex_data_light skim_for_yandex_DMC skimD0s skimD0sFromB skimCharm charmEfficiencies weightCharmEffs fit fitD0 fitD fitDs fitLc fit2d tagEvents skimZs fitD0withZ getTotalCharmYields getTotalCharmYieldsNew getTotalCharmYieldsMC getTotalCharmYieldsDMC makeNewCalibTuples makeNewDTuples
 
 skim_for_yandex.o : skim_for_yandex.cc
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
@@ -17,6 +17,12 @@ skim_for_yandex_data.o : skim_for_yandex_data.cc
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
 
 skim_for_yandex_data : skim_for_yandex_data.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
+
+skim_for_yandex_data_new.o : skim_for_yandex_data_new.cc
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
+
+skim_for_yandex_data_new : skim_for_yandex_data_new.o
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
 
 skim_for_yandex_data_z0.o : skim_for_yandex_data_z0.cc
@@ -59,6 +65,12 @@ charmEfficiencies.o : charmEfficiencies.C charmEfficiencies.h
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
 
 charmEfficiencies : charmEfficiencies.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
+
+charmEfficienciesOld.o : charmEfficienciesOld.C charmEfficienciesOld.h
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
+
+charmEfficienciesOld : charmEfficienciesOld.o
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
 
 weightCharmEffs.o : weightCharmEffs.C weightCharmEffs.h
@@ -112,6 +124,12 @@ tagEvents.o : tagEvents.C
 tagEvents : tagEvents.o
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
 
+tagEventsNew.o : tagEventsNew.C 
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
+
+tagEventsNew : tagEventsNew.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
+
 Fit_Daniel.o : Fit_Daniel.C 
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
 
@@ -128,4 +146,52 @@ skimZs.o : skimZs.C skimZs.h
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
 
 skimZs : skimZs.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
+
+fitD0withZ.o : fitD0withZ.C 
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
+
+fitD0withZ : fitD0withZ.o RooPromptShape.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
+
+getTotalCharmYields.o : getTotalCharmYields.C 
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
+
+getTotalCharmYields : getTotalCharmYields.o RooPromptShape.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
+
+getTotalCharmYieldsMC.o : getTotalCharmYieldsMC.C 
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
+
+getTotalCharmYieldsMC : getTotalCharmYieldsMC.o RooPromptShape.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
+
+getTotalCharmYieldsDMC.o : getTotalCharmYieldsDMC.C 
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
+
+getTotalCharmYieldsDMC : getTotalCharmYieldsDMC.o RooPromptShape.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
+
+makeNewCalibTuples.o : makeNewCalibTuples.C makeNewCalibTuples.h
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
+
+makeNewCalibTuples : makeNewCalibTuples.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
+
+makeNewDTuples.o : makeNewDTuples.C makeNewDTuples.h
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
+
+makeNewDTuples : makeNewDTuples.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
+
+getTotalCharmYieldsNew.o : getTotalCharmYieldsNew.C 
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
+
+getTotalCharmYieldsNew : getTotalCharmYieldsNew.o RooPromptShape.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
+
+makeDDRPlots.o : makeDDRPlots.C 
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
+
+makeDDRPlots : makeDDRPlots.o RooPromptShape.o
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)

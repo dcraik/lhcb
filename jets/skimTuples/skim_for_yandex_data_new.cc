@@ -407,7 +407,7 @@ int main(int argc, char *argv[]){
 			t->Add(str);
 		}
 	}
-	if(type=="testC1k") {
+	if(type=="testE1k") {
 		boost::progress_display show_addfile_progress( 1050 );
 		for(int i=0; i<1050; ++i) {
 			++show_addfile_progress;
@@ -911,7 +911,9 @@ int main(int argc, char *argv[]){
 			D0PIPNN   = -1000;
 			D0KPNN    = -1000;
 			for(uint iD=0; iD<d0_mass->size(); ++iD) {
-				if(d0_j->at(iD) == j && d0_nj->at(iD)==2) {
+				TLorentzVector p4d(d0_px->at(iD),d0_py->at(iD),d0_pz->at(iD),d0_e->at(iD));
+				if(p4d.DeltaR(p4j)<0.5) {
+				//if(d0_j->at(iD) == j && d0_nj->at(iD)==2) {
 					if(!(trk_pnnpi->at(d0_trk1->at(iD))>0.2 && trk_pnnk->at( d0_trk0->at(iD))>0.3)) continue;
 					//if(!pidCut(trk_pnnpi->at(d0_trk1->at(iD)),trk_px->at(d0_trk1->at(iD)),trk_py->at(d0_trk1->at(iD))) ||
 					//   !pidCut(trk_pnnk->at( d0_trk0->at(iD)),trk_px->at(d0_trk0->at(iD)),trk_py->at(d0_trk0->at(iD))) )
@@ -955,7 +957,9 @@ int main(int argc, char *argv[]){
 			DPMPI2PNN   = -1000;
 			DPMKPNN    = -1000;
 			for(uint iD=0; iD<d_mass->size(); ++iD) {
-				if(d_j->at(iD) == j && d_nj->at(iD)==3) {
+				TLorentzVector p4d(d_px->at(iD),d_py->at(iD),d_pz->at(iD),d_e->at(iD));
+				if(p4d.DeltaR(p4j)<0.5) {
+				//if(d_j->at(iD) == j && d_nj->at(iD)==3) {
 					if(!(trk_pnnpi->at(d_trk1->at(iD))>0.2 && trk_pnnpi->at(d_trk2->at(iD))>0.2 && trk_pnnk->at( d_trk0->at(iD))>0.3)) continue;
 					//if(!pidCut(trk_pnnpi->at(d_trk2->at(iD)),trk_px->at(d_trk2->at(iD)),trk_py->at(d_trk2->at(iD))) ||
 					//   !pidCut(trk_pnnpi->at(d_trk1->at(iD)),trk_px->at(d_trk1->at(iD)),trk_py->at(d_trk1->at(iD))) ||
@@ -1002,7 +1006,9 @@ int main(int argc, char *argv[]){
 			DSK2PNN   = -1000;
 			DSPHIM    = -1000.;
 			for(uint iD=0; iD<ds_mass->size(); ++iD) {
-				if(ds_j->at(iD) == j && ds_nj->at(iD)==3) {
+				TLorentzVector p4d(ds_px->at(iD),ds_py->at(iD),ds_pz->at(iD),ds_e->at(iD));
+				if(p4d.DeltaR(p4j)<0.5) {
+				//if(ds_j->at(iD) == j && ds_nj->at(iD)==3) {
 					if(!(trk_pnnk->at(ds_trk0->at(iD))>0.3 && trk_pnnk->at(ds_trk1->at(iD))>0.3 && trk_pnnpi->at( ds_trk2->at(iD))>0.2)) continue;
 					//if(!pidCut(trk_pnnpi->at(ds_trk2->at(iD)),trk_px->at(ds_trk2->at(iD)),trk_py->at(ds_trk2->at(iD))) ||
 					//   !pidCut(trk_pnnk->at( ds_trk1->at(iD)),trk_px->at(ds_trk1->at(iD)),trk_py->at(ds_trk1->at(iD))) ||
@@ -1053,7 +1059,9 @@ int main(int argc, char *argv[]){
 			LCKPNN    = -1000;
 			LCPPNN    = -1000;
 			for(uint iD=0; iD<lc_mass->size(); ++iD) {
-				if(lc_j->at(iD) == j && lc_nj->at(iD)==3) {
+				TLorentzVector p4d(lc_px->at(iD),lc_py->at(iD),lc_pz->at(iD),lc_e->at(iD));
+				if(p4d.DeltaR(p4j)<0.5) {
+				//if(lc_j->at(iD) == j && lc_nj->at(iD)==3) {
 					if(!(trk_pnnp->at(lc_trk0->at(iD))>0.3 && trk_pnnk->at(lc_trk1->at(iD))>0.3 && trk_pnnpi->at( lc_trk2->at(iD))>0.2)) continue;
 					//if(!pidCut(trk_pnnpi->at(lc_trk2->at(iD)),trk_px->at(lc_trk2->at(iD)),trk_py->at(lc_trk2->at(iD))) ||
 					//   !pidCut(trk_pnnk->at( lc_trk1->at(iD)),trk_px->at(lc_trk1->at(iD)),trk_py->at(lc_trk1->at(iD))) ||
@@ -1100,8 +1108,10 @@ int main(int argc, char *argv[]){
 			D2K3PIPI3PNN  = -1000;
 			D2K3PIKPNN   = -1000;
 			for(uint iD=0; iD<d2k3pi_mass->size(); ++iD) {
-				if(d2k3pi_j->at(iD) == j && d2k3pi_nj->at(iD)==4) {
-					if(!(trk_pnnk->at(d2k3pi_trk0->at(iD))>0.3 && trk_pnnk->at(d2k3pi_trk1->at(iD))>0.2 && trk_pnnk->at(d2k3pi_trk2->at(iD))>0.2 && trk_pnnpi->at( d2k3pi_trk3->at(iD))>0.2)) continue;
+				TLorentzVector p4d(d2k3pi_px->at(iD),d2k3pi_py->at(iD),d2k3pi_pz->at(iD),d2k3pi_e->at(iD));
+				if(p4d.DeltaR(p4j)<0.5) {
+				//if(d2k3pi_j->at(iD) == j && d2k3pi_nj->at(iD)==4) {
+					if(!(trk_pnnk->at(d2k3pi_trk0->at(iD))>0.3 && trk_pnnpi->at(d2k3pi_trk1->at(iD))>0.2 && trk_pnnpi->at(d2k3pi_trk2->at(iD))>0.2 && trk_pnnpi->at( d2k3pi_trk3->at(iD))>0.2)) continue;
 					//if(!pidCut(trk_pnnpi->at(d2k3pi_trk3->at(iD)),trk_px->at(d2k3pi_trk3->at(iD)),trk_py->at(d2k3pi_trk3->at(iD))) ||
 					//   !pidCut(trk_pnnpi->at(d2k3pi_trk2->at(iD)),trk_px->at(d2k3pi_trk2->at(iD)),trk_py->at(d2k3pi_trk2->at(iD))) ||
 					//   !pidCut(trk_pnnpi->at(d2k3pi_trk1->at(iD)),trk_px->at(d2k3pi_trk1->at(iD)),trk_py->at(d2k3pi_trk1->at(iD))) ||

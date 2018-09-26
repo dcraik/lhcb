@@ -82,9 +82,9 @@ int main(int argc, char *argv[]){
 	int e(0);
 	double JPX,JPY,JPZ,JE,JPT,JETA,JS1,JS2,JQ,JN,JNQ,JNN,JPTD;
 	double PARTON,BMAXPT,CMAXPT;
-	double SVM,SVMCOR,SVMINPERP,SVPT,SVDR,SVN,SVNJ,SVQ,SVFDCHI2,SVPERP,SVETA,SVTZ,
+	double SVM,SVMCOR,SVMCORERR,SVMCORERRFULL,SVMINPERP,SVPT,SVDR,SVN,SVNJ,SVQ,SVFDCHI2,SVPERP,SVETA,SVTZ,
 	       SVMINIPCHI2,SVPX,SVPY,SVPZ,SVE,SVMAXGHOST,SVX,SVY,SVZ,SVSUMIPCHI2;
-	double NSV,PVX,PVY,PVZ,NDISPL6,NDISPL9,NDISPL16;
+	double NSV,PVX,PVY,PVZ,NDISPL6,NDISPL9,NDISPL16,NADDDISPL6,NADDDISPL9,NADDDISPL16;
 	double MUPT,MUIPCHI2,MUDR,MUPNN,NMU;
 	double HPT,HIPCHI2,HDR;
 	//double D0M, D0PX, D0PY, D0PZ, D0E, D0X, D0Y, D0Z, D0FD, D0DIRA, D0DOCA, D0IPCHI2MIN, D0DOCAKPI, D0VTXCHI2;
@@ -127,6 +127,8 @@ int main(int argc, char *argv[]){
 	tout->Branch("SVETA",&SVETA);
 	tout->Branch("SVM",&SVM);
 	tout->Branch("SVMCor",&SVMCOR);
+	tout->Branch("SVMCorErr",&SVMCORERR);
+	tout->Branch("SVMCorErrFull",&SVMCORERRFULL);
 	tout->Branch("SVMINPERP",&SVMINPERP);
 	tout->Branch("SVDR",&SVDR);
 	tout->Branch("SVN",&SVN);
@@ -146,6 +148,9 @@ int main(int argc, char *argv[]){
 	tout->Branch("NDispl6",&NDISPL6);
 	tout->Branch("NDispl9",&NDISPL9);
 	tout->Branch("NDispl16",&NDISPL16);
+	tout->Branch("NAddDispl6",&NADDDISPL6);
+	tout->Branch("NAddDispl9",&NADDDISPL9);
+	tout->Branch("NAddDispl16",&NADDDISPL16);
 	tout->Branch("MuPT",&MUPT);
 	tout->Branch("MuIPChi2",&MUIPCHI2);
 	tout->Branch("MuDR",&MUDR);
@@ -352,52 +357,64 @@ int main(int argc, char *argv[]){
 	//283 RIIJ_testMagUp49000002 9
 	//284 RIIJ_testMagUp49000003 9
 	//285 RIIJ_testMagUp49000004 9
-	int jobs0[] = {266,267,268,269,270,281,282,283,284,285};
-	int jobs4[] = {261,262,263,264,265,276,277,278,279,280};
-	int jobs5[] = {256,257,258,259,260,271,272,273,274,275};
-	int nsubjobs0[] = { 9, 9, 9, 9,11, 8, 8, 9, 9, 9};
-	int nsubjobs4[] = { 9, 9, 9, 9,10, 8, 9, 9,10, 9};
-	int nsubjobs5[] = { 9, 9,10,10,10, 9, 9,10, 9, 9};
+	////TODO////int jobs0[] = {310,311,312,313,314};//{266,267,268,269,270,281,282,283,284,285};
+	////TODO////int jobs4[] = {300,301,302,303,304};//{261,262,263,264,265,276,277,278,279,280};
+	////TODO////int jobs5[] = {305,306,307,308,309};//{256,257,258,259,260,271,272,273,274,275};
+	////TODO////int nsubjobs0[] = { 9, 9, 9, 9,11};//, 8, 8, 9, 9, 9};
+	////TODO////int nsubjobs4[] = { 9, 9, 9, 9,10};//, 8, 9, 9,10, 9};
+	////TODO////int nsubjobs5[] = { 9, 9,10,10,10};//, 9, 9,10, 9, 9};
 
-	boost::progress_display show_addfile_progress( 10 );
-	switch(type) {
-		case 0:
-			for(int i=0; i<10; ++i) {
-				for(int j=0; j<nsubjobs0[i]; ++j) {
-					sprintf(str,"/eos/lhcb/user/d/dcraik/jets/%d/%d/output.root",jobs0[i],j);
-					if(gSystem->AccessPathName(str)) continue;
-					t->Add(str);
-				}
-				++show_addfile_progress;
-			}
-			break;
-		case 4:
-			for(int i=0; i<10; ++i) {
-				for(int j=0; j<nsubjobs4[i]; ++j) {
-					sprintf(str,"/eos/lhcb/user/d/dcraik/jets/%d/%d/output.root",jobs4[i],j);
-					if(gSystem->AccessPathName(str)) continue;
-					t->Add(str);
-				}
-				++show_addfile_progress;
-			}
-			break;
-		case 5:
-			for(int i=0; i<10; ++i) {
-				for(int j=0; j<nsubjobs5[i]; ++j) {
-					sprintf(str,"/eos/lhcb/user/d/dcraik/jets/%d/%d/output.root",jobs5[i],j);
-					if(gSystem->AccessPathName(str)) continue;
-					t->Add(str);
-				}
-				++show_addfile_progress;
-			}
-			break;
-	}
+	////TODO////boost::progress_display show_addfile_progress( 10 );
+	////TODO////switch(type) {
+	////TODO////	case 0:
+	////TODO////		for(int i=0; i<5; ++i) {
+	////TODO////			for(int j=0; j<nsubjobs0[i]; ++j) {
+	////TODO////				sprintf(str,"/eos/lhcb/user/d/dcraik/jets/%d/%d/output.root",jobs0[i],j);
+	////TODO////				if(gSystem->AccessPathName(str)) continue;
+	////TODO////				t->Add(str);
+	////TODO////			}
+	////TODO////			++show_addfile_progress;
+	////TODO////		}
+	////TODO////		break;
+	////TODO////	case 4:
+	////TODO////		for(int i=0; i<5; ++i) {
+	////TODO////			for(int j=0; j<nsubjobs4[i]; ++j) {
+	////TODO////				sprintf(str,"/eos/lhcb/user/d/dcraik/jets/%d/%d/output.root",jobs4[i],j);
+	////TODO////				if(gSystem->AccessPathName(str)) continue;
+	////TODO////				t->Add(str);
+	////TODO////			}
+	////TODO////			++show_addfile_progress;
+	////TODO////		}
+	////TODO////		break;
+	////TODO////	case 5:
+	////TODO////		for(int i=0; i<5; ++i) {
+	////TODO////			for(int j=0; j<nsubjobs5[i]; ++j) {
+	////TODO////				sprintf(str,"/eos/lhcb/user/d/dcraik/jets/%d/%d/output.root",jobs5[i],j);
+	////TODO////				if(gSystem->AccessPathName(str)) continue;
+	////TODO////				t->Add(str);
+	////TODO////			}
+	////TODO////			++show_addfile_progress;
+	////TODO////		}
+	////TODO////		break;
+	////TODO////}
 	//t->Add("lightjets_filtered_addVars_resampled1.root");
 	//for(int i=1; i<=4; i++){
 	//  sprintf(str,"/Users/philten/data/Run2Jets.MC15.MU.490000%d%d.0.160925.00.root",type,i);
 	//  sprintf(str,"/Users/philten/data/Run2Jets.MC15.MD.490000%d%d.0.160925.00.root",type,i);
 	//  t->Add(str);
 	//}
+
+	switch(type) {
+		case 0:
+			t->Add("../davinci/light.root");
+			break;
+		case 4:
+			t->Add("../davinci/charm.root");
+			break;
+		case 5:
+			t->Add("../davinci/beauty.root");
+			break;
+	}
 
 	vector<double> *gen_px = new vector<double>();
 	vector<double> *gen_py = new vector<double>();
@@ -441,6 +458,8 @@ int main(int argc, char *argv[]){
 	vector<double> *svfdchi2 = new vector<double>();  
 	vector<double> *svpv = new vector<double>();  
 	vector<double> *svmcor = new vector<double>();  
+	vector<double> *svmcorerr = new vector<double>();  
+	vector<double> *svmcorerrfull = new vector<double>();  
 	vector<double> *svfdmin = new vector<double>();  
 	vector<double> *svtrk[10];
 	t->SetBranchAddress("svr_x",&svx);  
@@ -453,6 +472,8 @@ int main(int argc, char *argv[]){
 	//  t->SetBranchAddress("svr_fd_chi2",&svfdchi2);  
 	t->SetBranchAddress("svr_idx_pvr",&svpv);  
 	t->SetBranchAddress("svr_m_cor",&svmcor);  
+	t->SetBranchAddress("svr_m_cor_err",&svmcorerr);  
+	t->SetBranchAddress("svr_m_cor_err_full",&svmcorerrfull);  
 	t->SetBranchAddress("svr_fd_min",&svfdmin);  
 	for(int i=0; i<10; i++){
 		svtrk[i] = new vector<double>();
@@ -902,9 +923,9 @@ int main(int argc, char *argv[]){
 
 					switch(pid) {
 						case 11:
-							pidBin = histE->FindBin(p4trk.P(), p4trk.Pt());
-							probMu = histE->GetBinContent(pidBin);
-							probMuErr = histE->GetBinError(pidBin);
+							pidBin = 0.;
+							probMu = 0.;
+							probMuErr = 0.;
 							++countE;
 							++countE2;
 							break;
@@ -1586,6 +1607,9 @@ int main(int argc, char *argv[]){
 			NDISPL6 = ndispl6;
 			NDISPL9 = ndispl9;
 			NDISPL16 = ndispl16;
+			NADDDISPL6 = ndispl6;
+			NADDDISPL9 = ndispl9;
+			NADDDISPL16 = ndispl16;
 			NSV = 0; 
 			int s = -1; double svptmax = -1;
 			for(int ss = 0; ss < nsv; ss++){
@@ -1607,6 +1631,8 @@ int main(int argc, char *argv[]){
 				SVZ = sv.Z();
 				SVPERP = sv.Perp();
 				SVMCOR = svmcor->at(s); 
+				SVMCORERR = svmcorerr->at(s); 
+				SVMCORERRFULL = svmcorerrfull->at(s); 
 				SVMINPERP = svfdmin->at(s);
 				SVDR = p4j.Vect().DeltaR(fly);
 				SVN = 0; 
@@ -1640,6 +1666,11 @@ int main(int argc, char *argv[]){
 					if(ipchi2 < SVMINIPCHI2) SVMINIPCHI2 = ipchi2;
 					double ghost = trk_ghost->at(ii);
 					if(ghost > SVMAXGHOST) SVMAXGHOST = ghost;
+					if(p4trk.Pt() > 500){//subtract off the tracks from our SV from the additional displaced tracks
+						if(trk_ipchi2->at(i) > 6) NADDDISPL6--;
+						if(trk_ipchi2->at(i) > 9) NADDDISPL9--;
+						if(trk_ipchi2->at(i) > 16) NADDDISPL16--;
+					}
 				}	
 				if(foundOutOfJet) ++nSVOutOfJet;
 				SVPX = p4sv.Px();
