@@ -7,15 +7,14 @@ polarity = str(sys.argv[1]) #MagDown, MagUp
 year = str(sys.argv[2]) #2015, 2016
 note = str(sys.argv[3])
 
-script=str('davinci-pPb.py')
+script=str('DV_pPb2phi.py')
 
-job_name = "CEP phi" +str(note) + str(polarity) + str(year)
+job_name = "CEP phi new " +str(note) + str(polarity) + str(year)
 print job_name
 print script
 
-DV = GaudiExec(directory="~/DaVinciDev_v42r6p1")
+DV = GaudiExec(directory="~/DaVinciDev_v44r5")
 DV.options = [script]
-DV.useGaudiRun = False
 
 if year not in ['2016-pPb','2016-Pbp']:##TODO only set up for 2016 data so far
     sys.exit()
@@ -44,7 +43,6 @@ j = Job(
   application    = DV,
   inputdata      = data,
   #do_auto_resubmit = True,
-  inputfiles = [LocalFile('Ntuple.py')]
   )
 
 if note=="test":
