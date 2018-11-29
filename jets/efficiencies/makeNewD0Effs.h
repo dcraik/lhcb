@@ -50,6 +50,7 @@ class makeNewD0Effs {
 		Double_t        JetTrueE;
 		Double_t        JetTruePT;
 		Double_t        JetTrueEta;
+		Double_t        JetTrueDR;
 		Double_t        JetSigma1;
 		Double_t        JetSigma2;
 		Double_t        JetQ;
@@ -57,6 +58,8 @@ class makeNewD0Effs {
 		Double_t        JetNChr;
 		Double_t        JetNNeu;
 		Double_t        JetPTD;
+		Double_t        JetTRUEb;
+		Double_t        JetTRUEc;
 		Double_t        JetTRUED0;
 		Double_t        JetTRUEDP;
 		Double_t        JetTRUEDS;
@@ -195,30 +198,39 @@ class makeNewD0Effs {
 		std::vector<double>  *TRUEDPZ;
 		std::vector<double>  *TRUEDE;
 		std::vector<double>  *TRUEDFROMB;
+		std::vector<double>  *TRUEDSEL;
 		std::vector<double>  *TRUEDTRK0IDX;
 		std::vector<double>  *TRUEDTRK0ID;
 		std::vector<double>  *TRUEDTRK0P;
 		std::vector<double>  *TRUEDTRK0PT;
 		std::vector<double>  *TRUEDTRK0INACC;
 		std::vector<double>  *TRUEDTRK0RECO;
+		std::vector<double>  *TRUEDTRK0PNNK;
+		std::vector<double>  *TRUEDTRK0PNNPI;
 		std::vector<double>  *TRUEDTRK1IDX;
 		std::vector<double>  *TRUEDTRK1ID;
 		std::vector<double>  *TRUEDTRK1P;
 		std::vector<double>  *TRUEDTRK1PT;
 		std::vector<double>  *TRUEDTRK1INACC;
 		std::vector<double>  *TRUEDTRK1RECO;
+		std::vector<double>  *TRUEDTRK1PNNK;
+		std::vector<double>  *TRUEDTRK1PNNPI;
 		std::vector<double>  *TRUEDTRK2IDX;
 		std::vector<double>  *TRUEDTRK2ID;
 		std::vector<double>  *TRUEDTRK2P;
 		std::vector<double>  *TRUEDTRK2PT;
 		std::vector<double>  *TRUEDTRK2INACC;
 		std::vector<double>  *TRUEDTRK2RECO;
+		std::vector<double>  *TRUEDTRK2PNNK;
+		std::vector<double>  *TRUEDTRK2PNNPI;
 		std::vector<double>  *TRUEDTRK3IDX;
 		std::vector<double>  *TRUEDTRK3ID;
 		std::vector<double>  *TRUEDTRK3P;
 		std::vector<double>  *TRUEDTRK3PT;
 		std::vector<double>  *TRUEDTRK3INACC;
 		std::vector<double>  *TRUEDTRK3RECO;
+		std::vector<double>  *TRUEDTRK3PNNK;
+		std::vector<double>  *TRUEDTRK3PNNPI;
 		std::vector<double>  *TRUEDTRK0PX;
 		std::vector<double>  *TRUEDTRK1PX;
 		std::vector<double>  *TRUEDTRK2PX;
@@ -464,6 +476,7 @@ class makeNewD0Effs {
 		TBranch        *b_JetTrueE;   //!
 		TBranch        *b_JetTruePT;   //!
 		TBranch        *b_JetTrueEta;   //!
+		TBranch        *b_JetTrueDR;   //!
 		TBranch        *b_JetSigma1;   //!
 		TBranch        *b_JetSigma2;   //!
 		TBranch        *b_JetQ;   //!
@@ -471,6 +484,8 @@ class makeNewD0Effs {
 		TBranch        *b_JetNChr;   //!
 		TBranch        *b_JetNNeu;   //!
 		TBranch        *b_JetPTD;   //!
+		TBranch        *b_JetTRUEb;   //!
+		TBranch        *b_JetTRUEc;   //!
 		TBranch        *b_JetTRUED0;   //!
 		TBranch        *b_JetTRUEDP;   //!
 		TBranch        *b_JetTRUEDS;   //!
@@ -609,30 +624,39 @@ class makeNewD0Effs {
 		TBranch        *b_TRUEDPZ;   //!
 		TBranch        *b_TRUEDE;   //!
 		TBranch        *b_TRUEDFROMB;   //!
+		TBranch        *b_TRUEDSEL;   //!
 		TBranch        *b_TRUEDTRK0IDX;   //!
 		TBranch        *b_TRUEDTRK0ID;   //!
 		TBranch        *b_TRUEDTRK0P;   //!
 		TBranch        *b_TRUEDTRK0PT;   //!
 		TBranch        *b_TRUEDTRK0INACC;   //!
 		TBranch        *b_TRUEDTRK0RECO;   //!
+		TBranch        *b_TRUEDTRK0PNNK;   //!
+		TBranch        *b_TRUEDTRK0PNNPI;   //!
 		TBranch        *b_TRUEDTRK1IDX;   //!
 		TBranch        *b_TRUEDTRK1ID;   //!
 		TBranch        *b_TRUEDTRK1P;   //!
 		TBranch        *b_TRUEDTRK1PT;   //!
 		TBranch        *b_TRUEDTRK1INACC;   //!
 		TBranch        *b_TRUEDTRK1RECO;   //!
+		TBranch        *b_TRUEDTRK1PNNK;   //!
+		TBranch        *b_TRUEDTRK1PNNPI;   //!
 		TBranch        *b_TRUEDTRK2IDX;   //!
 		TBranch        *b_TRUEDTRK2ID;   //!
 		TBranch        *b_TRUEDTRK2P;   //!
 		TBranch        *b_TRUEDTRK2PT;   //!
 		TBranch        *b_TRUEDTRK2INACC;   //!
 		TBranch        *b_TRUEDTRK2RECO;   //!
+		TBranch        *b_TRUEDTRK2PNNK;   //!
+		TBranch        *b_TRUEDTRK2PNNPI;   //!
 		TBranch        *b_TRUEDTRK3IDX;   //!
 		TBranch        *b_TRUEDTRK3ID;   //!
 		TBranch        *b_TRUEDTRK3P;   //!
 		TBranch        *b_TRUEDTRK3PT;   //!
 		TBranch        *b_TRUEDTRK3INACC;   //!
 		TBranch        *b_TRUEDTRK3RECO;   //!
+		TBranch        *b_TRUEDTRK3PNNK;   //!
+		TBranch        *b_TRUEDTRK3PNNPI;   //!
 		TBranch        *b_TRUEDTRK0PX;   //!
 		TBranch        *b_TRUEDTRK1PX;   //!
 		TBranch        *b_TRUEDTRK2PX;   //!
@@ -885,7 +909,7 @@ class makeNewD0Effs {
 makeNewD0Effs::makeNewD0Effs(TString sample, Binning binning) : fChain(0), binning_(binning), sample_(sample)
 {
 	TTree* tree(0);
-	TFile* f = new TFile("/eos/user/d/dcraik/jets-tuples-new-180914/for_yandex_data_new_"+sample_+".root");
+	TFile* f = new TFile("/eos/user/d/dcraik/jets-tuples-new-181128/for_yandex_data_new_"+sample_+".root");
 	f->GetObject("T",tree);
 	Init(tree);
 
@@ -1031,30 +1055,39 @@ void makeNewD0Effs::Init(TTree *tree)
 	TRUEDPZ = 0;
 	TRUEDE = 0;
 	TRUEDFROMB = 0;
+	TRUEDSEL = 0;
 	TRUEDTRK0IDX = 0;
 	TRUEDTRK0ID = 0;
 	TRUEDTRK0P = 0;
 	TRUEDTRK0PT = 0;
 	TRUEDTRK0INACC = 0;
 	TRUEDTRK0RECO = 0;
+	TRUEDTRK0PNNK = 0;
+	TRUEDTRK0PNNPI = 0;
 	TRUEDTRK1IDX = 0;
 	TRUEDTRK1ID = 0;
 	TRUEDTRK1P = 0;
 	TRUEDTRK1PT = 0;
 	TRUEDTRK1INACC = 0;
 	TRUEDTRK1RECO = 0;
+	TRUEDTRK1PNNK = 0;
+	TRUEDTRK1PNNPI = 0;
 	TRUEDTRK2IDX = 0;
 	TRUEDTRK2ID = 0;
 	TRUEDTRK2P = 0;
 	TRUEDTRK2PT = 0;
 	TRUEDTRK2INACC = 0;
 	TRUEDTRK2RECO = 0;
+	TRUEDTRK2PNNK = 0;
+	TRUEDTRK2PNNPI = 0;
 	TRUEDTRK3IDX = 0;
 	TRUEDTRK3ID = 0;
 	TRUEDTRK3P = 0;
 	TRUEDTRK3PT = 0;
 	TRUEDTRK3INACC = 0;
 	TRUEDTRK3RECO = 0;
+	TRUEDTRK3PNNK = 0;
+	TRUEDTRK3PNNPI = 0;
 	TRUEDTRK0PX = 0;
 	TRUEDTRK1PX = 0;
 	TRUEDTRK2PX = 0;
@@ -1304,6 +1337,7 @@ void makeNewD0Effs::Init(TTree *tree)
 	fChain->SetBranchAddress("JetTrueE", &JetTrueE, &b_JetTrueE);
 	fChain->SetBranchAddress("JetTruePT", &JetTruePT, &b_JetTruePT);
 	fChain->SetBranchAddress("JetTrueEta", &JetTrueEta, &b_JetTrueEta);
+	fChain->SetBranchAddress("JetTrueDR", &JetTrueDR, &b_JetTrueDR);
 	fChain->SetBranchAddress("JetSigma1", &JetSigma1, &b_JetSigma1);
 	fChain->SetBranchAddress("JetSigma2", &JetSigma2, &b_JetSigma2);
 	fChain->SetBranchAddress("JetQ", &JetQ, &b_JetQ);
@@ -1311,6 +1345,8 @@ void makeNewD0Effs::Init(TTree *tree)
 	fChain->SetBranchAddress("JetNChr", &JetNChr, &b_JetNChr);
 	fChain->SetBranchAddress("JetNNeu", &JetNNeu, &b_JetNNeu);
 	fChain->SetBranchAddress("JetPTD", &JetPTD, &b_JetPTD);
+	fChain->SetBranchAddress("JetTRUEb", &JetTRUEb, &b_JetTRUEb);
+	fChain->SetBranchAddress("JetTRUEc", &JetTRUEc, &b_JetTRUEc);
 	fChain->SetBranchAddress("JetTRUED0", &JetTRUED0, &b_JetTRUED0);
 	fChain->SetBranchAddress("JetTRUEDP", &JetTRUEDP, &b_JetTRUEDP);
 	fChain->SetBranchAddress("JetTRUEDS", &JetTRUEDS, &b_JetTRUEDS);
@@ -1449,30 +1485,39 @@ void makeNewD0Effs::Init(TTree *tree)
 	fChain->SetBranchAddress("TRUEDPZ", &TRUEDPZ, &b_TRUEDPZ);
 	fChain->SetBranchAddress("TRUEDE", &TRUEDE, &b_TRUEDE);
 	fChain->SetBranchAddress("TRUEDFROMB", &TRUEDFROMB, &b_TRUEDFROMB);
+	fChain->SetBranchAddress("TRUEDSEL", &TRUEDSEL, &b_TRUEDSEL);
 	fChain->SetBranchAddress("TRUEDTRK0IDX", &TRUEDTRK0IDX, &b_TRUEDTRK0IDX);
 	fChain->SetBranchAddress("TRUEDTRK0ID", &TRUEDTRK0ID, &b_TRUEDTRK0ID);
 	fChain->SetBranchAddress("TRUEDTRK0P", &TRUEDTRK0P, &b_TRUEDTRK0P);
 	fChain->SetBranchAddress("TRUEDTRK0PT", &TRUEDTRK0PT, &b_TRUEDTRK0PT);
 	fChain->SetBranchAddress("TRUEDTRK0INACC", &TRUEDTRK0INACC, &b_TRUEDTRK0INACC);
 	fChain->SetBranchAddress("TRUEDTRK0RECO", &TRUEDTRK0RECO, &b_TRUEDTRK0RECO);
+	fChain->SetBranchAddress("TRUEDTRK0PNNK", &TRUEDTRK0PNNK, &b_TRUEDTRK0PNNK);
+	fChain->SetBranchAddress("TRUEDTRK0PNNPI", &TRUEDTRK0PNNPI, &b_TRUEDTRK0PNNPI);
 	fChain->SetBranchAddress("TRUEDTRK1IDX", &TRUEDTRK1IDX, &b_TRUEDTRK1IDX);
 	fChain->SetBranchAddress("TRUEDTRK1ID", &TRUEDTRK1ID, &b_TRUEDTRK1ID);
 	fChain->SetBranchAddress("TRUEDTRK1P", &TRUEDTRK1P, &b_TRUEDTRK1P);
 	fChain->SetBranchAddress("TRUEDTRK1PT", &TRUEDTRK1PT, &b_TRUEDTRK1PT);
 	fChain->SetBranchAddress("TRUEDTRK1INACC", &TRUEDTRK1INACC, &b_TRUEDTRK1INACC);
 	fChain->SetBranchAddress("TRUEDTRK1RECO", &TRUEDTRK1RECO, &b_TRUEDTRK1RECO);
+	fChain->SetBranchAddress("TRUEDTRK1PNNK", &TRUEDTRK1PNNK, &b_TRUEDTRK1PNNK);
+	fChain->SetBranchAddress("TRUEDTRK1PNNPI", &TRUEDTRK1PNNPI, &b_TRUEDTRK1PNNPI);
 	fChain->SetBranchAddress("TRUEDTRK2IDX", &TRUEDTRK2IDX, &b_TRUEDTRK2IDX);
 	fChain->SetBranchAddress("TRUEDTRK2ID", &TRUEDTRK2ID, &b_TRUEDTRK2ID);
 	fChain->SetBranchAddress("TRUEDTRK2P", &TRUEDTRK2P, &b_TRUEDTRK2P);
 	fChain->SetBranchAddress("TRUEDTRK2PT", &TRUEDTRK2PT, &b_TRUEDTRK2PT);
 	fChain->SetBranchAddress("TRUEDTRK2INACC", &TRUEDTRK2INACC, &b_TRUEDTRK2INACC);
 	fChain->SetBranchAddress("TRUEDTRK2RECO", &TRUEDTRK2RECO, &b_TRUEDTRK2RECO);
+	fChain->SetBranchAddress("TRUEDTRK2PNNK", &TRUEDTRK2PNNK, &b_TRUEDTRK2PNNK);
+	fChain->SetBranchAddress("TRUEDTRK2PNNPI", &TRUEDTRK2PNNPI, &b_TRUEDTRK2PNNPI);
 	fChain->SetBranchAddress("TRUEDTRK3IDX", &TRUEDTRK3IDX, &b_TRUEDTRK3IDX);
 	fChain->SetBranchAddress("TRUEDTRK3ID", &TRUEDTRK3ID, &b_TRUEDTRK3ID);
 	fChain->SetBranchAddress("TRUEDTRK3P", &TRUEDTRK3P, &b_TRUEDTRK3P);
 	fChain->SetBranchAddress("TRUEDTRK3PT", &TRUEDTRK3PT, &b_TRUEDTRK3PT);
 	fChain->SetBranchAddress("TRUEDTRK3INACC", &TRUEDTRK3INACC, &b_TRUEDTRK3INACC);
 	fChain->SetBranchAddress("TRUEDTRK3RECO", &TRUEDTRK3RECO, &b_TRUEDTRK3RECO);
+	fChain->SetBranchAddress("TRUEDTRK3PNNK", &TRUEDTRK3PNNK, &b_TRUEDTRK3PNNK);
+	fChain->SetBranchAddress("TRUEDTRK3PNNPI", &TRUEDTRK3PNNPI, &b_TRUEDTRK3PNNPI);
 	fChain->SetBranchAddress("TRUEDTRK0PX", &TRUEDTRK0PX, &b_TRUEDTRK0PX);
 	fChain->SetBranchAddress("TRUEDTRK1PX", &TRUEDTRK1PX, &b_TRUEDTRK1PX);
 	fChain->SetBranchAddress("TRUEDTRK2PX", &TRUEDTRK2PX, &b_TRUEDTRK2PX);

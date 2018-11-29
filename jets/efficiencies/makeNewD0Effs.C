@@ -88,7 +88,7 @@ void makeNewD0Effs::Loop()
 
 	gStyle->SetOptStat(0);
 
-	TFile* fout = TFile::Open("D0Effs_"+name+"_splitEffs.root","RECREATE");
+	TFile* fout = TFile::Open("D0Effs_"+name+"_up181129.root","RECREATE");
 	TH2D* inaccD04 = new TH2D("inaccD04","",npt,ptBins,neta,etaBins);
 	TH2D* recoD04 = new TH2D("recoD04","",npt,ptBins,neta,etaBins);
 	TH2D* selD04 = new TH2D("selD04","",npt,ptBins,neta,etaBins);
@@ -473,7 +473,7 @@ void makeNewD0Effs::Loop()
 int main(int argc, char** argv) {
 	TString sample="2XX";
 	if(argc>1) sample=argv[1];
-	makeNewD0Effs::Binning binning=makeNewD0Effs::ThirtySevenByEight;
+	makeNewD0Effs::Binning binning=makeNewD0Effs::SixteenByEight;
 	if(argc>2) {
 		TString binStr = argv[2];
 		if(binStr=="12x3") {
