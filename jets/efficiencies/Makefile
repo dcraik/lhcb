@@ -24,3 +24,9 @@ getMCD0StatsNew.o : getMCD0StatsNew.C
 
 getMCD0StatsNew : getMCD0StatsNew.o
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
+
+compareCalibMCPID.o : compareCalibMCPID.C
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
+
+compareCalibMCPID : compareCalibMCPID.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)

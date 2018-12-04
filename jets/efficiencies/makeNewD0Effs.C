@@ -88,12 +88,13 @@ void makeNewD0Effs::Loop()
 
 	gStyle->SetOptStat(0);
 
-	TFile* fout = TFile::Open("D0Effs_"+name+"_up181129.root","RECREATE");
+	TFile* fout = TFile::Open("D0Effs_"+name+"_up181201.root","RECREATE");
 	TH2D* inaccD04 = new TH2D("inaccD04","",npt,ptBins,neta,etaBins);
 	TH2D* recoD04 = new TH2D("recoD04","",npt,ptBins,neta,etaBins);
 	TH2D* selD04 = new TH2D("selD04","",npt,ptBins,neta,etaBins);
 	TH2D* numD04 = new TH2D("numD04","",npt,ptBins,neta,etaBins);
 	TH2D* pidD04 = new TH2D("pidD04","",npt,ptBins,neta,etaBins);
+	TH2D* pidmcD04 = new TH2D("pidmcD04","",npt,ptBins,neta,etaBins);
 	TH2D* acceffD04 = new TH2D("acceffD04","",npt,ptBins,neta,etaBins);
 	TH2D* accerrD04 = new TH2D("accerrD04","",npt,ptBins,neta,etaBins);
 	TH2D* receffD04 = new TH2D("receffD04","",npt,ptBins,neta,etaBins);
@@ -104,6 +105,8 @@ void makeNewD0Effs::Loop()
 	TH2D* selerrRD04 = new TH2D("selerrRD04","",npt,ptBins,neta,etaBins);
 	TH2D* pideffD04 = new TH2D("pideffD04","",npt,ptBins,neta,etaBins);
 	TH2D* piderrD04 = new TH2D("piderrD04","",npt,ptBins,neta,etaBins);
+	TH2D* pidmceffD04 = new TH2D("pidmceffD04","",npt,ptBins,neta,etaBins);
+	TH2D* pidmcerrD04 = new TH2D("pidmcerrD04","",npt,ptBins,neta,etaBins);
 //	TH2D* diffD04 = new TH2D("diffD04","",npt,ptBins,neta,etaBins);
 //	TH2D* ratioD04 = new TH2D("ratioD04","",npt,ptBins,neta,etaBins);
 
@@ -112,6 +115,7 @@ void makeNewD0Effs::Loop()
 	TH2D* selD05 = new TH2D("selD05","",npt,ptBins,neta,etaBins);
 	TH2D* numD05 = new TH2D("numD05","",npt,ptBins,neta,etaBins);
 	TH2D* pidD05 = new TH2D("pidD05","",npt,ptBins,neta,etaBins);
+	TH2D* pidmcD05 = new TH2D("pidmcD05","",npt,ptBins,neta,etaBins);
 	TH2D* acceffD05 = new TH2D("acceffD05","",npt,ptBins,neta,etaBins);
 	TH2D* accerrD05 = new TH2D("accerrD05","",npt,ptBins,neta,etaBins);
 	TH2D* receffD05 = new TH2D("receffD05","",npt,ptBins,neta,etaBins);
@@ -122,6 +126,8 @@ void makeNewD0Effs::Loop()
 	TH2D* selerrRD05 = new TH2D("selerrRD05","",npt,ptBins,neta,etaBins);
 	TH2D* pideffD05 = new TH2D("pideffD05","",npt,ptBins,neta,etaBins);
 	TH2D* piderrD05 = new TH2D("piderrD05","",npt,ptBins,neta,etaBins);
+	TH2D* pidmceffD05 = new TH2D("pidmceffD05","",npt,ptBins,neta,etaBins);
+	TH2D* pidmcerrD05 = new TH2D("pidmcerrD05","",npt,ptBins,neta,etaBins);
 //	TH2D* diffD05 = new TH2D("diffD05","",npt,ptBins,neta,etaBins);
 //	TH2D* ratioD05 = new TH2D("ratioD05","",npt,ptBins,neta,etaBins);
 
@@ -145,6 +151,7 @@ void makeNewD0Effs::Loop()
 	TH2D* selD045 = new TH2D("selD045","",npt,ptBins,neta,etaBins);
 	TH2D* numD045 = new TH2D("numD045","",npt,ptBins,neta,etaBins);
 	TH2D* pidD045 = new TH2D("pidD045","",npt,ptBins,neta,etaBins);
+	TH2D* pidmcD045 = new TH2D("pidmcD045","",npt,ptBins,neta,etaBins);
 	TH2D* acceffD045 = new TH2D("acceffD045","",npt,ptBins,neta,etaBins);
 	TH2D* accerrD045 = new TH2D("accerrD045","",npt,ptBins,neta,etaBins);
 	TH2D* receffD045 = new TH2D("receffD045","",npt,ptBins,neta,etaBins);
@@ -155,12 +162,15 @@ void makeNewD0Effs::Loop()
 	TH2D* selerrRD045 = new TH2D("selerrRD045","",npt,ptBins,neta,etaBins);
 	TH2D* pideffD045 = new TH2D("pideffD045","",npt,ptBins,neta,etaBins);
 	TH2D* piderrD045 = new TH2D("piderrD045","",npt,ptBins,neta,etaBins);
+	TH2D* pidmceffD045 = new TH2D("pidmceffD045","",npt,ptBins,neta,etaBins);
+	TH2D* pidmcerrD045 = new TH2D("pidmcerrD045","",npt,ptBins,neta,etaBins);
 
 	inaccD04->Sumw2();
 	recoD04->Sumw2();
 	selD04->Sumw2();
 	numD04->Sumw2();
 	pidD04->Sumw2();
+	pidmcD04->Sumw2();
 	acceffD04->Sumw2();
 	accerrD04->Sumw2();
 	receffD04->Sumw2();
@@ -171,6 +181,8 @@ void makeNewD0Effs::Loop()
 	selerrRD04->Sumw2();
 	pideffD04->Sumw2();
 	piderrD04->Sumw2();
+	pidmceffD04->Sumw2();
+	pidmcerrD04->Sumw2();
 //	diffD04->Sumw2();
 //	ratioD04->Sumw2();
 
@@ -179,6 +191,7 @@ void makeNewD0Effs::Loop()
 	selD05->Sumw2();
 	numD05->Sumw2();
 	pidD05->Sumw2();
+	pidmcD05->Sumw2();
 	acceffD05->Sumw2();
 	accerrD05->Sumw2();
 	receffD05->Sumw2();
@@ -189,6 +202,8 @@ void makeNewD0Effs::Loop()
 	selerrRD05->Sumw2();
 	pideffD05->Sumw2();
 	piderrD05->Sumw2();
+	pidmceffD05->Sumw2();
+	pidmcerrD05->Sumw2();
 //	diffD05->Sumw2();
 //	ratioD05->Sumw2();
 
@@ -212,6 +227,7 @@ void makeNewD0Effs::Loop()
 	selD045->Sumw2();
 	numD045->Sumw2();
 	pidD045->Sumw2();
+	pidmcD045->Sumw2();
 	acceffD045->Sumw2();
 	accerrD045->Sumw2();
 	receffD045->Sumw2();
@@ -222,6 +238,8 @@ void makeNewD0Effs::Loop()
 	selerrRD045->Sumw2();
 	pideffD045->Sumw2();
 	piderrD045->Sumw2();
+	pidmceffD045->Sumw2();
+	pidmcerrD045->Sumw2();
 
 	Long64_t nentries = fChain->GetEntries();
 
@@ -287,10 +305,10 @@ void makeNewD0Effs::Loop()
 					double ptK = precK.Pt();
 					double ptPi= precPi.Pt();
 
-					if(pK  >160000.) pK  =160000.;
-					if(pPi >160000.) pPi =160000.;
-					if(ptK > 20000.) ptK = 20000.;
-					if(ptPi> 20000.) ptPi= 20000.;
+					if(pK  >500000.) pK  =499000.;
+					if(pPi >500000.) pPi =499000.;
+					if(ptK > 50000.) ptK = 49000.;
+					if(ptPi> 25000.) ptPi= 24000.;
 
 					double effK = pidK->GetBinContent(pidK->FindBin(pK,ptK));
 					double effPi = pidPi->GetBinContent(pidPi->FindBin(pPi,ptPi));
@@ -299,14 +317,20 @@ void makeNewD0Effs::Loop()
 						numD05->Fill(p.Pt(),p.Eta());
 						pidD05->Fill(p.Pt(),p.Eta(),effK*effPi);
 						selD05->Fill(prec.Pt(),prec.Eta());
+						if(D0KPNNK->at(s)>0.2&&D0PIPNNPI->at(s)>0.1)
+							pidmcD05->Fill(p.Pt(),p.Eta());
 					} else {
 						numD04->Fill(p.Pt(),p.Eta());
 						pidD04->Fill(p.Pt(),p.Eta(),effK*effPi);
 						selD04->Fill(prec.Pt(),prec.Eta());
+						if(D0KPNNK->at(s)>0.2&&D0PIPNNPI->at(s)>0.1)
+							pidmcD04->Fill(p.Pt(),p.Eta());
 					}
 					numD045->Fill(p.Pt(),p.Eta());
 					pidD045->Fill(p.Pt(),p.Eta(),effK*effPi);
 					selD045->Fill(prec.Pt(),prec.Eta());
+						if(D0KPNNK->at(s)>0.2&&D0PIPNNPI->at(s)>0.1)
+							pidmcD045->Fill(p.Pt(),p.Eta());
 					break;
 				}
 			}
@@ -328,6 +352,9 @@ void makeNewD0Effs::Loop()
 	pideffD04->Divide(pidD04,numD04);
 	pideffD05->Divide(pidD05,numD05);
 	pideffD045->Divide(pidD045,numD045);
+	pidmceffD04->Divide(pidmcD04,numD04);
+	pidmceffD05->Divide(pidmcD05,numD05);
+	pidmceffD045->Divide(pidmcD045,numD045);
 
 	//effD04->Divide(numD04,denomD04);
 	//effD05->Divide(numD05,denomD05);
@@ -408,6 +435,7 @@ void makeNewD0Effs::Loop()
 	selD04->Write();
 	numD04->Write();
 	pidD04->Write();
+	pidmcD04->Write();
 	//numD04->Write();
 	denomD04->Write();
 	acceffD04->Write();
@@ -415,12 +443,14 @@ void makeNewD0Effs::Loop()
 	seleffD04->Write();
 	seleffRD04->Write();
 	pideffD04->Write();
+	pidmceffD04->Write();
 	//effD04->Write();
 	accerrD04->Write();
 	recerrD04->Write();
 	selerrD04->Write();
 	selerrRD04->Write();
 	piderrD04->Write();
+	pidmcerrD04->Write();
 	//errD04->Write();
 //	diffD04->Write();
 	//diffD04->Write();
@@ -432,6 +462,7 @@ void makeNewD0Effs::Loop()
 	selD05->Write();
 	numD05->Write();
 	pidD05->Write();
+	pidmcD05->Write();
 	//numD05->Write();
 	denomD05->Write();
 	acceffD05->Write();
@@ -439,12 +470,14 @@ void makeNewD0Effs::Loop()
 	seleffD05->Write();
 	seleffRD05->Write();
 	pideffD05->Write();
+	pidmceffD05->Write();
 	//effD05->Write();
 	accerrD05->Write();
 	recerrD05->Write();
 	selerrD05->Write();
 	selerrRD05->Write();
 	piderrD05->Write();
+	pidmcerrD05->Write();
 	//errD05->Write();
 //	diffD05->Write();
 	//diffD05->Write();
@@ -455,6 +488,7 @@ void makeNewD0Effs::Loop()
 	recoD045->Write();
 	selD045->Write();
 	pidD045->Write();
+	pidmcD045->Write();
 	numD045->Write();
 	denomD045->Write();
 	acceffD045->Write();
@@ -462,11 +496,13 @@ void makeNewD0Effs::Loop()
 	seleffD045->Write();
 	seleffRD045->Write();
 	pideffD045->Write();
+	pidmceffD045->Write();
 	accerrD045->Write();
 	recerrD045->Write();
 	selerrD045->Write();
 	selerrRD045->Write();
 	piderrD045->Write();
+	pidmcerrD045->Write();
 	fout->Close();
 }
 

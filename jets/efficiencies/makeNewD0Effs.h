@@ -913,8 +913,8 @@ makeNewD0Effs::makeNewD0Effs(TString sample, Binning binning) : fChain(0), binni
 	f->GetObject("T",tree);
 	Init(tree);
 
-	TFile* fpidk = TFile::Open("pidcalib/PerfHists_K_Turbo16_MagDown_kaons3_Brunel_P_Brunel_PT.root");
-	TFile* fpidpi= TFile::Open("pidcalib/PerfHists_Pi_Turbo16_MagDown_pions_Brunel_P_Brunel_PT.root");
+	TFile* fpidk = TFile::Open("pidcalib/PerfHists_K_Turbo16_MagDown_kaons4_Brunel_P_Brunel_PT.root");
+	TFile* fpidpi= TFile::Open("pidcalib/PerfHists_Pi_Turbo16_MagDown_kaons4_Brunel_P_Brunel_PT.root");
 	pidK = dynamic_cast<TH2F*>(fpidk->Get("K_Brunel_MC15TuneV1_ProbNNK > 0.2_All"));
 	pidPi= dynamic_cast<TH2F*>(fpidpi->Get("Pi_Brunel_MC15TuneV1_ProbNNpi > 0.1_All"));
 }

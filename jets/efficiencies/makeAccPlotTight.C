@@ -1,10 +1,10 @@
 {
-	TFile* f0 = TFile::Open("/eos/user/d/dcraik/jets-tuples-new-180903/D02Kpi_tightacc_tree.root");
-	TFile* f1 = TFile::Open("/eos/user/d/dcraik/jets-tuples-new-180903/eff_09b_smooth.root");
+	TFile* f0 = TFile::Open("/eos/user/d/dcraik/D02Kpi_tightacc_tree.root");
+	//TFile* f1 = TFile::Open("/eos/user/d/dcraik/jets-tuples-new-180903/eff_09b_smooth.root");
 	TFile* f2 = TFile::Open("recoEff/trkRecoEffs_fix.root");
 
 	TTree* t0 = dynamic_cast<TTree*>(f0->Get("DecayTree"));
-	TH2F*  h0 = dynamic_cast<TH2F*>(f1->Get("heff"));
+	//TH2F*  h0 = dynamic_cast<TH2F*>(f1->Get("heff"));
 	TH2D*  h1 = dynamic_cast<TH2D*>(f2->Get("effPi"));
 	TH2D*  h2 = dynamic_cast<TH2D*>(f2->Get("effK"));
 
@@ -25,7 +25,7 @@
 
 	TCanvas c1;
 
-	TString cuts = "K_eta_TRUE>2. && K_eta_TRUE<4.5 && K_PT_TRUE>.5 && K_P_TRUE>5. && pi_eta_TRUE>2. && pi_eta_TRUE<4.5 && pi_PT_TRUE>.5 && pi_P_TRUE>5.";
+	TString cuts = "K_eta_TRUE>2. && K_eta_TRUE<4.5 && K_PT_TRUE>.5 && K_PT_TRUE<25. && K_P_TRUE>5. && K_P_TRUE<500. && pi_eta_TRUE>2. && pi_eta_TRUE<4.5 && pi_PT_TRUE>.5 && pi_PT_TRUE<25. && pi_P_TRUE>5. && pi_P_TRUE<500.";
 
 	std::cout << t0->GetEntries() << std::endl;
 	std::cout << t0->GetEntries(cuts) << std::endl;
@@ -50,8 +50,8 @@
 
 	for(int ientry=0; ientry<t0->GetEntries(); ++ientry) {
 		t0->GetEntry(ientry);
-		if(!(K_eta_TRUE>2. && K_eta_TRUE<4.5 && K_PT_TRUE>.5 && K_P_TRUE>5.)) continue;
-		if(!(pi_eta_TRUE>2. && pi_eta_TRUE<4.5 && pi_PT_TRUE>.5 && pi_P_TRUE>5.)) continue;
+		if(!(K_eta_TRUE>2. && K_eta_TRUE<4.5 && K_PT_TRUE>.5 && K_PT_TRUE<25. && K_P_TRUE>5. && K_P_TRUE<500.)) continue;
+		if(!(pi_eta_TRUE>2. && pi_eta_TRUE<4.5 && pi_PT_TRUE>.5 && pi_PT_TRUE<25. && pi_P_TRUE>5. && pi_P_TRUE<500.)) continue;
 
 		//if(K_P_TRUE>732.) K_P_TRUE=732.;
 		//if(pi_P_TRUE>732.) pi_P_TRUE=732.;
@@ -95,19 +95,19 @@
 	effcomb.GetYaxis()->SetTitle("#it{y}(#it{D}^{0})");
 
 	eff.Draw("colz");
-	c1.SaveAs("D0Acceptance.pdf");
+	c1.SaveAs("D0AcceptanceNewUp181203.pdf");
 	err.Draw("colz");
-	c1.SaveAs("D0AcceptanceError.pdf");
+	c1.SaveAs("D0AcceptanceErrorNewUp181203.pdf");
 
 	reff.Draw("colz");
-	c1.SaveAs("D0RecoNew.pdf");
+	c1.SaveAs("D0RecoNewUp181203.pdf");
 	rerr.Draw("colz");
-	c1.SaveAs("D0RecoErrorNew.pdf");
+	c1.SaveAs("D0RecoErrorNewNewUp181203.pdf");
 
 	effcomb.Draw("colz");
-	c1.SaveAs("D0AccRecoEff.pdf");
+	c1.SaveAs("D0AccRecoEffNewUp181203.pdf");
 
-	TFile* fout = TFile::Open("D0AccEffNew.root","recreate");
+	TFile* fout = TFile::Open("D0AccEffNewUp181203.root","recreate");
 	eff.Write();
 	err.Write();
 	reff.Write();

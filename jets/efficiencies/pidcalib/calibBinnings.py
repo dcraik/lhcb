@@ -4,265 +4,9 @@ from PIDPerfScripts.Definitions import GetMuonPIDPartTypes
 
 for trType in GetPartTypes():
     # momentum
-    AddBinScheme(  trType, 'P',  'DKpi_none', 0, 100000)
-    AddBinScheme(  trType, 'PT', 'DKpi_none', 0, 50000)
-    AddBinScheme(  trType, 'nTracks', 'DKpi_none', 0, 500)
-
-for trType in GetPartTypes():
-    # momentum
-    AddBinScheme(  trType, 'P',  'DKpi_PPT', 0, 100000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT', 3000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT', 6000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT', 9000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT', 12000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT', 13500)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT', 15000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT', 20000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT', 22000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT', 24000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT', 26000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT', 28000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT', 30000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT', 32000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT', 34000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT', 36000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT', 38000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT', 40000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT', 42000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT', 44000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT', 46000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT', 48000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT', 50000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT', 56000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT', 90000)
-
-    # pt 
-    AddBinScheme(  trType, 'PT', 'DKpi_PPT', 0, 50000)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPT', 1000)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPT', 1500)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPT', 2000)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPT', 3000)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPT', 5000)
-
-    # nTracks
-    AddBinScheme(  trType, 'nTracks', 'DKpi_PPT', 0, 500)
-    AddBinBoundary(trType, 'nTracks', 'DKpi_PPT', 120)
-    AddBinBoundary(trType, 'nTracks', 'DKpi_PPT', 180)
-
-for trType in GetPartTypes():
-    # momentum
-    AddBinScheme(  trType, 'P',  'DKpi_PPT2', 0, 100000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT2', 3000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT2', 6000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT2', 9000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT2', 12000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT2', 13500)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT2', 15000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT2', 20000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT2', 22000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT2', 24000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT2', 26000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT2', 28000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT2', 30000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT2', 32000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT2', 34000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT2', 36000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT2', 38000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT2', 40000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT2', 42000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT2', 44000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT2', 46000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT2', 48000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT2', 50000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT2', 56000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT2', 64000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT2', 90000)
-
-    # pt 
-    AddBinScheme(  trType, 'PT', 'DKpi_PPT2', 0, 50000)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPT2', 1000)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPT2', 1500)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPT2', 2000)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPT2', 2500)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPT2', 3000)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPT2', 5000)
-
-
-for trType in GetPartTypes():
-    # momentum
-    AddBinScheme(  trType, 'P',  'DKpi_PPT3', 0, 100000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT3', 3000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT3', 6000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT3', 9000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT3', 12000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT3', 13500)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT3', 15000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT3', 20000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT3', 22000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT3', 24000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT3', 26000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT3', 28000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT3', 30000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT3', 32000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT3', 34000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT3', 36000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT3', 38000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT3', 40000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT3', 42000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT3', 44000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT3', 46000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT3', 48000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT3', 50000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT3', 56000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT3', 64000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT3', 75000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT3', 90000)
-
-    # pt 
-    AddBinScheme(  trType, 'PT', 'DKpi_PPT3', 0, 50000)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPT3', 1000)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPT3', 1500)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPT3', 2000)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPT3', 2500)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPT3', 3000)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPT3', 5000)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPT3', 10000)
-
-for trType in GetPartTypes():
-    # momentum
-    AddBinScheme(  trType, 'P',  'DKpi_PPT4a', 0, 100000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT4a', 3000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT4a', 6000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT4a', 9000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT4a', 12000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT4a', 13500)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT4a', 15000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT4a', 20000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT4a', 22000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT4a', 24000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT4a', 26000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT4a', 28000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT4a', 30000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT4a', 32000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT4a', 34000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT4a', 36000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT4a', 38000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT4a', 40000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT4a', 42000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT4a', 44000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT4a', 46000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT4a', 48000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT4a', 50000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT4a', 56000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT4a', 64000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT4a', 75000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPT4a', 90000)
-
-    # pt 
-    AddBinScheme(  trType, 'PT', 'DKpi_PPT4a', 0, 50000)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPT4a', 1000)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPT4a', 1500)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPT4a', 2000)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPT4a', 2500)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPT4a', 3000)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPT4a', 5000)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPT4a', 7500)
-
-for trType in GetPartTypes(): #for misIDs
-    # momentum
-    AddBinScheme(  trType, 'P',  'DKpi_PPTN', 0, 100000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN', 3000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN', 6000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN', 9000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN', 12000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN', 15000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN', 20000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN', 24000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN', 28000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN', 32000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN', 40000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN', 48000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN', 64000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN', 85000)
-
-    # pt 
-    AddBinScheme(  trType, 'PT', 'DKpi_PPTN', 0, 50000)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPTN', 1500)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPTN', 3000)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPTN', 5000)
-
-    # nTracks
-    AddBinScheme(  trType, 'nTracks', 'DKpi_PPTN', 0, 500)
-    AddBinBoundary(trType, 'nTracks', 'DKpi_PPTN', 120)
-    AddBinBoundary(trType, 'nTracks', 'DKpi_PPTN', 180)
-
-for trType in GetPartTypes(): # for protons
-    # momentum
-    AddBinScheme(  trType, 'P',  'DKpi_PPTN2', 0, 100000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN2', 9000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN2', 12000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN2', 20000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN2', 48000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN2', 80000)
-
-    # pt 
-    AddBinScheme(  trType, 'PT', 'DKpi_PPTN2', 0, 50000)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPTN2', 1500)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPTN2', 3000)
-
-    # nTracks
-    AddBinScheme(  trType, 'nTracks', 'DKpi_PPTN2', 0, 500)
-    AddBinBoundary(trType, 'nTracks', 'DKpi_PPTN2', 200)
-    AddBinBoundary(trType, 'nTracks', 'DKpi_PPTN2', 300)
-
-for trType in GetPartTypes(): # for signal
-    # momentum
-    AddBinScheme(  trType, 'P',  'DKpi_PPTN3', 0, 100000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 3000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 4500)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 6000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 7500)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 9000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 10500)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 12000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 13500)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 15000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 17500)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 20000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 22000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 24000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 26000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 28000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 30000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 32000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 34000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 36000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 38000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 40000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 42000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 44000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 46000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 48000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 50000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 56000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 64000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 75000)
-    AddBinBoundary(trType, 'P',  'DKpi_PPTN3', 90000)
-
-    # pt 
-    AddBinScheme(  trType, 'PT', 'DKpi_PPTN3', 0, 50000)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPTN3', 1000)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPTN3', 1500)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPTN3', 2000)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPTN3', 2500)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPTN3', 3000)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPTN3', 5000)
-    AddBinBoundary(trType, 'PT', 'DKpi_PPTN3', 7500)
-
-    # nTracks
-    AddBinScheme(  trType, 'nTracks', 'DKpi_PPTN3', 0, 500)
-    AddBinBoundary(trType, 'nTracks', 'DKpi_PPTN3', 120)
-    AddBinBoundary(trType, 'nTracks', 'DKpi_PPTN3', 180)
+    AddBinScheme(  trType, 'P',  'none', 0, 100000)
+    AddBinScheme(  trType, 'PT', 'none', 0, 50000)
+    AddBinScheme(  trType, 'nTracks', 'none', 0, 500)
 
 for trType in GetPartTypes():
     # momentum
@@ -290,7 +34,7 @@ for trType in GetPartTypes():
     AddBinBoundary(trType, 'P',  'muons', 75000)
     AddBinBoundary(trType, 'P',  'muons', 90000)
 
-    # pt 
+    # pt
     AddBinScheme(  trType, 'PT', 'muons', 0, 50000)
     AddBinBoundary(trType, 'PT', 'muons', 1000)
     AddBinBoundary(trType, 'PT', 'muons', 1500)
@@ -332,7 +76,7 @@ for trType in GetPartTypes():
     AddBinBoundary(trType, 'P',  'muons2',300000)
     AddBinBoundary(trType, 'P',  'muons2',400000)
 
-    # pt 
+    # pt
     AddBinScheme(  trType, 'PT', 'muons2', 0, 50000)
     AddBinBoundary(trType, 'PT', 'muons2', 1000)
     AddBinBoundary(trType, 'PT', 'muons2', 1500)
@@ -368,7 +112,7 @@ for trType in GetPartTypes():
     AddBinBoundary(trType, 'P',  'muons3',300000)
     AddBinBoundary(trType, 'P',  'muons3',400000)
 
-    # pt 
+    # pt
     AddBinScheme(  trType, 'PT', 'muons3', 0, 50000)
     AddBinBoundary(trType, 'PT', 'muons3', 1000)
     AddBinBoundary(trType, 'PT', 'muons3', 1500)
@@ -404,7 +148,7 @@ for trType in GetPartTypes():
     AddBinBoundary(trType, 'P',  'muons4',300000)
     AddBinBoundary(trType, 'P',  'muons4',400000)
 
-    # pt 
+    # pt
     AddBinScheme(  trType, 'PT', 'muons4', 0, 50000)
     AddBinBoundary(trType, 'PT', 'muons4', 1000)
     AddBinBoundary(trType, 'PT', 'muons4', 1100)
@@ -479,7 +223,7 @@ for trType in GetPartTypes():
     AddBinBoundary(trType, 'Brunel_P',  'muons5',300000)
     AddBinBoundary(trType, 'Brunel_P',  'muons5',400000)
 
-    # pt 
+    # pt
     AddBinScheme(  trType, 'PT', 'muons5', 0, 50000)
     AddBinBoundary(trType, 'PT', 'muons5', 1000)
     AddBinBoundary(trType, 'PT', 'muons5', 1100)
@@ -549,7 +293,7 @@ for trType in GetPartTypes():
     AddBinBoundary(trType, 'P',  'muonsalt',250000)
     AddBinBoundary(trType, 'P',  'muonsalt',400000)
 
-    # pt 
+    # pt
     AddBinScheme(  trType, 'PT', 'muonsalt', 0, 50000)
     AddBinBoundary(trType, 'PT', 'muonsalt', 1000)
     AddBinBoundary(trType, 'PT', 'muonsalt', 1200)
@@ -597,7 +341,7 @@ for trType in GetPartTypes():
     AddBinBoundary(trType, 'P',  'kaons',300000)
     AddBinBoundary(trType, 'P',  'kaons',400000)
 
-    # pt 
+    # pt
     AddBinScheme(  trType, 'PT', 'kaons', 0, 50000)
     AddBinBoundary(trType, 'PT', 'kaons', 1000)
     AddBinBoundary(trType, 'PT', 'kaons', 1100)
@@ -644,7 +388,7 @@ for trType in GetPartTypes():
     AddBinBoundary(trType, 'P',  'kaons2', 90000)
     AddBinBoundary(trType, 'P',  'kaons2',120000)
 
-    # pt 
+    # pt
     AddBinScheme(  trType, 'PT', 'kaons2', 0, 20000)
     AddBinBoundary(trType, 'PT', 'kaons2', 1000)
     AddBinBoundary(trType, 'PT', 'kaons2', 1100)
@@ -690,7 +434,7 @@ for trType in GetPartTypes():
     AddBinBoundary(trType, 'Brunel_P',  'kaons3', 90000)
     AddBinBoundary(trType, 'Brunel_P',  'kaons3',120000)
 
-    # pt 
+    # pt
     AddBinScheme(  trType, 'Brunel_PT', 'kaons3', 0, 20000)
     AddBinBoundary(trType, 'Brunel_PT', 'kaons3', 1000)
     AddBinBoundary(trType, 'Brunel_PT', 'kaons3', 1100)
@@ -722,6 +466,63 @@ for trType in GetPartTypes():
 
 for trType in GetPartTypes():
     # momentum
+    AddBinScheme(  trType, 'Brunel_P',  'kaons4', 0, 500000)
+    AddBinBoundary(trType, 'Brunel_P',  'kaons4', 4000)
+    AddBinBoundary(trType, 'Brunel_P',  'kaons4', 8000)
+    AddBinBoundary(trType, 'Brunel_P',  'kaons4', 12000)
+    AddBinBoundary(trType, 'Brunel_P',  'kaons4', 16000)
+    AddBinBoundary(trType, 'Brunel_P',  'kaons4', 20000)
+    AddBinBoundary(trType, 'Brunel_P',  'kaons4', 24000)
+    AddBinBoundary(trType, 'Brunel_P',  'kaons4', 28000)
+    AddBinBoundary(trType, 'Brunel_P',  'kaons4', 32000)
+    AddBinBoundary(trType, 'Brunel_P',  'kaons4', 36000)
+    AddBinBoundary(trType, 'Brunel_P',  'kaons4', 40000)
+    AddBinBoundary(trType, 'Brunel_P',  'kaons4', 44000)
+    AddBinBoundary(trType, 'Brunel_P',  'kaons4', 50000)
+    AddBinBoundary(trType, 'Brunel_P',  'kaons4', 56000)
+    AddBinBoundary(trType, 'Brunel_P',  'kaons4', 64000)
+    AddBinBoundary(trType, 'Brunel_P',  'kaons4', 75000)
+    AddBinBoundary(trType, 'Brunel_P',  'kaons4', 90000)
+    AddBinBoundary(trType, 'Brunel_P',  'kaons4',120000)
+    AddBinBoundary(trType, 'Brunel_P',  'kaons4',160000)
+    AddBinBoundary(trType, 'Brunel_P',  'kaons4',250000)
+    AddBinBoundary(trType, 'Brunel_P',  'kaons4',350000)
+
+    # pt
+    AddBinScheme(  trType, 'Brunel_PT', 'kaons4', 0, 50000)
+    AddBinBoundary(trType, 'Brunel_PT', 'kaons4', 1000)
+    AddBinBoundary(trType, 'Brunel_PT', 'kaons4', 1100)
+    AddBinBoundary(trType, 'Brunel_PT', 'kaons4', 1200)
+    AddBinBoundary(trType, 'Brunel_PT', 'kaons4', 1300)
+    AddBinBoundary(trType, 'Brunel_PT', 'kaons4', 1400)
+    AddBinBoundary(trType, 'Brunel_PT', 'kaons4', 1500)
+    AddBinBoundary(trType, 'Brunel_PT', 'kaons4', 1600)
+    AddBinBoundary(trType, 'Brunel_PT', 'kaons4', 1700)
+    AddBinBoundary(trType, 'Brunel_PT', 'kaons4', 1800)
+    AddBinBoundary(trType, 'Brunel_PT', 'kaons4', 1900)
+    AddBinBoundary(trType, 'Brunel_PT', 'kaons4', 2000)
+    AddBinBoundary(trType, 'Brunel_PT', 'kaons4', 2250)
+    AddBinBoundary(trType, 'Brunel_PT', 'kaons4', 2500)
+    AddBinBoundary(trType, 'Brunel_PT', 'kaons4', 2750)
+    AddBinBoundary(trType, 'Brunel_PT', 'kaons4', 3000)
+    AddBinBoundary(trType, 'Brunel_PT', 'kaons4', 3500)
+    AddBinBoundary(trType, 'Brunel_PT', 'kaons4', 4000)
+    AddBinBoundary(trType, 'Brunel_PT', 'kaons4', 4500)
+    AddBinBoundary(trType, 'Brunel_PT', 'kaons4', 5000)
+    AddBinBoundary(trType, 'Brunel_PT', 'kaons4', 6250)
+    AddBinBoundary(trType, 'Brunel_PT', 'kaons4', 7500)
+    AddBinBoundary(trType, 'Brunel_PT', 'kaons4',10000)
+    AddBinBoundary(trType, 'Brunel_PT', 'kaons4',15000)
+    AddBinBoundary(trType, 'Brunel_PT', 'kaons4',25000)
+    AddBinBoundary(trType, 'Brunel_PT', 'kaons4',35000)
+
+    # nTracks
+    AddBinScheme(  trType, 'nTracks', 'kaons4', 0, 500)
+    AddBinBoundary(trType, 'nTracks', 'kaons4', 120)
+    AddBinBoundary(trType, 'nTracks', 'kaons4', 180)
+
+for trType in GetPartTypes():
+    # momentum
     AddBinScheme(  trType, 'P',  'kaonsalt', 0, 160000)
     AddBinBoundary(trType, 'P',  'kaonsalt', 8000)
     AddBinBoundary(trType, 'P',  'kaonsalt', 16000)
@@ -732,7 +533,7 @@ for trType in GetPartTypes():
     AddBinBoundary(trType, 'P',  'kaonsalt', 64000)
     AddBinBoundary(trType, 'P',  'kaonsalt', 90000)
 
-    # pt 
+    # pt
     AddBinScheme(  trType, 'PT', 'kaonsalt', 0, 20000)
     AddBinBoundary(trType, 'PT', 'kaonsalt', 1000)
     AddBinBoundary(trType, 'PT', 'kaonsalt', 1200)
@@ -779,7 +580,7 @@ for trType in GetPartTypes():
     AddBinBoundary(trType, 'P',  'protons',300000)
     AddBinBoundary(trType, 'P',  'protons',400000)
 
-    # pt 
+    # pt
     AddBinScheme(  trType, 'PT', 'protons', 0, 50000)
     AddBinBoundary(trType, 'PT', 'protons', 1000)
     AddBinBoundary(trType, 'PT', 'protons', 1100)
@@ -826,7 +627,7 @@ for trType in GetPartTypes():
     AddBinBoundary(trType, 'P',  'protons2', 90000)
     AddBinBoundary(trType, 'P',  'protons2',120000)
 
-    # pt 
+    # pt
     AddBinScheme(  trType, 'PT', 'protons2', 0, 20000)
     AddBinBoundary(trType, 'PT', 'protons2', 1000)
     AddBinBoundary(trType, 'PT', 'protons2', 1100)
@@ -868,7 +669,7 @@ for trType in GetPartTypes():
     AddBinBoundary(trType, 'P',  'protons3', 80000)
     AddBinBoundary(trType, 'P',  'protons3',120000)
 
-    # pt 
+    # pt
     AddBinScheme(  trType, 'PT', 'protons3', 0, 20000)
     AddBinBoundary(trType, 'PT', 'protons3', 1000)
     AddBinBoundary(trType, 'PT', 'protons3', 1250)
@@ -899,7 +700,7 @@ for trType in GetPartTypes():
     AddBinBoundary(trType, 'P',  'protons4', 80000)
     AddBinBoundary(trType, 'P',  'protons4',120000)
 
-    # pt 
+    # pt
     AddBinScheme(  trType, 'PT', 'protons4', 0, 20000)
     AddBinBoundary(trType, 'PT', 'protons4',  750)
     AddBinBoundary(trType, 'PT', 'protons4',  900)
@@ -942,7 +743,7 @@ for trType in GetPartTypes():
     AddBinBoundary(trType, 'P',  'protons5', 80000)
     AddBinBoundary(trType, 'P',  'protons5',120000)
 
-    # pt 
+    # pt
     AddBinScheme(  trType, 'PT', 'protons5', 0, 20000)
     AddBinBoundary(trType, 'PT', 'protons5',  750)
     AddBinBoundary(trType, 'PT', 'protons5',  900)
@@ -1012,7 +813,7 @@ for trType in GetPartTypes():
     AddBinBoundary(trType, 'Brunel_P',  'protons6', 80000)
     AddBinBoundary(trType, 'Brunel_P',  'protons6',120000)
 
-    # pt 
+    # pt
     AddBinScheme(  trType, 'PT', 'protons6', 0, 20000)
     AddBinBoundary(trType, 'PT', 'protons6',  750)
     AddBinBoundary(trType, 'PT', 'protons6',  900)
@@ -1060,7 +861,7 @@ for trType in GetPartTypes():
     AddBinBoundary(trType, 'P',  'protonsalt', 60000)
     AddBinBoundary(trType, 'P',  'protonsalt', 80000)
 
-    # pt 
+    # pt
     AddBinScheme(  trType, 'PT', 'protonsalt', 0, 20000)
     AddBinBoundary(trType, 'PT', 'protonsalt', 1000)
     AddBinBoundary(trType, 'PT', 'protonsalt', 1250)
@@ -1097,7 +898,7 @@ for trType in GetPartTypes():
     AddBinBoundary(trType, 'Brunel_P',  'pions', 90000)
     AddBinBoundary(trType, 'Brunel_P',  'pions',120000)
 
-    # pt 
+    # pt
     AddBinScheme(  trType, 'Brunel_PT', 'pions', 0, 20000)
     AddBinBoundary(trType, 'Brunel_PT', 'pions', 1000)
     AddBinBoundary(trType, 'Brunel_PT', 'pions', 1100)
@@ -1127,6 +928,61 @@ for trType in GetPartTypes():
     AddBinBoundary(trType, 'nTracks', 'pions', 120)
     AddBinBoundary(trType, 'nTracks', 'pions', 180)
 
+for trType in GetPartTypes():
+    # momentum
+    AddBinScheme(  trType, 'Brunel_P',  'pions2', 0, 500000)
+    AddBinBoundary(trType, 'Brunel_P',  'pions2', 4000)
+    AddBinBoundary(trType, 'Brunel_P',  'pions2', 8000)
+    AddBinBoundary(trType, 'Brunel_P',  'pions2', 12000)
+    AddBinBoundary(trType, 'Brunel_P',  'pions2', 16000)
+    AddBinBoundary(trType, 'Brunel_P',  'pions2', 20000)
+    AddBinBoundary(trType, 'Brunel_P',  'pions2', 24000)
+    AddBinBoundary(trType, 'Brunel_P',  'pions2', 28000)
+    AddBinBoundary(trType, 'Brunel_P',  'pions2', 32000)
+    AddBinBoundary(trType, 'Brunel_P',  'pions2', 36000)
+    AddBinBoundary(trType, 'Brunel_P',  'pions2', 40000)
+    AddBinBoundary(trType, 'Brunel_P',  'pions2', 44000)
+    AddBinBoundary(trType, 'Brunel_P',  'pions2', 50000)
+    AddBinBoundary(trType, 'Brunel_P',  'pions2', 56000)
+    AddBinBoundary(trType, 'Brunel_P',  'pions2', 64000)
+    AddBinBoundary(trType, 'Brunel_P',  'pions2', 75000)
+    AddBinBoundary(trType, 'Brunel_P',  'pions2', 90000)
+    AddBinBoundary(trType, 'Brunel_P',  'pions2',120000)
+    AddBinBoundary(trType, 'Brunel_P',  'pions2',160000)
+    AddBinBoundary(trType, 'Brunel_P',  'pions2',250000)
+    AddBinBoundary(trType, 'Brunel_P',  'pions2',350000)
+
+    # pt
+    AddBinScheme(  trType, 'Brunel_PT', 'pions2', 0, 25000)
+    AddBinBoundary(trType, 'Brunel_PT', 'pions2', 1000)
+    AddBinBoundary(trType, 'Brunel_PT', 'pions2', 1100)
+    AddBinBoundary(trType, 'Brunel_PT', 'pions2', 1200)
+    AddBinBoundary(trType, 'Brunel_PT', 'pions2', 1300)
+    AddBinBoundary(trType, 'Brunel_PT', 'pions2', 1400)
+    AddBinBoundary(trType, 'Brunel_PT', 'pions2', 1500)
+    AddBinBoundary(trType, 'Brunel_PT', 'pions2', 1600)
+    AddBinBoundary(trType, 'Brunel_PT', 'pions2', 1700)
+    AddBinBoundary(trType, 'Brunel_PT', 'pions2', 1800)
+    AddBinBoundary(trType, 'Brunel_PT', 'pions2', 1900)
+    AddBinBoundary(trType, 'Brunel_PT', 'pions2', 2000)
+    AddBinBoundary(trType, 'Brunel_PT', 'pions2', 2250)
+    AddBinBoundary(trType, 'Brunel_PT', 'pions2', 2500)
+    AddBinBoundary(trType, 'Brunel_PT', 'pions2', 2750)
+    AddBinBoundary(trType, 'Brunel_PT', 'pions2', 3000)
+    AddBinBoundary(trType, 'Brunel_PT', 'pions2', 3500)
+    AddBinBoundary(trType, 'Brunel_PT', 'pions2', 4000)
+    AddBinBoundary(trType, 'Brunel_PT', 'pions2', 4500)
+    AddBinBoundary(trType, 'Brunel_PT', 'pions2', 5000)
+    AddBinBoundary(trType, 'Brunel_PT', 'pions2', 6250)
+    AddBinBoundary(trType, 'Brunel_PT', 'pions2', 7500)
+    AddBinBoundary(trType, 'Brunel_PT', 'pions2',10000)
+    AddBinBoundary(trType, 'Brunel_PT', 'pions2',15000)
+
+    # nTracks
+    AddBinScheme(  trType, 'nTracks', 'pions2', 0, 500)
+    AddBinBoundary(trType, 'nTracks', 'pions2', 120)
+    AddBinBoundary(trType, 'nTracks', 'pions2', 180)
+
 
 for trType in GetPartTypes():
     # momentum
@@ -1149,7 +1005,7 @@ for trType in GetPartTypes():
     AddBinBoundary(trType, 'Brunel_P',  'electrons', 90000)
     AddBinBoundary(trType, 'Brunel_P',  'electrons',120000)
 
-    # pt 
+    # pt
     AddBinScheme(  trType, 'Brunel_PT', 'electrons', 0, 20000)
     AddBinBoundary(trType, 'Brunel_PT', 'electrons', 1000)
     AddBinBoundary(trType, 'Brunel_PT', 'electrons', 1100)
@@ -1195,7 +1051,7 @@ for trType in GetPartTypes():
     AddBinBoundary(trType, 'Brunel_P',  'protonsAsMu', 80000)
     AddBinBoundary(trType, 'Brunel_P',  'protonsAsMu',120000)
 
-    # pt 
+    # pt
     AddBinScheme(  trType, 'Brunel_PT', 'protonsAsMu', 0, 20000)
     AddBinBoundary(trType, 'Brunel_PT', 'protonsAsMu', 1000)
     AddBinBoundary(trType, 'Brunel_PT', 'protonsAsMu', 1500)
@@ -1219,7 +1075,7 @@ for trType in GetPartTypes():
     AddBinBoundary(trType, 'Brunel_P',  'misIDAsMu', 80000)
     AddBinBoundary(trType, 'Brunel_P',  'misIDAsMu',120000)
 
-    # pt 
+    # pt
     AddBinScheme(  trType, 'Brunel_PT', 'misIDAsMu', 0, 20000)
     AddBinBoundary(trType, 'Brunel_PT', 'misIDAsMu', 1000)
     AddBinBoundary(trType, 'Brunel_PT', 'misIDAsMu', 1500)
