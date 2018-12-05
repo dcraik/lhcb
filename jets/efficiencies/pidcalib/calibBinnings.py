@@ -466,7 +466,7 @@ for trType in GetPartTypes():
 
 for trType in GetPartTypes():
     # momentum
-    AddBinScheme(  trType, 'Brunel_P',  'kaons4', 0, 500000)
+    AddBinScheme(  trType, 'Brunel_P',  'kaons4', 0, 750000)
     AddBinBoundary(trType, 'Brunel_P',  'kaons4', 4000)
     AddBinBoundary(trType, 'Brunel_P',  'kaons4', 8000)
     AddBinBoundary(trType, 'Brunel_P',  'kaons4', 12000)
@@ -487,9 +487,10 @@ for trType in GetPartTypes():
     AddBinBoundary(trType, 'Brunel_P',  'kaons4',160000)
     AddBinBoundary(trType, 'Brunel_P',  'kaons4',250000)
     AddBinBoundary(trType, 'Brunel_P',  'kaons4',350000)
+    AddBinBoundary(trType, 'Brunel_P',  'kaons4',500000)
 
     # pt
-    AddBinScheme(  trType, 'Brunel_PT', 'kaons4', 0, 50000)
+    AddBinScheme(  trType, 'Brunel_PT', 'kaons4', 0, 75000)
     AddBinBoundary(trType, 'Brunel_PT', 'kaons4', 1000)
     AddBinBoundary(trType, 'Brunel_PT', 'kaons4', 1100)
     AddBinBoundary(trType, 'Brunel_PT', 'kaons4', 1200)
@@ -515,6 +516,7 @@ for trType in GetPartTypes():
     AddBinBoundary(trType, 'Brunel_PT', 'kaons4',15000)
     AddBinBoundary(trType, 'Brunel_PT', 'kaons4',25000)
     AddBinBoundary(trType, 'Brunel_PT', 'kaons4',35000)
+    AddBinBoundary(trType, 'Brunel_PT', 'kaons4',50000)
 
     # nTracks
     AddBinScheme(  trType, 'nTracks', 'kaons4', 0, 500)

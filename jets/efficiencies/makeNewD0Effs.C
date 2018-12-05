@@ -88,7 +88,7 @@ void makeNewD0Effs::Loop()
 
 	gStyle->SetOptStat(0);
 
-	TFile* fout = TFile::Open("D0Effs_"+name+"_up181201.root","RECREATE");
+	TFile* fout = TFile::Open("D0Effs_"+name+"_up181204.root","RECREATE");
 	TH2D* inaccD04 = new TH2D("inaccD04","",npt,ptBins,neta,etaBins);
 	TH2D* recoD04 = new TH2D("recoD04","",npt,ptBins,neta,etaBins);
 	TH2D* selD04 = new TH2D("selD04","",npt,ptBins,neta,etaBins);
@@ -301,35 +301,37 @@ void makeNewD0Effs::Loop()
 					TVector3 precPi(D0PIPX->at(s),D0PIPY->at(s),D0PIPZ->at(s));
 
 					double pK  = precK.Mag();
-					double pPi = precPi.Mag();
+					//double pPi = precPi.Mag();
 					double ptK = precK.Pt();
-					double ptPi= precPi.Pt();
+					//double ptPi= precPi.Pt();
 
-					if(pK  >500000.) pK  =499000.;
-					if(pPi >500000.) pPi =499000.;
-					if(ptK > 50000.) ptK = 49000.;
-					if(ptPi> 25000.) ptPi= 24000.;
+					//if(pK  >500000.) pK  =499000.;
+					//if(pPi >500000.) pPi =499000.;
+					//if(ptK > 50000.) ptK = 49000.;
+					//if(ptPi> 25000.) ptPi= 24000.;
 
 					double effK = pidK->GetBinContent(pidK->FindBin(pK,ptK));
-					double effPi = pidPi->GetBinContent(pidPi->FindBin(pPi,ptPi));
+					double effPi = 1.;//pidPi->GetBinContent(pidPi->FindBin(pPi,ptPi)); //pion PID turned off
+
+					if(pK>500000. || ptK>25000.) effK=1.; //no PID cut at high P or PT
 
 					if(fromb) {
 						numD05->Fill(p.Pt(),p.Eta());
 						pidD05->Fill(p.Pt(),p.Eta(),effK*effPi);
 						selD05->Fill(prec.Pt(),prec.Eta());
-						if(D0KPNNK->at(s)>0.2&&D0PIPNNPI->at(s)>0.1)
+						if(D0KPNNK->at(s)>0.2 || pK>500000. || ptK>25000.) //&&D0PIPNNPI->at(s)>0.1)
 							pidmcD05->Fill(p.Pt(),p.Eta());
 					} else {
 						numD04->Fill(p.Pt(),p.Eta());
 						pidD04->Fill(p.Pt(),p.Eta(),effK*effPi);
 						selD04->Fill(prec.Pt(),prec.Eta());
-						if(D0KPNNK->at(s)>0.2&&D0PIPNNPI->at(s)>0.1)
+						if(D0KPNNK->at(s)>0.2 || pK>500000. || ptK>25000.) //&&D0PIPNNPI->at(s)>0.1)
 							pidmcD04->Fill(p.Pt(),p.Eta());
 					}
 					numD045->Fill(p.Pt(),p.Eta());
 					pidD045->Fill(p.Pt(),p.Eta(),effK*effPi);
 					selD045->Fill(prec.Pt(),prec.Eta());
-						if(D0KPNNK->at(s)>0.2&&D0PIPNNPI->at(s)>0.1)
+						if(D0KPNNK->at(s)>0.2 || pK>500000. || ptK>25000.) //&&D0PIPNNPI->at(s)>0.1)
 							pidmcD045->Fill(p.Pt(),p.Eta());
 					break;
 				}
