@@ -440,6 +440,38 @@ int makeNewCalibTuples::checkRealSV(std::vector<int> indices) {
 	return nInBestAn;
 }
 
+int makeNewCalibTuples::checkBestD0Cand(int dA, int dB) {
+	if(dA==dB) return 0;
+
+	int trkA0 = d0_idx_trk0->at(dA);
+	int trkA1 = d0_idx_trk1->at(dA);
+	int trkB0 = d0_idx_trk0->at(dB);
+	int trkB1 = d0_idx_trk1->at(dB);
+
+	int genA0 = trk_idx_gen->at(trkA0);
+	int genA1 = trk_idx_gen->at(trkA1);
+	int genB0 = trk_idx_gen->at(trkB0);
+	int genB1 = trk_idx_gen->at(trkB1);
+
+	//if only one candidate is fully truth-matched, keep that one
+	if(genA0>-1 && genA1>-1 && !(genB0>-1 && genB1>-1)) return 0;
+	if(genB0>-1 && genB1>-1 && !(genA0>-1 && genA1>-1)) return 1;
+
+	//if truth-matched and only one has correct child PID assignment, keep that one
+	if(genA0>-1 && genA1>-1 && genB0>-1 && genB1>-1) {
+		if(TMath::Abs(gen_pid->at(genA0))==321 && TMath::Abs(gen_pid->at(genA1))==211 && !(TMath::Abs(gen_pid->at(genB0))==321 && TMath::Abs(gen_pid->at(genB1))==211)) return 0;
+		if(TMath::Abs(gen_pid->at(genB0))==321 && TMath::Abs(gen_pid->at(genB1))==211 && !(TMath::Abs(gen_pid->at(genA0))==321 && TMath::Abs(gen_pid->at(genA1))==211)) return 1;
+	}
+
+	//keep candidate with higher pT
+	if(d0_pt->at(dA)>d0_pt->at(dB)) return 0;
+	if(d0_pt->at(dB)>d0_pt->at(dA)) return 1;
+
+	//fall back to keeping the one with the most kaon-like kaon
+	if(trk_pnn_k->at( trkA0) < trk_pnn_k->at(trkB0)) return 1;
+	else return 0;
+}
+
 void makeNewCalibTuples::fillOutput(int j, int t)
 {
 	//fill the output tuples
@@ -1361,8 +1393,56 @@ void makeNewCalibTuples::fillSVCands(int j, int t)
 		}
 
 		//PID off for MC (simply require kaon to be the most kaon-like)
-		if(!isMC_ && !(trk_pnn_pi->at(trk1)>0.1 && trk_pnn_k->at( trk0)>0.1)) continue;
-		if( isMC_ && trk_pnn_k->at( trk0) < trk_pnn_k->at(trk1)) continue;
+		if(!isMC_) {
+			if(trk_pnn_k->at( trk0)<0.1) {//PID cut off for pion
+				if(trk_pt->at(trk0)<25000. && trk_p->at(trk0)<500000.) continue;//PID turned off for kaons with PT>25GeV or P>500GeV
+			}
+		}
+		//for MC only use PID to distinguish double mis-ID
+		if( isMC_ && d0_m->size()>1 ) {
+
+			bool foundBetter(false);
+			for(uint jD=0; jD<d0_m->size(); ++jD) {
+				if(jD==iD) continue;
+				//first check if there's a second D0 with the same tracks
+				if((trk0==d0_idx_trk0->at(jD) && trk1==d0_idx_trk1->at(jD)) ||
+				   (trk0==d0_idx_trk1->at(jD) && trk1==d0_idx_trk0->at(jD))) {
+					if(checkBestD0Cand(iD,jD)==1) {
+						foundBetter=true;
+						break;
+					}
+				}
+				//also check for cases where multiple tracks have same truth match
+				int gen0 = trk_idx_gen->at(trk0);
+				int gen1 = trk_idx_gen->at(trk1);
+				if(gen0>-1 && gen1>-1) {
+					if((gen0==trk_idx_gen->at(d0_idx_trk0->at(jD)) && gen1==trk_idx_gen->at(d0_idx_trk1->at(jD))) ||
+					   (gen0==trk_idx_gen->at(d0_idx_trk1->at(jD)) && gen1==trk_idx_gen->at(d0_idx_trk0->at(jD)))) {
+						if(checkBestD0Cand(iD,jD)==1) {
+							foundBetter=true;
+							break;
+						}
+					}
+				} else if(gen0>-1) {
+					if((gen0==trk_idx_gen->at(d0_idx_trk0->at(jD)) && trk1==d0_idx_trk1->at(jD)) ||
+					   (gen0==trk_idx_gen->at(d0_idx_trk1->at(jD)) && trk1==d0_idx_trk0->at(jD))) {
+						if(checkBestD0Cand(iD,jD)==1) {
+							foundBetter=true;
+							break;
+						}
+					}
+				} else if(gen1>-1) {
+					if((gen1==trk_idx_gen->at(d0_idx_trk0->at(jD)) && trk0==d0_idx_trk1->at(jD)) ||
+					   (gen1==trk_idx_gen->at(d0_idx_trk1->at(jD)) && trk0==d0_idx_trk0->at(jD))) {
+						if(checkBestD0Cand(iD,jD)==1) {
+							foundBetter=true;
+							break;
+						}
+					}
+				}
+			}
+			if(foundBetter) continue;
+		}
 
 		D0M       ->push_back(d0_m->at(iD));
 		D0PX      ->push_back(d0_px->at(iD));
@@ -1405,6 +1485,19 @@ void makeNewCalibTuples::fillSVCands(int j, int t)
 		D0PIPZ    ->push_back(p4Dtrk1.Pz());
 		D0KIPCHI2 ->push_back(trk_ip_chi2->at(trk0));
 		D0PIIPCHI2->push_back(trk_ip_chi2->at(trk1));
+
+		double pk   = p4Dtrk0.P();
+		double ptk  = p4Dtrk0.Pt();
+		double ppi  = p4Dtrk1.P();
+		double ptpi = p4Dtrk1.Pt();
+
+		if(pk  >500000.) pk  =499000.;
+		if(ppi >500000.) ppi =499000.;
+		if(ptk > 50000.) ptk = 49000.;
+		if(ptpi> 25000.) ptpi= 24000.;
+
+		D0KWEIGHT ->push_back(pidK->GetBinContent(pidK->FindBin(pk,ptk)));
+		D0PIWEIGHT->push_back(1.);//pidPi->GetBinContent(pidPi->FindBin(ppi,ptpi)));
 
 		D0TRK0    ->push_back(trk0);
 		D0TRK1    ->push_back(trk1);

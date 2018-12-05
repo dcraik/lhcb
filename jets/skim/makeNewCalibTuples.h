@@ -13,6 +13,7 @@
 #include <TROOT.h>
 #include <TChain.h>
 #include <TFile.h>
+#include <TH2F.h>
 #include <TSystem.h>
 #include <TVector3.h>
 
@@ -864,6 +865,8 @@ class makeNewCalibTuples {
 		std::vector<double> *D0KPNNK;
 		std::vector<double> *D0PIPNNPI;
 		std::vector<double> *D0KPNNPI;
+		std::vector<double> *D0PIWEIGHT;
+		std::vector<double> *D0KWEIGHT;
 
 		std::vector<double> *D0P;
 		std::vector<double> *D0PT;
@@ -1130,6 +1133,8 @@ class makeNewCalibTuples {
 		bool longLived(int pid);
 		int checkRealSV(std::vector<int> indices);
 
+		int checkBestD0Cand(int dA, int dB);
+
 		//tagging functions
 		bool tagTruthJet(int& j1, int& j2);
 		bool tagTruthNoMuJet(int& j1);
@@ -1162,6 +1167,8 @@ class makeNewCalibTuples {
 		double minipchi2cut_;
 		double maxmcorerrcut_;
 
+		TH2F* pidPi;
+		TH2F* pidK;
 
 		VeloMaterial* detector;
 		double detOffsetX;
@@ -1192,6 +1199,12 @@ class makeNewCalibTuples {
 #ifdef makeNewCalibTuples_cxx
 makeNewCalibTuples::makeNewCalibTuples(int year, int part) : fChain(0), year_(year), part_(part), backwards_(false), isMC_(false), flavour_(0)
 {
+	TFile* fpidk = TFile::Open("../efficiencies/pidcalib/PerfHists_K_Turbo16_MagDown_kaons4_Brunel_P_Brunel_PT.root");
+	TFile* fpidpi= TFile::Open("../efficiencies/pidcalib/PerfHists_Pi_Turbo16_MagDown_pions2_Brunel_P_Brunel_PT.root");
+
+	pidK = dynamic_cast<TH2F*>(fpidk->Get("K_Brunel_MC15TuneV1_ProbNNK > 0.2_All"));
+	pidPi= dynamic_cast<TH2F*>(fpidpi->Get("Pi_Brunel_MC15TuneV1_ProbNNpi > 0.1_All"));
+
 	detector = new VeloMaterial("run2.root");
 	detOffsetX = 0.;//data  0.818);//MC
 	detOffsetY = 0.;//data -0.173);//MC
@@ -1431,13 +1444,13 @@ makeNewCalibTuples::makeNewCalibTuples(int year, int part) : fChain(0), year_(ye
 		boost::progress_display show_addfile_progress( 20 );
 		for(int i=0; i<10; ++i) {
 			++show_addfile_progress;
-			sprintf(str,"/eos/lhcb/user/d/dcraik/jets/596/%d/output.root",i);
+			sprintf(str,"/eos/user/d/dcraik/jets/596/%d/output.root",i);
 			if(gSystem->AccessPathName(str)) continue;
 			t->Add(str);
 		}
 		for(int i=0; i<10; ++i) {
 			++show_addfile_progress;
-			sprintf(str,"/eos/lhcb/user/d/dcraik/jets/600/%d/output.root",i);
+			sprintf(str,"/eos/user/d/dcraik/jets/600/%d/output.root",i);
 			if(gSystem->AccessPathName(str)) continue;
 			t->Add(str);
 		}
@@ -1450,13 +1463,13 @@ makeNewCalibTuples::makeNewCalibTuples(int year, int part) : fChain(0), year_(ye
 		boost::progress_display show_addfile_progress( 20 );
 		for(int i=0; i<10; ++i) {
 			++show_addfile_progress;
-			sprintf(str,"/eos/lhcb/user/d/dcraik/jets/597/%d/output.root",i);
+			sprintf(str,"/eos/user/d/dcraik/jets/597/%d/output.root",i);
 			if(gSystem->AccessPathName(str)) continue;
 			t->Add(str);
 		}
 		for(int i=0; i<10; ++i) {
 			++show_addfile_progress;
-			sprintf(str,"/eos/lhcb/user/d/dcraik/jets/601/%d/output.root",i);
+			sprintf(str,"/eos/user/d/dcraik/jets/601/%d/output.root",i);
 			if(gSystem->AccessPathName(str)) continue;
 			t->Add(str);
 		}
@@ -1469,13 +1482,13 @@ makeNewCalibTuples::makeNewCalibTuples(int year, int part) : fChain(0), year_(ye
 		boost::progress_display show_addfile_progress( 20 );
 		for(int i=0; i<10; ++i) {
 			++show_addfile_progress;
-			sprintf(str,"/eos/lhcb/user/d/dcraik/jets/598/%d/output.root",i);
+			sprintf(str,"/eos/user/d/dcraik/jets/598/%d/output.root",i);
 			if(gSystem->AccessPathName(str)) continue;
 			t->Add(str);
 		}
 		for(int i=0; i<10; ++i) {
 			++show_addfile_progress;
-			sprintf(str,"/eos/lhcb/user/d/dcraik/jets/602/%d/output.root",i);
+			sprintf(str,"/eos/user/d/dcraik/jets/602/%d/output.root",i);
 			if(gSystem->AccessPathName(str)) continue;
 			t->Add(str);
 		}
@@ -1507,13 +1520,13 @@ makeNewCalibTuples::makeNewCalibTuples(int year, int part) : fChain(0), year_(ye
 		boost::progress_display show_addfile_progress( 20 );
 		for(int i=0; i<10; ++i) {
 			++show_addfile_progress;
-			sprintf(str,"/eos/lhcb/user/d/dcraik/jets/599/%d/output.root",i);
+			sprintf(str,"/eos/user/d/dcraik/jets/599/%d/output.root",i);
 			if(gSystem->AccessPathName(str)) continue;
 			t->Add(str);
 		}
 		for(int i=0; i<10; ++i) {
 			++show_addfile_progress;
-			sprintf(str,"/eos/lhcb/user/d/dcraik/jets/603/%d/output.root",i);
+			sprintf(str,"/eos/user/d/dcraik/jets/603/%d/output.root",i);
 			if(gSystem->AccessPathName(str)) continue;
 			t->Add(str);
 		}
@@ -1536,13 +1549,13 @@ makeNewCalibTuples::makeNewCalibTuples(int year, int part) : fChain(0), year_(ye
 		boost::progress_display show_addfile_progress( 61 );
 		for(int i=0; i<30; ++i) {
 			++show_addfile_progress;
-			sprintf(str,"/eos/lhcb/user/d/dcraik/jets/608/%d/output.root",i);//214
+			sprintf(str,"/eos/user/d/dcraik/jets/608/%d/output.root",i);//214
 			if(gSystem->AccessPathName(str)) continue;
 			t->Add(str);
 		}
 		for(int i=0; i<31; ++i) {
 			++show_addfile_progress;
-			sprintf(str,"/eos/lhcb/user/d/dcraik/jets/609/%d/output.root",i);//214
+			sprintf(str,"/eos/user/d/dcraik/jets/609/%d/output.root",i);//214
 			if(gSystem->AccessPathName(str)) continue;
 			t->Add(str);
 		}
@@ -1552,7 +1565,7 @@ makeNewCalibTuples::makeNewCalibTuples(int year, int part) : fChain(0), year_(ye
 		boost::progress_display show_addfile_progress( 200 );
 		for(int i=0; i<200; ++i) {
 			++show_addfile_progress;
-			sprintf(str,"/eos/lhcb/user/d/dcraik/jets/546/%d/output.root",i);//380
+			sprintf(str,"/eos/user/d/dcraik/jets/546/%d/output.root",i);//380
 			if(gSystem->AccessPathName(str)) continue;
 			t->Add(str);
 		}
@@ -1682,13 +1695,13 @@ makeNewCalibTuples::makeNewCalibTuples(int year, int part) : fChain(0), year_(ye
 		boost::progress_display show_addfile_progress( 20 );
 		for(int i=0; i<10; ++i) {
 			++show_addfile_progress;
-			sprintf(str,"/eos/lhcb/user/d/dcraik/jets/596/%d/output.root",i);
+			sprintf(str,"/eos/user/d/dcraik/jets/596/%d/output.root",i);
 			if(gSystem->AccessPathName(str)) continue;
 			t->Add(str);
 		}
 		for(int i=0; i<10; ++i) {
 			++show_addfile_progress;
-			sprintf(str,"/eos/lhcb/user/d/dcraik/jets/600/%d/output.root",i);
+			sprintf(str,"/eos/user/d/dcraik/jets/600/%d/output.root",i);
 			if(gSystem->AccessPathName(str)) continue;
 			t->Add(str);
 		}
@@ -1698,13 +1711,13 @@ makeNewCalibTuples::makeNewCalibTuples(int year, int part) : fChain(0), year_(ye
 		boost::progress_display show_addfile_progress( 20 );
 		for(int i=0; i<10; ++i) {
 			++show_addfile_progress;
-			sprintf(str,"/eos/lhcb/user/d/dcraik/jets/597/%d/output.root",i);
+			sprintf(str,"/eos/user/d/dcraik/jets/597/%d/output.root",i);
 			if(gSystem->AccessPathName(str)) continue;
 			t->Add(str);
 		}
 		for(int i=0; i<10; ++i) {
 			++show_addfile_progress;
-			sprintf(str,"/eos/lhcb/user/d/dcraik/jets/601/%d/output.root",i);
+			sprintf(str,"/eos/user/d/dcraik/jets/601/%d/output.root",i);
 			if(gSystem->AccessPathName(str)) continue;
 			t->Add(str);
 		}
@@ -1714,13 +1727,13 @@ makeNewCalibTuples::makeNewCalibTuples(int year, int part) : fChain(0), year_(ye
 		boost::progress_display show_addfile_progress( 20 );
 		for(int i=0; i<10; ++i) {
 			++show_addfile_progress;
-			sprintf(str,"/eos/lhcb/user/d/dcraik/jets/598/%d/output.root",i);
+			sprintf(str,"/eos/user/d/dcraik/jets/598/%d/output.root",i);
 			if(gSystem->AccessPathName(str)) continue;
 			t->Add(str);
 		}
 		for(int i=0; i<10; ++i) {
 			++show_addfile_progress;
-			sprintf(str,"/eos/lhcb/user/d/dcraik/jets/602/%d/output.root",i);
+			sprintf(str,"/eos/user/d/dcraik/jets/602/%d/output.root",i);
 			if(gSystem->AccessPathName(str)) continue;
 			t->Add(str);
 		}
@@ -1746,13 +1759,13 @@ makeNewCalibTuples::makeNewCalibTuples(int year, int part) : fChain(0), year_(ye
 		boost::progress_display show_addfile_progress( 20 );
 		for(int i=0; i<10; ++i) {
 			++show_addfile_progress;
-			sprintf(str,"/eos/lhcb/user/d/dcraik/jets/599/%d/output.root",i);
+			sprintf(str,"/eos/user/d/dcraik/jets/599/%d/output.root",i);
 			if(gSystem->AccessPathName(str)) continue;
 			t->Add(str);
 		}
 		for(int i=0; i<10; ++i) {
 			++show_addfile_progress;
-			sprintf(str,"/eos/lhcb/user/d/dcraik/jets/603/%d/output.root",i);
+			sprintf(str,"/eos/user/d/dcraik/jets/603/%d/output.root",i);
 			if(gSystem->AccessPathName(str)) continue;
 			t->Add(str);
 		}
@@ -1775,7 +1788,7 @@ makeNewCalibTuples::makeNewCalibTuples(int year, int part) : fChain(0), year_(ye
 		boost::progress_display show_addfile_progress( 10 );
 		for(int i=0; i<10; ++i) {
 			++show_addfile_progress;
-			sprintf(str,"/eos/lhcb/user/d/dcraik/jets/559/%d/output.root",i);//380
+			sprintf(str,"/eos/user/d/dcraik/jets/559/%d/output.root",i);//380
 			//sprintf(str,"/eos/lhcb/user/d/dcraik/jets/546/%d/output.root",i);//380
 			if(gSystem->AccessPathName(str)) continue;
 			t->Add(str);
@@ -2841,6 +2854,8 @@ void makeNewCalibTuples::Init(TTree *tree)
 	D0KPNNK   = new std::vector<double>();
 	D0PIPNNPI = new std::vector<double>();
 	D0KPNNPI  = new std::vector<double>();
+	D0PIWEIGHT= new std::vector<double>();
+	D0KWEIGHT = new std::vector<double>();
 
 	D0P       = new std::vector<double>();
 	D0PT      = new std::vector<double>();
@@ -2949,6 +2964,8 @@ void makeNewCalibTuples::Init(TTree *tree)
 	tout->Branch("D0KPNNK",    &D0KPNNK);
 	tout->Branch("D0PIPNNPI",  &D0PIPNNPI);
 	tout->Branch("D0KPNNPI",   &D0KPNNPI);
+	tout->Branch("D0PIWEIGHT", &D0PIWEIGHT);
+	tout->Branch("D0KWEIGHT",  &D0KWEIGHT);
 
 	tout->Branch("D0P",        &D0P);
 	tout->Branch("D0PT",       &D0PT);
@@ -3615,6 +3632,8 @@ void makeNewCalibTuples::clearOutputVectors() {
 	D0KPNNK   ->clear();
 	D0PIPNNPI ->clear();
 	D0KPNNPI  ->clear();
+	D0PIWEIGHT->clear();
+	D0KWEIGHT ->clear();
 
 	D0P       ->clear();
 	D0PT      ->clear();
