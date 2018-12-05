@@ -1,12 +1,16 @@
 #include <vector>
 
 #include "TCanvas.h"
+#include "TChain.h"
+#include "TError.h"
 #include "TFile.h"
 #include "TH2.h"
 #include "TH3.h"
 #include "TMath.h"
+#include "TRandom3.h"
 #include "TString.h"
 #include "TStyle.h"
+#include "TSystem.h"
 #include "TTree.h"
 #include "TVector3.h"
 
@@ -21,6 +25,7 @@
 #include "RooGaussian.h"
 #include "RooHistPdf.h"
 #include "RooKeysPdf.h"
+#include "RooMsgService.h"
 #include "RooPlot.h"
 #include "RooPolynomial.h"
 #include "RooProdPdf.h"
@@ -45,9 +50,25 @@ enum fitType{
 	fitSBS1D
 };
 
+//globals to save passing these around
 fitType whichFit(fitSBS1D);
 double d0minpt(5000);
 double d0maxpt(-1);
+TString savedir("output");
+
+//the following globals give the locations of input tuples
+//these may be overridden in certain cases, e.g. if doing an MC closure test
+TString charmSimFile  = "/eos/user/d/dcraik/jets-tuples-new-181204/for_yandex_data_new_14X.root";
+TString beautySimFile = "/eos/user/d/dcraik/jets-tuples-new-181204/for_yandex_data_new_15X.root";
+TString lightSimFile  = "/eos/user/d/dcraik/jets-tuples-new-181204/for_yandex_data_new_101.root";
+TString dataFile      = "/eos/user/d/dcraik/jets-tuples-new-181204/for_yandex_data_new_100.root";
+
+//efficiency inputs - update these with latest version numbers
+TString effFile = "../efficiencies/D0Effs_2XX_16x8bins_up181204.root";
+TString accFile = "../efficiencies/D0AccEffNewUp181204.root";
+
+bool dataIsMC(false);
+bool dataIsResampledMC(false);
 
 enum jetType {
 	jetRecoD04,
@@ -56,8 +77,31 @@ enum jetType {
 	jetRecoSV5
 };
 
+//functions to clone a histogram
+TH1D* cloneTH1D(TString name, TH1D* hist)
+{
+	if (!hist) return 0;
+	TH1D* cloneHist = new TH1D(name,
+			"",
+			hist->GetNbinsX(),
+			hist->GetXaxis()->GetXbins()->GetArray());
+	return cloneHist;
+}
+
+TH2D* cloneTH2D(TString name, TH2D* hist)
+{
+	if (!hist) return 0;
+	TH2D* cloneHist = new TH2D(name,
+			"",
+			hist->GetNbinsX(),
+			hist->GetXaxis()->GetXbins()->GetArray(),
+			hist->GetNbinsY(),
+			hist->GetYaxis()->GetXbins()->GetArray());
+	return cloneHist;
+}
+
 // function to make plot of 1D projection of the fit
-void plot(RooRealVar& var, double min, double max, int nbins, RooAbsData* dh, RooAbsPdf& pdf, std::vector<std::string>& sig_pdfs, std::vector<std::string>& bkg_pdfs,  TString name, TString title) {
+void plotFit(RooRealVar& var, double min, double max, int nbins, RooAbsData* dh, RooAbsPdf& pdf, std::vector<std::string>& sig_pdfs, std::vector<std::string>& bkg_pdfs,  TString name, TString title) {
 	TCanvas c1;
 	c1.SetBottomMargin(0.19);
 	RooPlot* plot = var.frame(min, max, nbins);
@@ -90,15 +134,15 @@ void plot(RooRealVar& var, double min, double max, int nbins, RooAbsData* dh, Ro
 	plot->GetXaxis()->SetTitleOffset(1.18);
 	plot->Draw();
 
-	c1.SaveAs("plots/"+name+"_fit.pdf");
-	c1.SaveAs("plots/"+name+"_fit.png");
+	c1.SaveAs(savedir+"/"+name+"_fit.pdf");
+	c1.SaveAs(savedir+"/"+name+"_fit.png");
 
 	delete plot;
 }
 
 // function to print parameters to a file
-void print(TString file, const RooArgList& params) {
-	FILE * pFile = fopen(file.Data(), "w");
+void printParams(TString file, const RooArgList& params) {
+	FILE * pFile = fopen((savedir+"/"+file).Data(), "w");
 
 	int nPar = params.getSize();
 
@@ -140,9 +184,69 @@ void print(TString file, const RooArgList& params) {
 		format+=precision;
 		format+="f$ \\\\\n";
 
-			fprintf(pFile, format, title.Data(), value, error);
+		fprintf(pFile, format, title.Data(), value, error);
 	}
 	fclose(pFile);
+}
+
+void makeTrainTestSamples(int sample) {
+	std::cout << "INFO : making samples for MC study " << sample << std::endl;
+	TRandom3 rand(1000+sample);
+	TString name = "_"; name+=sample;
+	TFile* fin4 = TFile::Open(charmSimFile);
+	TTree* tin4 = dynamic_cast<TTree*>(fin4->Get("T"));
+
+	TFile* fout40 = TFile::Open("/tmp/dcraik/for_yandex_data_new_14X_train"+name+".root","RECREATE");
+	TTree* tout40 = tin4->CloneTree(0);
+
+	TFile* fout41 = TFile::Open("/tmp/dcraik/for_yandex_data_new_14X_test"+name+".root","RECREATE");
+	TTree* tout41 = tin4->CloneTree(0);
+
+	TFile* fin5 = TFile::Open(beautySimFile);
+	TTree* tin5 = dynamic_cast<TTree*>(fin5->Get("T"));
+
+	TFile* fout50 = TFile::Open("/tmp/dcraik/for_yandex_data_new_15X_train"+name+".root","RECREATE");
+	TTree* tout50 = tin5->CloneTree(0);
+
+	TFile* fout51 = TFile::Open("/tmp/dcraik/for_yandex_data_new_15X_test"+name+".root","RECREATE");
+	TTree* tout51 = tin5->CloneTree(0);
+
+	boost::progress_display progress( tin4->GetEntries()+tin5->GetEntries() );
+	for(int ientry=0; ientry<tin4->GetEntries(); ++ientry) {
+		++progress;
+		tin4->GetEntry(ientry);
+		if(rand.Rndm()<0.5) tout40->Fill();
+		else tout41->Fill();
+	}
+
+	for(int ientry=0; ientry<tin5->GetEntries(); ++ientry) {
+		++progress;
+		tin5->GetEntry(ientry);
+		if(rand.Rndm()<0.5) tout50->Fill();
+		else tout51->Fill();
+	}
+
+	tout40->AutoSave();
+	fout40->Close();
+	tout41->AutoSave();
+	fout41->Close();
+	tout50->AutoSave();
+	fout50->Close();
+	tout51->AutoSave();
+	fout51->Close();
+
+	//now merge the test samples
+	TChain* tout45 = new TChain("T");
+	tout45->Add("/tmp/dcraik/for_yandex_data_new_14X_test"+name+".root");
+	tout45->Add("/tmp/dcraik/for_yandex_data_new_15X_test"+name+".root");
+	tout45->Merge("/tmp/dcraik/for_yandex_data_new"+name+".root");
+
+	//update the standard locations and set the dataIsMC flag
+	charmSimFile = "/tmp/dcraik/for_yandex_data_new_14X_train"+name+".root";
+	beautySimFile = "/tmp/dcraik/for_yandex_data_new_15X_train"+name+".root";
+	dataFile = "/tmp/dcraik/for_yandex_data_new"+name+".root";
+	dataIsMC=true;
+	dataIsResampledMC=true;
 }
 
 RooUnfoldResponse* trainUnfold(TH1* binning, jetType type, TString file) {
@@ -150,21 +254,30 @@ RooUnfoldResponse* trainUnfold(TH1* binning, jetType type, TString file) {
 	TString nameStr;
 	switch(type) {
 		case jetRecoD04:
+			std::cout << "INFO : training unfolding for c2D0" << std::endl;
 			nameStr="_c2D0";
 			break;
 		case jetRecoSV4:
+			std::cout << "INFO : training unfolding for c2SV" << std::endl;
 			nameStr="_c2SV";
 			break;
 		case jetRecoD05:
+			std::cout << "INFO : training unfolding for b2D0" << std::endl;
 			nameStr="_b2D0";
 			break;
 		case jetRecoSV5:
+			std::cout << "INFO : training unfolding for b2SV" << std::endl;
 			nameStr="_b2SV";
 			break;
 		default:
 			return 0;
 	}
-	f = TFile::Open("D0MCjets"+file+nameStr+".root");
+
+	TString fname="D0MCjets";
+	if(dataIsResampledMC) fname+=file;
+	fname+=nameStr+".root";
+
+	f = TFile::Open(fname);
 	if(!f) return 0;
 	TTree* t = dynamic_cast<TTree*>(f->Get("T"));
 	if(!t) return 0;
@@ -238,23 +351,26 @@ RooUnfoldResponse* trainUnfold(TH1* binning, jetType type, TString file) {
 
 
 bool addEffs(TString file) {
-	TFile* f0 = TFile::Open("/eos/user/d/dcraik/jets-tuples-new-181001/for_yandex_data_new_"+file+".root");
+	std::cout << "INFO : adding efficiencies to file " << file << std::endl;
+	TFile* f0 = TFile::Open(dataFile);
 
-	TFile* f2 = TFile::Open("../efficiencies/D0Effs_2XX_16x8bins_splitEffs.root");
-	TFile* f3 = TFile::Open("../efficiencies/D0AccEffNew.root");
+	TFile* f2 = TFile::Open(effFile);
+	TFile* f3 = TFile::Open(accFile);
 
 	TTree* t0 = dynamic_cast<TTree*>(f0->Get("T"));
 
 	if(!t0) return false;
 
 	TH2D* hacc = dynamic_cast<TH2D*>(f3->Get("eff"));
-	TH2D* hrec = dynamic_cast<TH2D*>(f3->Get("reff"));
+	//TH2D* hrec = dynamic_cast<TH2D*>(f3->Get("reff")); //TODO this histogram has finer bins but there's currently a bug in its generation
 
-	TH2D* hpid  = dynamic_cast<TH2D*>(f2->Get("pideffD045"));
+	TH2D* hpid(0);
+	if(dataIsMC) hpid = dynamic_cast<TH2D*>(f2->Get("pidmceffD045"));
+	else hpid = dynamic_cast<TH2D*>(f2->Get("pideffD045"));
 	TH2D* hsel4 = dynamic_cast<TH2D*>(f2->Get("seleffD04"));
 	TH2D* hsel5 = dynamic_cast<TH2D*>(f2->Get("seleffD05"));
-	//TH2D* haccB = dynamic_cast<TH2D*>(f2->Get("acceffD045"));
-	//TH2D* hrecB = dynamic_cast<TH2D*>(f2->Get("receffD045"));
+	//TH2D* hacc  = dynamic_cast<TH2D*>(f2->Get("acceffD045")); //superseded by RapidSim version
+	TH2D* hrec  = dynamic_cast<TH2D*>(f2->Get("receffD045"));
 
 	if(!hacc || !hrec || !hpid || !hsel4 || !hsel5) return false;
 
@@ -280,6 +396,7 @@ bool addEffs(TString file) {
 
 	double JetPT;
 	double JetEta;
+	double JetTruePT;
 
 	t0->SetBranchAddress("D0M",           &vD0M);
 	t0->SetBranchAddress("D0IPCHI2",      &vD0IPCHI2);
@@ -303,22 +420,25 @@ bool addEffs(TString file) {
 
 	t0->SetBranchAddress("JetPT",         &JetPT);
 	t0->SetBranchAddress("JetEta",        &JetEta);
+	if(dataIsMC) t0->SetBranchAddress("JetTruePT",     &JetTruePT);
 
 	unsigned int nentries0 = t0->GetEntries();
 
 	TFile* fout = TFile::Open("D0jets"+file+".root","RECREATE");
 	TTree* tout = new TTree("T","");
 
-	double D0M(0.), D0Pt(0.), D0Eta(0.), D0LogIPChi2(0.), weight4(0.), weight5(0.);
+	double D0M(0.), D0PT(0.), D0Eta(0.), D0LogIPChi2(0.), weight4(0.), weight5(0.);
 
 	tout->Branch("JetPT",        &JetPT);
 	tout->Branch("JetEta",       &JetEta);
 	tout->Branch("D0M",          &D0M);
-	tout->Branch("D0PT",         &D0Pt);
+	tout->Branch("D0PT",         &D0PT);
 	tout->Branch("D0Eta",        &D0Eta);
 	tout->Branch("D0LogIPChi2",  &D0LogIPChi2);
 	tout->Branch("weight4",      &weight4);
 	tout->Branch("weight5",      &weight5);
+
+	if(dataIsMC) tout->Branch("JetTruePT", &JetTruePT);
 
 	//first make non-vector tree for fits
 	boost::progress_display progress( nentries0 );
@@ -338,33 +458,47 @@ bool addEffs(TString file) {
 			if(!(d0maxpt==-1 || D0P.Pt() < d0maxpt) ) continue;
 
 			//check PID cuts
-			if(vD0KPNNK->at(s)<0.2 || vD0PIPNNPI->at(s)<0.1) continue;
+			if(vD0KPNNK->at(s)<0.2 && D0P0.Pt()<25000. && D0P0.Mag()<500000.) continue; //kaon PID turned off for high p or pT
+			//if(vD0PIPNNPI->at(s)<0.1) continue; //pion PID turned off
 
 			D0M         = vD0M->at(s);
 			D0LogIPChi2 = TMath::Log(vD0IPCHI2->at(s));
-			D0Pt        = D0P.Pt();
+			D0PT        = D0P.Pt();
 			D0Eta       = D0P.Eta();
 
 			//get efficiency corrections
 			double effacc(0.), effrec(0.), effsel4(0.), effsel5(0.), effpid(0.);
 
-			if(D0Pt>=100000.) D0Pt=99999.;
-			effacc =      hacc ->GetBinContent(hacc ->FindBin(D0Pt/1000.,D0Eta));
-			effrec =      hrec ->GetBinContent(hrec ->FindBin(D0Pt/1000.,D0Eta));
-			effsel4=      hsel4->GetBinContent(hsel4->FindBin(D0Pt      ,D0Eta));
-			effsel5=      hsel5->GetBinContent(hsel5->FindBin(D0Pt      ,D0Eta));
-			effpid =      hpid ->GetBinContent(hpid ->FindBin(D0Pt      ,D0Eta));
+			if(D0PT>=100000.) D0PT=99999.;
+			effacc =      hacc ->GetBinContent(hacc ->FindBin(D0PT/1000.,D0Eta));
+			effrec =      hrec ->GetBinContent(hrec ->FindBin(D0PT/1000.,D0Eta));
+			effsel4=      hsel4->GetBinContent(hsel4->FindBin(D0PT      ,D0Eta));
+			effsel5=      hsel5->GetBinContent(hsel5->FindBin(D0PT      ,D0Eta));
+			effpid =      hpid ->GetBinContent(hpid ->FindBin(D0PT      ,D0Eta));
 
 			double eff4=effacc*effrec*effsel4*effpid;
 			double eff5=effacc*effrec*effsel5*effpid;
 
-			if(eff4<0.01 && eff5<0.01) {
-				std::cout << D0Pt << "\t" << D0Eta << "\t" << effacc << "\t" << effrec << "\t" << effsel4 << "\t" << effsel5 << "\t" << effpid << std::endl;
+			if(eff4<0.01 || eff5<0.01) {
+				std::cout << D0PT << "\t" << D0Eta << "\t" << effacc << "\t" << effrec << "\t" << effsel4 << "\t" << effsel5 << "\t" << effpid << std::endl;
 				continue;
 			}
 
 			weight4 = 1./eff4;
 			weight5 = 1./eff5;
+
+			if(dataIsMC) {//scale weights for roughly continuous jet true pT
+				if(JetTruePT>50000.) {
+					weight4*=0.007;
+					weight5*=0.007;
+				} else if(JetTruePT>20000.) {
+					weight4*=0.10;
+					weight5*=0.10;
+				} else if(JetTruePT>15000.) {
+					weight4*=0.25;
+					weight5*=0.25;
+				}
+			}
 
 			tout->Fill();
 			break;//only keep one D0 candidate per entry
@@ -377,26 +511,373 @@ bool addEffs(TString file) {
 	return true;
 }
 
+bool testEffs(TString file, TH1D* ptBinScheme) {
+	if(!dataIsMC) return false;
+	std::cout << "INFO : testing efficiencies for file " << file << std::endl;
+	TFile* f0 = TFile::Open(dataFile);
+
+	TFile* f2 = TFile::Open(effFile);
+	TFile* f3 = TFile::Open(accFile);
+
+	TTree* t0 = dynamic_cast<TTree*>(f0->Get("T"));
+
+	if(!t0) return false;
+
+	TH2D* hacc = dynamic_cast<TH2D*>(f3->Get("eff"));
+	//TH2D* hrec = dynamic_cast<TH2D*>(f3->Get("reff"));
+
+	TH2D* hpid = dynamic_cast<TH2D*>(f2->Get("pidmceffD045"));
+	TH2D* hsel(0);
+	if(file.BeginsWith("15")) hsel = dynamic_cast<TH2D*>(f2->Get("seleffD05"));
+	else hsel = dynamic_cast<TH2D*>(f2->Get("seleffD04"));
+	//TH2D* hacc  = dynamic_cast<TH2D*>(f2->Get("acceffD045"));
+	TH2D* hrec  = dynamic_cast<TH2D*>(f2->Get("receffD045"));
+
+	if(!hacc || !hrec || !hpid || !hsel) return false;
+
+	//yield histograms - 0=all; 1=passAcc; 2=passRec; 3=passSel; 4=passPID.
+	//tru=truth D0; fit=eff-corrected reco D0; fnd=eff-corrected truth-matched reco D0.
+	std::vector<TString> stages;
+	stages.push_back("all");
+	stages.push_back("geometric");
+	stages.push_back("reconstruction");
+	stages.push_back("selection");
+	stages.push_back("PID");
+	std::vector<TH1D*> truD0truePT;
+	truD0truePT.push_back(cloneTH1D("tru0truept", ptBinScheme));
+	truD0truePT.push_back(cloneTH1D("tru1truept", ptBinScheme));
+	truD0truePT.push_back(cloneTH1D("tru2truept", ptBinScheme));
+	truD0truePT.push_back(cloneTH1D("tru3truept", ptBinScheme));
+	truD0truePT.push_back(cloneTH1D("tru4truept", ptBinScheme));
+	std::vector<TH1D*> fitD0truePT;
+	fitD0truePT.push_back(cloneTH1D("fit0truept", ptBinScheme));
+	fitD0truePT.push_back(cloneTH1D("fit1truept", ptBinScheme));
+	fitD0truePT.push_back(cloneTH1D("fit2truept", ptBinScheme));
+	fitD0truePT.push_back(cloneTH1D("fit3truept", ptBinScheme));
+	fitD0truePT.push_back(cloneTH1D("fit4truept", ptBinScheme));
+	std::vector<TH1D*> fndD0truePT;
+	fndD0truePT.push_back(cloneTH1D("fnd0truept", ptBinScheme));
+	fndD0truePT.push_back(cloneTH1D("fnd1truept", ptBinScheme));
+	fndD0truePT.push_back(cloneTH1D("fnd2truept", ptBinScheme));
+	fndD0truePT.push_back(cloneTH1D("fnd3truept", ptBinScheme));
+	fndD0truePT.push_back(cloneTH1D("fnd4truept", ptBinScheme));
+	std::vector<TH1D*> truD0recoPT;
+	truD0recoPT.push_back(cloneTH1D("tru0recopt", ptBinScheme));
+	truD0recoPT.push_back(cloneTH1D("tru1recopt", ptBinScheme));
+	truD0recoPT.push_back(cloneTH1D("tru2recopt", ptBinScheme));
+	truD0recoPT.push_back(cloneTH1D("tru3recopt", ptBinScheme));
+	truD0recoPT.push_back(cloneTH1D("tru4recopt", ptBinScheme));
+	std::vector<TH1D*> fitD0recoPT;
+	fitD0recoPT.push_back(cloneTH1D("fit0recopt", ptBinScheme));
+	fitD0recoPT.push_back(cloneTH1D("fit1recopt", ptBinScheme));
+	fitD0recoPT.push_back(cloneTH1D("fit2recopt", ptBinScheme));
+	fitD0recoPT.push_back(cloneTH1D("fit3recopt", ptBinScheme));
+	fitD0recoPT.push_back(cloneTH1D("fit4recopt", ptBinScheme));
+	std::vector<TH1D*> fndD0recoPT;
+	fndD0recoPT.push_back(cloneTH1D("fnd0recopt", ptBinScheme));
+	fndD0recoPT.push_back(cloneTH1D("fnd1recopt", ptBinScheme));
+	fndD0recoPT.push_back(cloneTH1D("fnd2recopt", ptBinScheme));
+	fndD0recoPT.push_back(cloneTH1D("fnd3recopt", ptBinScheme));
+	fndD0recoPT.push_back(cloneTH1D("fnd4recopt", ptBinScheme));
+
+	for(int i=0; i<5; ++i) {
+		truD0truePT.at(i)->Sumw2();
+		fitD0truePT.at(i)->Sumw2();
+		fndD0truePT.at(i)->Sumw2();
+		truD0recoPT.at(i)->Sumw2();
+		fitD0recoPT.at(i)->Sumw2();
+		fndD0recoPT.at(i)->Sumw2();
+	}
+
+	std::vector<double> *D0M = new std::vector<double>();
+	std::vector<double> *D0IPCHI2 = new std::vector<double>();
+	std::vector<double> *D0PT = new std::vector<double>();
+	std::vector<double> *D0PX = new std::vector<double>();
+	std::vector<double> *D0PY = new std::vector<double>();
+	std::vector<double> *D0PZ = new std::vector<double>();
+	std::vector<double> *D0E = new std::vector<double>();
+	std::vector<double> *D0KP = new std::vector<double>();
+	std::vector<double> *D0KPT = new std::vector<double>();
+	std::vector<double> *D0KPX = new std::vector<double>();
+	std::vector<double> *D0KPY = new std::vector<double>();
+	std::vector<double> *D0KPZ = new std::vector<double>();
+	std::vector<double> *D0PIP = new std::vector<double>();
+	std::vector<double> *D0PIPT = new std::vector<double>();
+	std::vector<double> *D0PIPX = new std::vector<double>();
+	std::vector<double> *D0PIPY = new std::vector<double>();
+	std::vector<double> *D0PIPZ = new std::vector<double>();
+	std::vector<double> *D0KWEIGHT = new std::vector<double>();
+	std::vector<double> *D0PIWEIGHT = new std::vector<double>();
+	std::vector<double> *D0TRUEIDX = new std::vector<double>();
+	std::vector<double> *D0TRUETRK0 = new std::vector<double>();
+	std::vector<double> *D0TRUETRK1 = new std::vector<double>();
+
+	std::vector<double> *TRUEDID = new std::vector<double>();
+	std::vector<double> *TRUEDPX = new std::vector<double>();
+	std::vector<double> *TRUEDPY = new std::vector<double>();
+	std::vector<double> *TRUEDPZ = new std::vector<double>();
+	std::vector<double> *TRUEDE = new std::vector<double>();
+	std::vector<double> *TRUEDFROMB = new std::vector<double>();
+	std::vector<double> *TRUEDTRK0P = new std::vector<double>();
+	std::vector<double> *TRUEDTRK0PT = new std::vector<double>();
+	std::vector<double> *TRUEDTRK0INACC = new std::vector<double>();
+	std::vector<double> *TRUEDTRK0RECO = new std::vector<double>();
+	std::vector<double> *TRUEDTRK1P = new std::vector<double>();
+	std::vector<double> *TRUEDTRK1PT = new std::vector<double>();
+	std::vector<double> *TRUEDTRK1INACC = new std::vector<double>();
+	std::vector<double> *TRUEDTRK1RECO = new std::vector<double>();
+	std::vector<double> *TRUEDTRK0IDX = new std::vector<double>();
+	std::vector<double> *TRUEDTRK1IDX = new std::vector<double>();
+	std::vector<double> *TRUEDTRK2IDX = new std::vector<double>();
+	std::vector<double> *TRUEDTRK3IDX = new std::vector<double>();
+	std::vector<double> *TRUEDTRK0ID = new std::vector<double>();
+	std::vector<double> *TRUEDTRK1ID = new std::vector<double>();
+	std::vector<double> *TRUEDTRK2ID = new std::vector<double>();
+	std::vector<double> *TRUEDTRK3ID = new std::vector<double>();
+
+	double JetPT;
+	double JetEta;
+	double JetTruePT;
+
+	t0->SetBranchAddress("D0M",           &D0M);
+	t0->SetBranchAddress("D0IPCHI2",      &D0IPCHI2);
+	t0->SetBranchAddress("D0PT",          &D0PT);
+	t0->SetBranchAddress("D0PX",          &D0PX);
+	t0->SetBranchAddress("D0PY",          &D0PY);
+	t0->SetBranchAddress("D0PZ",          &D0PZ);
+	t0->SetBranchAddress("D0E",           &D0E);
+	t0->SetBranchAddress("D0KP",          &D0KP);
+	t0->SetBranchAddress("D0KPT",         &D0KPT);
+	t0->SetBranchAddress("D0KPX",         &D0KPX);
+	t0->SetBranchAddress("D0KPY",         &D0KPY);
+	t0->SetBranchAddress("D0KPZ",         &D0KPZ);
+	t0->SetBranchAddress("D0PIP",         &D0PIP);
+	t0->SetBranchAddress("D0PIPT",        &D0PIPT);
+	t0->SetBranchAddress("D0PIPX",        &D0PIPX);
+	t0->SetBranchAddress("D0PIPY",        &D0PIPY);
+	t0->SetBranchAddress("D0PIPZ",        &D0PIPZ);
+	t0->SetBranchAddress("D0KWEIGHT",     &D0KWEIGHT);
+	t0->SetBranchAddress("D0PIWEIGHT",    &D0PIWEIGHT);
+	t0->SetBranchAddress("D0TRUEIDX",     &D0TRUEIDX);
+	t0->SetBranchAddress("D0TRUETRK0",    &D0TRUETRK0);
+	t0->SetBranchAddress("D0TRUETRK1",    &D0TRUETRK1);
+
+	t0->SetBranchAddress("TRUEDID",       &TRUEDID);
+	t0->SetBranchAddress("TRUEDPX",       &TRUEDPX);
+	t0->SetBranchAddress("TRUEDPY",       &TRUEDPY);
+	t0->SetBranchAddress("TRUEDPZ",       &TRUEDPZ);
+	t0->SetBranchAddress("TRUEDE",        &TRUEDE);
+	t0->SetBranchAddress("TRUEDFROMB",    &TRUEDFROMB);
+	t0->SetBranchAddress("TRUEDTRK0P",    &TRUEDTRK0P);
+	t0->SetBranchAddress("TRUEDTRK0PT",   &TRUEDTRK0PT);
+	t0->SetBranchAddress("TRUEDTRK0INACC",&TRUEDTRK0INACC);
+	t0->SetBranchAddress("TRUEDTRK0RECO", &TRUEDTRK0RECO);
+	t0->SetBranchAddress("TRUEDTRK1P",    &TRUEDTRK1P);
+	t0->SetBranchAddress("TRUEDTRK1PT",   &TRUEDTRK1PT);
+	t0->SetBranchAddress("TRUEDTRK1INACC",&TRUEDTRK1INACC);
+	t0->SetBranchAddress("TRUEDTRK1RECO", &TRUEDTRK1RECO);
+	t0->SetBranchAddress("TRUEDTRK0IDX",  &TRUEDTRK0IDX);
+	t0->SetBranchAddress("TRUEDTRK1IDX",  &TRUEDTRK1IDX);
+	t0->SetBranchAddress("TRUEDTRK2IDX",  &TRUEDTRK2IDX);
+	t0->SetBranchAddress("TRUEDTRK3IDX",  &TRUEDTRK3IDX);
+	t0->SetBranchAddress("TRUEDTRK0ID",  &TRUEDTRK0ID);
+	t0->SetBranchAddress("TRUEDTRK1ID",  &TRUEDTRK1ID);
+	t0->SetBranchAddress("TRUEDTRK2ID",  &TRUEDTRK2ID);
+	t0->SetBranchAddress("TRUEDTRK3ID",  &TRUEDTRK3ID);
+
+	t0->SetBranchAddress("JetPT",         &JetPT);
+	t0->SetBranchAddress("JetEta",        &JetEta);
+	t0->SetBranchAddress("JetTruePT",     &JetTruePT);
+
+	unsigned int nentries0 = t0->GetEntries();
+
+	double dpt(0.), deta(0.);
+
+	boost::progress_display progress( nentries0 );
+	for(unsigned int ientry=0; ientry<nentries0; ++ientry) {
+		++progress;
+		t0->GetEntry(ientry);
+
+		for(unsigned int d=0; d<TRUEDID->size(); ++d) {
+			//only use D0->Kpi with Pt>5GeV
+			if(TMath::Abs(TRUEDID->at(d))!=421) continue;
+			if(TRUEDTRK0IDX->at(d)==-1) continue;
+			if(TRUEDTRK2IDX->at(d)!=-1) continue;
+			if(TRUEDPX->at(d)*TRUEDPX->at(d)+TRUEDPY->at(d)*TRUEDPY->at(d)<5000.*5000.) continue;
+
+			truD0recoPT.at(0)->Fill(JetPT);
+			truD0truePT.at(0)->Fill(JetTruePT);
+
+			if(TRUEDTRK0INACC->at(d)!=1 || TRUEDTRK1INACC->at(d)!=1) continue;
+
+			truD0recoPT.at(1)->Fill(JetPT);
+			truD0truePT.at(1)->Fill(JetTruePT);
+
+			if(TRUEDTRK0RECO->at(d)!=1 || TRUEDTRK1RECO->at(d)!=1) continue;
+
+			truD0recoPT.at(2)->Fill(JetPT);
+			truD0truePT.at(2)->Fill(JetTruePT);
+
+			for(unsigned int s=0; s<D0TRUEIDX->size(); ++s) {
+				if(D0TRUEIDX->at(s)==d) {
+					TVector3 D0P (D0PX->at(s)  ,D0PY->at(s)  ,D0PZ->at(s));
+					TVector3 D0P0(D0KPX->at(s) ,D0KPY->at(s) ,D0KPZ->at(s));
+					TVector3 D0P1(D0PIPX->at(s),D0PIPY->at(s),D0PIPZ->at(s));
+
+					if(!(D0P0.Eta()>2.0 && D0P0.Eta()<4.5 && D0P0.Pt()>500. && D0P0.Mag()>5000.)) continue;
+					if(!(D0P1.Eta()>2.0 && D0P1.Eta()<4.5 && D0P1.Pt()>500. && D0P1.Mag()>5000.)) continue;
+					if(!(D0P.Pt()>d0minpt)) continue;
+					if(!(d0maxpt==-1 || D0P.Pt() < d0maxpt) ) continue;
+					//if(!(D0P.Eta()>2.5&&D0P.Eta()<4.0)) continue;//TODO test restricting the eta(D0) range (turn on in two places 1/2)
+
+					truD0recoPT.at(3)->Fill(JetPT);
+					truD0truePT.at(3)->Fill(JetTruePT);
+
+					//if(D0KPNNK->at(s)<0.2 || D0PIPNNPI->at(s)<0.1) continue;
+
+					truD0recoPT.at(4)->Fill(JetPT,D0KWEIGHT->at(s)*D0PIWEIGHT->at(s));
+					truD0truePT.at(4)->Fill(JetTruePT,D0KWEIGHT->at(s)*D0PIWEIGHT->at(s));
+
+					break;
+				}
+			}
+		}
+		for(unsigned int s=0; s<D0M->size(); ++s) {
+			//first check in our tight acceptance
+			TVector3 D0P (D0PX->at(s)  ,D0PY->at(s)  ,D0PZ->at(s));
+			TVector3 D0P0(D0KPX->at(s) ,D0KPY->at(s) ,D0KPZ->at(s));
+			TVector3 D0P1(D0PIPX->at(s),D0PIPY->at(s),D0PIPZ->at(s));
+
+			if(!(D0P0.Eta()>2.0 && D0P0.Eta()<4.5 && D0P0.Pt()>500. && D0P0.Mag()>5000.)) continue;
+			if(!(D0P1.Eta()>2.0 && D0P1.Eta()<4.5 && D0P1.Pt()>500. && D0P1.Mag()>5000.)) continue;
+			if(!(D0P.Pt()>d0minpt)) continue;
+			if(!(d0maxpt==-1 || D0P.Pt() < d0maxpt) ) continue;
+			//if(!(D0P.Eta()>2.2&&D0P.Eta()<4.0)) continue;//TODO test restrcting the eta(D0) range (turn on in two places 2/2)
+
+			//check PID cuts
+			//if(D0KPNNK->at(s)<0.2 || D0PIPNNPI->at(s)<0.1) continue;
+			double weight = D0KWEIGHT->at(s);// pion PID removed *D0PIWEIGHT->at(s);
+			if(D0P0.Pt()>25000. || D0P0.Mag()>500000.) weight = 1.; //PID turned off for high P or PT
+
+			dpt        = D0P.Pt();
+			deta       = D0P.Eta();
+
+			//get efficiency corrections
+			double effacc(0.), effrec(0.), effsel(0.), effpid(0.);
+
+			if(dpt>=100000.) dpt=99999.;
+			effacc =      hacc ->GetBinContent(hacc ->FindBin(dpt/1000.,deta));
+			effrec =      hrec ->GetBinContent(hrec ->FindBin(dpt/1000.,deta));
+			effsel =      hsel ->GetBinContent(hsel ->FindBin(dpt      ,deta));
+			effpid =      hpid ->GetBinContent(hpid ->FindBin(dpt      ,deta));
+
+			double eff=effacc*effrec*effsel*effpid;
+
+			if(eff<0.01) {
+				std::cout << dpt << "\t" << deta << "\t" << effacc << "\t" << effrec << "\t" << effsel << "\t" << effpid << std::endl;
+				continue;
+			}
+
+			double sbSubSwitch(0.);
+			if(TMath::Abs(D0M->at(s)-1865)<40.) sbSubSwitch = 1.;
+			else if(TMath::Abs(D0M->at(s)-1865)<80.) sbSubSwitch = -1.;
+
+			fitD0recoPT.at(4)->Fill(JetPT,weight*sbSubSwitch);
+			fitD0recoPT.at(3)->Fill(JetPT,weight*sbSubSwitch/effpid);
+			fitD0recoPT.at(2)->Fill(JetPT,weight*sbSubSwitch/(effpid*effsel));
+			fitD0recoPT.at(1)->Fill(JetPT,weight*sbSubSwitch/(effpid*effsel*effrec));
+			fitD0recoPT.at(0)->Fill(JetPT,weight*sbSubSwitch/(effpid*effsel*effrec*effacc));
+
+			fitD0truePT.at(4)->Fill(JetTruePT,weight*sbSubSwitch);
+			fitD0truePT.at(3)->Fill(JetTruePT,weight*sbSubSwitch/effpid);
+			fitD0truePT.at(2)->Fill(JetTruePT,weight*sbSubSwitch/(effpid*effsel));
+			fitD0truePT.at(1)->Fill(JetTruePT,weight*sbSubSwitch/(effpid*effsel*effrec));
+			fitD0truePT.at(0)->Fill(JetTruePT,weight*sbSubSwitch/(effpid*effsel*effrec*effacc));
+
+			//truth match to real, accepted and reconstructed D0
+			if(D0TRUEIDX->at(s)<0) break;
+			int d = D0TRUEIDX->at(s);
+			if(TRUEDTRK0IDX->at(d)==-1) continue;
+			if(TRUEDTRK2IDX->at(d)!=-1) continue;
+			if(TRUEDPX->at(d)*TRUEDPX->at(d)+TRUEDPY->at(d)*TRUEDPY->at(d)<5000.*5000.) continue;
+			if(TRUEDTRK0INACC->at(d)!=1 || TRUEDTRK1INACC->at(d)!=1) continue;
+			if(TRUEDTRK0RECO->at(d)!=1 || TRUEDTRK1RECO->at(d)!=1) continue;
+
+			fndD0recoPT.at(4)->Fill(JetPT,weight);
+			fndD0recoPT.at(3)->Fill(JetPT,weight/effpid);
+			fndD0recoPT.at(2)->Fill(JetPT,weight/(effpid*effsel));
+			fndD0recoPT.at(1)->Fill(JetPT,weight/(effpid*effsel*effrec));
+			fndD0recoPT.at(0)->Fill(JetPT,weight/(effpid*effsel*effrec*effacc));
+
+			fndD0truePT.at(4)->Fill(JetTruePT,weight);
+			fndD0truePT.at(3)->Fill(JetTruePT,weight/effpid);
+			fndD0truePT.at(2)->Fill(JetTruePT,weight/(effpid*effsel));
+			fndD0truePT.at(1)->Fill(JetTruePT,weight/(effpid*effsel*effrec));
+			fndD0truePT.at(0)->Fill(JetTruePT,weight/(effpid*effsel*effrec*effacc));
+
+			break;//only keep one D0 candidate per entry
+		}
+	}
+
+	printf("bins of true jet pT\n");
+	for(int i=0; i<5; ++i) {
+		printf("stage %d (%s)\n",i,stages[i].Data());
+		for(int j=1; j<=truD0truePT.at(i)->GetNbinsX(); ++j) {
+			printf("%6.0f-%6.0f\t",truD0truePT.at(i)->GetBinLowEdge(j),truD0truePT.at(i)->GetBinLowEdge(j+1));
+			printf("%5.0f\t%5.0f\t%5.0f",truD0truePT.at(i)->GetBinContent(j),fndD0truePT.at(i)->GetBinContent(j),fitD0truePT.at(i)->GetBinContent(j));
+			if(i>0) {
+				printf("\t%5.3f\t%5.3f", truD0truePT.at(i)->GetBinContent(j)/truD0truePT.at(i-1)->GetBinContent(j),
+						         fndD0truePT.at(i)->GetBinContent(j)/fndD0truePT.at(i-1)->GetBinContent(j));
+				printf("\t%5.3f", (fndD0truePT.at(i)->GetBinContent(j)/fndD0truePT.at(i-1)->GetBinContent(j))/
+						  (truD0truePT.at(i)->GetBinContent(j)/truD0truePT.at(i-1)->GetBinContent(j)));
+			}
+			printf("\n");
+		}
+	}
+	printf("bins of reco jet pT\n");
+
+	for(int i=0; i<5; ++i) {
+		printf("stage %d (%s)\n",i,stages[i].Data());
+		for(int j=1; j<=truD0recoPT.at(i)->GetNbinsX(); ++j) {
+			printf("%6.0f-%6.0f\t",truD0recoPT.at(i)->GetBinLowEdge(j),truD0recoPT.at(i)->GetBinLowEdge(j+1));
+			printf("%5.0f\t%5.0f\t%5.0f\t",truD0recoPT.at(i)->GetBinContent(j),fndD0recoPT.at(i)->GetBinContent(j),fitD0recoPT.at(i)->GetBinContent(j));
+			if(i>0) {
+				printf("\t%5.3f\t%5.3f", truD0recoPT.at(i)->GetBinContent(j)/truD0recoPT.at(i-1)->GetBinContent(j),
+						         fndD0recoPT.at(i)->GetBinContent(j)/fndD0recoPT.at(i-1)->GetBinContent(j));
+				printf("\t%5.3f", (fndD0recoPT.at(i)->GetBinContent(j)/fndD0recoPT.at(i-1)->GetBinContent(j))/
+						  (truD0recoPT.at(i)->GetBinContent(j)/truD0recoPT.at(i-1)->GetBinContent(j)));
+			}
+			printf("\n");
+		}
+	}
+
+	return true;
+}
+
 bool weightMC(TString file, jetType type) {
 	TString nameStr="";
 
 	TFile* fin(0);
 	switch(type) {
 		case jetRecoD04:
+			std::cout << "INFO : weighting c2D0 MC sample for job " << file << std::endl;
 			nameStr="_c2D0";
-			fin = TFile::Open("/eos/user/d/dcraik/jets-tuples-new-180914/for_yandex_data_new_14X.root");
+			fin = TFile::Open(charmSimFile);
 			break;
 		case jetRecoSV4:
+			std::cout << "INFO : weighting c2SV MC sample for job " << file << std::endl;
 			nameStr="_c2SV";
-			fin = TFile::Open("/eos/user/d/dcraik/jets-tuples-new-180914/for_yandex_data_new_14X.root");
+			fin = TFile::Open(charmSimFile);
 			break;
 		case jetRecoD05:
+			std::cout << "INFO : weighting b2D0 MC sample for job " << file << std::endl;
 			nameStr="_b2D0";
-			fin = TFile::Open("/eos/user/d/dcraik/jets-tuples-new-180914/for_yandex_data_new_15X.root");
+			fin = TFile::Open(beautySimFile);
 			break;
 		case jetRecoSV5:
+			std::cout << "INFO : weighting b2SV MC sample for job " << file << std::endl;
 			nameStr="_b2SV";
-			fin = TFile::Open("/eos/user/d/dcraik/jets-tuples-new-180914/for_yandex_data_new_15X.root");
+			fin = TFile::Open(beautySimFile);
 			break;
 		default:
 			return false;
@@ -417,6 +898,8 @@ bool weightMC(TString file, jetType type) {
 	std::vector<double>* vD0M = new std::vector<double>();
 	std::vector<double>* vD0PT = new std::vector<double>();
 	std::vector<double>* vD0IPCHI2 = new std::vector<double>();
+	std::vector<double>* vD0KWEIGHT = new std::vector<double>();
+	std::vector<double>* vD0PIWEIGHT = new std::vector<double>();
 
 	tin->SetBranchAddress("JetPT",       &JetPT);
 	tin->SetBranchAddress("JetTruePT",   &JetTruePT);
@@ -430,6 +913,8 @@ bool weightMC(TString file, jetType type) {
 	tin->SetBranchAddress("D0M",         &vD0M);
 	tin->SetBranchAddress("D0PT",        &vD0PT);
 	tin->SetBranchAddress("D0IPCHI2",    &vD0IPCHI2);
+	tin->SetBranchAddress("D0KWEIGHT",   &vD0KWEIGHT);
+	tin->SetBranchAddress("D0PIWEIGHT",  &vD0PIWEIGHT);
 
 	//weight MC for continuous true jet pT
 	unsigned int npt=4;
@@ -463,7 +948,7 @@ bool weightMC(TString file, jetType type) {
 
 		fPtDData->Sumw2();
 		fPtDSim->Sumw2();
-		
+
 		tin->Draw("D0PT/JetPT>>fPtDSim","D0M>0 && JetTRUED0 && D0KPNNK>0.2 && D0PIPNNPI>0.1");
 		if(type==jetRecoD04) {
 			tdata->Draw("D0PT/JetPT>>fPtDData","weight4*(TMath::Abs(D0M-1865)<30.)*(D0LogIPChi2<2.5)");
@@ -480,15 +965,19 @@ bool weightMC(TString file, jetType type) {
 		TCanvas c;
 		fPtDData->Draw();
 		fPtDSim->Draw("same");
-		c.SaveAs("D0fPtReweighting"+file+nameStr+".pdf");
+		c.SaveAs(savedir+"/D0fPtReweighting"+file+nameStr+".pdf");
 
 		fPtDWeights->Draw();
-		c.SaveAs("D0fPtWeights"+file+nameStr+".pdf");
+		c.SaveAs(savedir+"/D0fPtWeights"+file+nameStr+".pdf");
 	}
 	//end f(pT) weights setup
 
 	//now make the weighted output file
-	TFile* fout = TFile::Open("D0MCjets"+file+nameStr+".root","RECREATE");
+	TString fname="D0MCjets";
+	if(dataIsResampledMC) fname+=file;
+	fname+=nameStr+".root";
+
+	TFile* fout = TFile::Open(fname,"RECREATE");
 	TTree* tout = new TTree("T","");
 	tout->SetDirectory(fout);
 
@@ -546,8 +1035,14 @@ bool weightMC(TString file, jetType type) {
 		}
 
 		weight = jetTruePtWeights->GetBinContent(jetTruePtWeights->FindBin(JetTruePT));
-		if(type==jetRecoD04||type==jetRecoD05)
+
+		if(type==jetRecoD04||type==jetRecoD05) {
 			weight *= fPtDWeights->GetBinContent(fPtDWeights->FindBin(D0PT/JetPT));
+
+			//apply PID weights
+			weight *= vD0KWEIGHT->at(0);
+			weight *= vD0PIWEIGHT->at(0);
+		}
 
 		tout->Fill();
 	}
@@ -561,6 +1056,7 @@ bool weightMC(TString file, jetType type) {
 }
 
 bool fitD0_1D1D(int flavour, double minpt, double maxpt, double& yield, double& error, TString file) {
+	std::cout << "INFO : fitting D0 - 1D mass and IP fits to file " << file << ", pT in (" << minpt << "," << maxpt << ")" << std::endl;
 	bool fix(true);
 
 	double valPromptMean(0.), valPromptWidth(0.), valPromptAsym(0.), valPromptRhoL(0.), valPromptRhoR(0.),  valDisplacedMean(5.), valDisplacedWidth(1.5);
@@ -628,7 +1124,7 @@ bool fitD0_1D1D(int flavour, double minpt, double maxpt, double& yield, double& 
 
 	TString peakCut = "TMath::Abs("; peakCut+=dType; peakCut+="M-"; peakCut+=massVal; peakCut+=")<"; peakCut+=massScaleFact*20.;
 	TString sideCut = "TMath::Abs("; sideCut+=dType; sideCut+="M-"; sideCut+=massVal; sideCut+=")<"; sideCut+=massScaleFact*80.; sideCut+=" && ";
-	        sideCut+= "TMath::Abs("; sideCut+=dType; sideCut+="M-"; sideCut+=massVal; sideCut+=")>"; sideCut+=massScaleFact*40.;
+	sideCut+= "TMath::Abs("; sideCut+=dType; sideCut+="M-"; sideCut+=massVal; sideCut+=")>"; sideCut+=massScaleFact*40.;
 
 	RooDataSet* dsPeak = dynamic_cast<RooDataSet*>(ds->reduce(peakCut));
 	RooDataSet* dsSB   = dynamic_cast<RooDataSet*>(ds->reduce(sideCut));
@@ -701,7 +1197,7 @@ bool fitD0_1D1D(int flavour, double minpt, double maxpt, double& yield, double& 
 	maxyield = t0->GetEntries(cutStr);
 	fracsig = (t0->GetEntries(cutStrPeak)-t0->GetEntries(cutStrSB))/maxyield;
 	std::cout << maxyield << "\t" << fracsig << std::endl;
-	
+
 	maxyield = ds->sumEntries();
 	fracsig = (ds->sumEntries(cutStrPeak)-ds->sumEntries(cutStrSB))/maxyield;
 	std::cout << maxyield << "\t" << fracsig << std::endl;
@@ -714,33 +1210,35 @@ bool fitD0_1D1D(int flavour, double minpt, double maxpt, double& yield, double& 
 	RooAddPdf data_pdf( "data_pdf",  "data_pdf", RooArgList(sigMass,bkgMass), RooArgList(sigYield,bkgYield) );
 
 	// -- fit model pdf to the dataset ----------------------------------------------
+	gSystem->RedirectOutput(savedir+"/"+dType+"_"+file+"_"+ptStr+"_fits.log","w");
 	/*RooFitResult * result =*/ data_pdf.fitTo(*ds, RooFit::Extended(), RooFit::Save(), RooFit::NumCPU(4), RooFit::Range("FIT"), RooFit::SumW2Error(kTRUE));
+	gSystem->RedirectOutput(0);
 
 	RooRealVar  bkgYield_mean("bkgYield_mean","bkgYield_mean", bkgYield.getVal());
 	RooRealVar  bkgYield_sigma("bkgYield_sigma","bkgYield_sigma", bkgYield.getError());
 	RooGaussian bkgYield_constraint("bkgYield_constraint","bkgYield_constraint", bkgYield, bkgYield_mean, bkgYield_sigma);
 
-        DM.setRange("signal",massVal-massScaleFact*20.,massVal+massScaleFact*20.);
-        DM.setRange("sideLo",massVal-massScaleFact*80.,massVal-massScaleFact*60.);
-        DM.setRange("sideHi",massVal+massScaleFact*60.,massVal+massScaleFact*80.);
-        DM.setRange("full",  massVal-massScaleFact*80.,massVal+massScaleFact*80.);
+	DM.setRange("signal",massVal-massScaleFact*20.,massVal+massScaleFact*20.);
+	DM.setRange("sideLo",massVal-massScaleFact*80.,massVal-massScaleFact*60.);
+	DM.setRange("sideHi",massVal+massScaleFact*60.,massVal+massScaleFact*80.);
+	DM.setRange("full",  massVal-massScaleFact*80.,massVal+massScaleFact*80.);
 
-        DLOGIPCHI2.setRange("sigIPCHI2",-5.,3.);
-        DLOGIPCHI2.setRange("fullIPCHI2",-5.,15.);
+	DLOGIPCHI2.setRange("sigIPCHI2",-5.,3.);
+	DLOGIPCHI2.setRange("fullIPCHI2",-5.,15.);
 
-        double fsig_1 = sigMass.createIntegral(RooArgSet(DM),RooFit::NormSet(DM),RooFit::Range("signal"))->getVal();
-        double fsig_2 = sigMass.createIntegral(RooArgSet(DM),RooFit::NormSet(DM),RooFit::Range("sideLo"))->getVal();
-        double fsig_3 = sigMass.createIntegral(RooArgSet(DM),RooFit::NormSet(DM),RooFit::Range("sideHi"))->getVal();
-        double fsig_0 = sigMass.createIntegral(RooArgSet(DM),RooFit::NormSet(DM),RooFit::Range("full"))->getVal();
+	double fsig_1 = sigMass.createIntegral(RooArgSet(DM),RooFit::NormSet(DM),RooFit::Range("signal"))->getVal();
+	double fsig_2 = sigMass.createIntegral(RooArgSet(DM),RooFit::NormSet(DM),RooFit::Range("sideLo"))->getVal();
+	double fsig_3 = sigMass.createIntegral(RooArgSet(DM),RooFit::NormSet(DM),RooFit::Range("sideHi"))->getVal();
+	double fsig_0 = sigMass.createIntegral(RooArgSet(DM),RooFit::NormSet(DM),RooFit::Range("full"))->getVal();
 
-        double fbkg_1 = bkgMass.createIntegral(RooArgSet(DM),RooFit::NormSet(DM),RooFit::Range("signal"))->getVal();
-        double fbkg_2 = bkgMass.createIntegral(RooArgSet(DM),RooFit::NormSet(DM),RooFit::Range("sideLo"))->getVal();
-        double fbkg_3 = bkgMass.createIntegral(RooArgSet(DM),RooFit::NormSet(DM),RooFit::Range("sideHi"))->getVal();
-        double fbkg_0 = bkgMass.createIntegral(RooArgSet(DM),RooFit::NormSet(DM),RooFit::Range("full"))->getVal();
+	double fbkg_1 = bkgMass.createIntegral(RooArgSet(DM),RooFit::NormSet(DM),RooFit::Range("signal"))->getVal();
+	double fbkg_2 = bkgMass.createIntegral(RooArgSet(DM),RooFit::NormSet(DM),RooFit::Range("sideLo"))->getVal();
+	double fbkg_3 = bkgMass.createIntegral(RooArgSet(DM),RooFit::NormSet(DM),RooFit::Range("sideHi"))->getVal();
+	double fbkg_0 = bkgMass.createIntegral(RooArgSet(DM),RooFit::NormSet(DM),RooFit::Range("full"))->getVal();
 
-        std::cout << "yields in mass windows" << std::endl;
-        std::cout << sigYield.getVal()*fsig_1/fsig_0 << "\t" << bkgYield.getVal()*fbkg_1/fbkg_0 << std::endl;
-        std::cout << sigYield.getVal()*(fsig_2+fsig_3)/fsig_0 << "\t" << bkgYield.getVal()*(fbkg_2+fbkg_3)/fbkg_0 << std::endl;
+	std::cout << "yields in mass windows" << std::endl;
+	std::cout << sigYield.getVal()*fsig_1/fsig_0 << "\t" << bkgYield.getVal()*fbkg_1/fbkg_0 << std::endl;
+	std::cout << sigYield.getVal()*(fsig_2+fsig_3)/fsig_0 << "\t" << bkgYield.getVal()*(fbkg_2+fbkg_3)/fbkg_0 << std::endl;
 
 	RooRealVar promptMean("promptMean","mean prompt",valPromptMean,-1.,3.);
 	RooRealVar promptWidth("promptWidth","width prompt",valPromptWidth,0.5,5.);
@@ -766,28 +1264,30 @@ bool fitD0_1D1D(int flavour, double minpt, double maxpt, double& yield, double& 
 	RooProdPdf data_pdf2_full("data_pdf2_full", "data_pdf2_full", RooArgList(data_pdf2,bkgYield_constraint));
 
 	if(fix) {
-	//	promptMean.setConstant();
-	//	promptWidth.setConstant();
+		//promptMean.setConstant();
+		//promptWidth.setConstant();
 		promptAsym.setConstant();
 		promptRhoL.setConstant();
 		promptRhoR.setConstant();
-	//	displacedMean.setConstant();
-	//	displacedWidth.setConstant();
+		//displacedMean.setConstant();
+		//displacedWidth.setConstant();
 	}
 
+	gSystem->RedirectOutput(savedir+"/"+dType+"_"+file+"_"+ptStr+"_fits.log","a");
 	RooFitResult * result2 = data_pdf2_full.fitTo( *dsPeak, RooFit::Extended(), RooFit::Save(), RooFit::NumCPU(4), RooFit::Range("FIT"), RooFit::SumW2Error(kTRUE), RooFit::Constrain(RooArgSet(bkgYield)));
+	gSystem->RedirectOutput(0);
 
-        double fsigIPCHI2_1 = promptLOGIPCHI2.createIntegral(RooArgSet(DLOGIPCHI2),RooFit::NormSet(DLOGIPCHI2),RooFit::Range("sigIPCHI2"))->getVal();
-        double fsigIPCHI2_0 = promptLOGIPCHI2.createIntegral(RooArgSet(DLOGIPCHI2),RooFit::NormSet(DLOGIPCHI2),RooFit::Range("fullIPCHI2"))->getVal();
+	double fsigIPCHI2_1 = promptLOGIPCHI2.createIntegral(RooArgSet(DLOGIPCHI2),RooFit::NormSet(DLOGIPCHI2),RooFit::Range("sigIPCHI2"))->getVal();
+	double fsigIPCHI2_0 = promptLOGIPCHI2.createIntegral(RooArgSet(DLOGIPCHI2),RooFit::NormSet(DLOGIPCHI2),RooFit::Range("fullIPCHI2"))->getVal();
 
-        double f2ndIPCHI2_1 = displacedLOGIPCHI2.createIntegral(RooArgSet(DLOGIPCHI2),RooFit::NormSet(DLOGIPCHI2),RooFit::Range("sigIPCHI2"))->getVal();
-        double f2ndIPCHI2_0 = displacedLOGIPCHI2.createIntegral(RooArgSet(DLOGIPCHI2),RooFit::NormSet(DLOGIPCHI2),RooFit::Range("fullIPCHI2"))->getVal();
+	double f2ndIPCHI2_1 = displacedLOGIPCHI2.createIntegral(RooArgSet(DLOGIPCHI2),RooFit::NormSet(DLOGIPCHI2),RooFit::Range("sigIPCHI2"))->getVal();
+	double f2ndIPCHI2_0 = displacedLOGIPCHI2.createIntegral(RooArgSet(DLOGIPCHI2),RooFit::NormSet(DLOGIPCHI2),RooFit::Range("fullIPCHI2"))->getVal();
 
-        double fbkgIPCHI2_1 = bkgLOGIPCHI2.createIntegral(RooArgSet(DLOGIPCHI2),RooFit::NormSet(DLOGIPCHI2),RooFit::Range("sigIPCHI2"))->getVal();
-        double fbkgIPCHI2_0 = bkgLOGIPCHI2.createIntegral(RooArgSet(DLOGIPCHI2),RooFit::NormSet(DLOGIPCHI2),RooFit::Range("fullIPCHI2"))->getVal();
+	double fbkgIPCHI2_1 = bkgLOGIPCHI2.createIntegral(RooArgSet(DLOGIPCHI2),RooFit::NormSet(DLOGIPCHI2),RooFit::Range("sigIPCHI2"))->getVal();
+	double fbkgIPCHI2_0 = bkgLOGIPCHI2.createIntegral(RooArgSet(DLOGIPCHI2),RooFit::NormSet(DLOGIPCHI2),RooFit::Range("fullIPCHI2"))->getVal();
 
-        std::cout << "yields in IP window" << std::endl;
-        std::cout << promptYield.getVal()*fsigIPCHI2_1/fsigIPCHI2_0 << "\t" << displacedYield.getVal()*f2ndIPCHI2_1/f2ndIPCHI2_0 << "\t" << bkgInPeakYield.getVal()*fbkgIPCHI2_1/fbkgIPCHI2_0 << std::endl;
+	std::cout << "yields in IP window" << std::endl;
+	std::cout << promptYield.getVal()*fsigIPCHI2_1/fsigIPCHI2_0 << "\t" << displacedYield.getVal()*f2ndIPCHI2_1/f2ndIPCHI2_0 << "\t" << bkgInPeakYield.getVal()*fbkgIPCHI2_1/fbkgIPCHI2_0 << std::endl;
 
 	//extract results - corrected for the mass window cut
 	if(flavour==5) {
@@ -809,8 +1309,8 @@ bool fitD0_1D1D(int flavour, double minpt, double maxpt, double& yield, double& 
 	std::vector<std::string> bkg_pdfs2;
 	bkg_pdfs2.push_back( "bkgLOGIPCHI2" );
 
-	plot(DM, massVal-massScaleFact*80., massVal+massScaleFact*80., 40, ds, data_pdf, sig_pdfs, bkg_pdfs, dType+"_"+file+"_M_"+ptStr, "m");
-	plot(DLOGIPCHI2, -5., 15., 20, dsPeak, data_pdf2, sig_pdfs2, bkg_pdfs2, dType+"_"+file+"_IPChi2_"+ptStr, "log(IP#chi^{2})");
+	plotFit(DM, massVal-massScaleFact*80., massVal+massScaleFact*80., 40, ds, data_pdf, sig_pdfs, bkg_pdfs, dType+"_"+file+"_M_"+ptStr, "m");
+	plotFit(DLOGIPCHI2, -5., 15., 20, dsPeak, data_pdf2, sig_pdfs2, bkg_pdfs2, dType+"_"+file+"_IPChi2_"+ptStr, "log(IP#chi^{2})");
 
 	////print parameters
 	RooArgList params;
@@ -827,12 +1327,13 @@ bool fitD0_1D1D(int flavour, double minpt, double maxpt, double& yield, double& 
 	//params.add(promptRhoR);
 	params.add(displacedMean);
 	params.add(displacedWidth);
-	print(dType+"_"+file+"_params_"+ptStr+".dat",params);
+	printParams(dType+"_"+file+"_params_"+ptStr+".dat",params);
 
 	return true;
 }
 
 bool fitD0_SBS(int flavour, double minpt, double maxpt, double& yield, double& error, TString file) {
+	std::cout << "INFO : fitting D0 - sideband subtraction and IP cut to file " << file << ", pT in (" << minpt << "," << maxpt << ")"  << std::endl;
 	TString ptStr;
 	ptStr+=minpt; ptStr+="-"; ptStr+=maxpt;
 
@@ -915,7 +1416,7 @@ bool fitD0_SBS(int flavour, double minpt, double maxpt, double& yield, double& e
 	hsub.Draw("same");
 	hside.SetLineColor(kRed);
 	hside.Draw("same");
-	c.SaveAs(dType+"_"+file+"_IPChi2_SBS_"+ptStr+".pdf");
+	c.SaveAs(savedir+"/"+dType+"_"+file+"_IPChi2_SBS_"+ptStr+".pdf");
 
 	std::cout << hsub.Integral() << "\t" << hsub.Integral(1,14) << "\t" << hsub.Integral(15,40) << std::endl;
 
@@ -935,11 +1436,12 @@ bool fitD0_SBS(int flavour, double minpt, double maxpt, double& yield, double& e
 		}
 		error=TMath::Sqrt(error);
 	}
-	
+
 	return true;
 }
 
 bool fitD0_SBS1D(int flavour, double minpt, double maxpt, double& yield, double& error, TString file) {
+	std::cout << "INFO : fitting D0 - sideband subtraction and IP fit to file " << file << ", pT in (" << minpt << "," << maxpt << ")"  << std::endl;
 	TString ptStr;
 	ptStr+=minpt; ptStr+="-"; ptStr+=maxpt;
 
@@ -1017,6 +1519,13 @@ bool fitD0_SBS1D(int flavour, double minpt, double maxpt, double& yield, double&
 	t0->Draw(dType+"LogIPChi2>>hside",sideCut);
 
 	hsub.Add(&hpeak,&hside,1.,-1.);
+	for(int ibin=1; ibin<=hsub.GetNbinsX(); ++ibin) {
+		if(hsub.GetBinContent(ibin)<0.) {
+			std::cout << "Resetting negative bin " << ibin << " (" << hsub.GetBinContent(ibin) << " +/- " << hsub.GetBinError(ibin) << ") to 0+/-1." << std::endl;
+			hsub.SetBinContent(ibin,0.);
+			hsub.SetBinError(ibin,1.);
+		}
+	}
 
 	TCanvas c;
 	hpeak.Draw();
@@ -1024,7 +1533,7 @@ bool fitD0_SBS1D(int flavour, double minpt, double maxpt, double& yield, double&
 	hsub.Draw("same");
 	hside.SetLineColor(kRed);
 	hside.Draw("same");
-	c.SaveAs(dType+"_"+file+"_IPChi2_SBS_"+ptStr+".pdf");
+	c.SaveAs(savedir+"/"+dType+"_"+file+"_IPChi2_SBS_"+ptStr+".pdf");
 
 	//now fit log(chi^2_IP)
 
@@ -1050,13 +1559,13 @@ bool fitD0_SBS1D(int flavour, double minpt, double maxpt, double& yield, double&
 
 	bool fix(true);
 	if(fix) {
-	//	promptMean.setConstant();
-	//	promptWidth.setConstant();
+		//	promptMean.setConstant();
+		//	promptWidth.setConstant();
 		promptAsym.setConstant();
 		promptRhoL.setConstant();
 		promptRhoR.setConstant();
-	//	displacedMean.setConstant();
-	//	displacedWidth.setConstant();
+		//	displacedMean.setConstant();
+		//	displacedWidth.setConstant();
 	}
 
 	RooRealVar displacedMean("displacedMean","mean displ.",valDisplacedMean,2.,12.);
@@ -1071,7 +1580,9 @@ bool fitD0_SBS1D(int flavour, double minpt, double maxpt, double& yield, double&
 	// -- total PDF
 	RooAddPdf data_pdf( "data_pdf",  "data_pdf", RooArgList(prompt,displaced), RooArgList(promptYield,displacedYield) );
 
+	gSystem->RedirectOutput(savedir+"/"+dType+"_"+file+"_"+ptStr+"_fits.log","w");
 	/*RooFitResult * result =*/ data_pdf.fitTo( dh, RooFit::Extended(), RooFit::Save(), RooFit::NumCPU(4), RooFit::Range("FIT"), RooFit::SumW2Error(kTRUE));
+	gSystem->RedirectOutput(0);
 
 	//extract results - corrected for the mass window cut
 	if(flavour==5) {
@@ -1087,7 +1598,7 @@ bool fitD0_SBS1D(int flavour, double minpt, double maxpt, double& yield, double&
 	sig_pdfs.push_back( "prompt" );
 	std::vector<std::string> bkg_pdfs;
 
-	plot(DLOGIPCHI2, -5., 15., 20, &dh, data_pdf, sig_pdfs, bkg_pdfs, dType+"_"+file+"_IPChi2_SBS1D_"+ptStr, "log(IP#chi^{2})");
+	plotFit(DLOGIPCHI2, -5., 15., 20, &dh, data_pdf, sig_pdfs, bkg_pdfs, dType+"_"+file+"_IPChi2_SBS1D_"+ptStr, "log(IP#chi^{2})");
 
 	////print parameters
 	RooArgList params;
@@ -1100,12 +1611,13 @@ bool fitD0_SBS1D(int flavour, double minpt, double maxpt, double& yield, double&
 	//params.add(promptRhoR);
 	params.add(displacedMean);
 	params.add(displacedWidth);
-	print(dType+"_"+file+"_params_SBS1D_"+ptStr+".dat",params);
+	printParams(dType+"_"+file+"_params_SBS1D_"+ptStr+".dat",params);
 
 	return true;
 }
 
 bool fitD0_2D(int flavour, double minpt, double maxpt, double& yield, double& error, TString file) {
+	std::cout << "INFO : fitting D0 - 2D mass and IP fit to file " << file << ", pT in (" << minpt << "," << maxpt << ")"  << std::endl;
 	bool fix(true);
 
 	double valPromptMean(0.), valPromptWidth(0.), valPromptAsym(0.), valPromptRhoL(0.), valPromptRhoR(0.),  valDisplacedMean(5.), valDisplacedWidth(1.5);
@@ -1228,15 +1740,17 @@ bool fitD0_2D(int flavour, double minpt, double maxpt, double& yield, double& er
 	RooAddPdf data_pdf( "data_pdf",  "data_pdf", RooArgList(prompt,displaced,bkg), RooArgList(promptYield,displacedYield,bkgYield) );
 
 	// -- fit model pdf to the dataset ----------------------------------------------
+	gSystem->RedirectOutput(savedir+"/"+dType+"_"+file+"_"+ptStr+"_fits.log","w");
 	/*RooFitResult * result =*/ data_pdf.fitTo(*ds, RooFit::Extended(), RooFit::Save(), RooFit::NumCPU(4), RooFit::Range("FIT"), RooFit::SumW2Error(kTRUE));
+	gSystem->RedirectOutput(0);
 
-        DM.setRange("signal",massVal-massScaleFact*20.,massVal+massScaleFact*20.);
-        DM.setRange("sideLo",massVal-massScaleFact*80.,massVal-massScaleFact*60.);
-        DM.setRange("sideHi",massVal+massScaleFact*60.,massVal+massScaleFact*80.);
-        DM.setRange("full",  massVal-massScaleFact*80.,massVal+massScaleFact*80.);
+	DM.setRange("signal",massVal-massScaleFact*20.,massVal+massScaleFact*20.);
+	DM.setRange("sideLo",massVal-massScaleFact*80.,massVal-massScaleFact*60.);
+	DM.setRange("sideHi",massVal+massScaleFact*60.,massVal+massScaleFact*80.);
+	DM.setRange("full",  massVal-massScaleFact*80.,massVal+massScaleFact*80.);
 
-        DLOGIPCHI2.setRange("sigIPCHI2",-5.,3.);
-        DLOGIPCHI2.setRange("fullIPCHI2",-5.,15.);
+	DLOGIPCHI2.setRange("sigIPCHI2",-5.,3.);
+	DLOGIPCHI2.setRange("fullIPCHI2",-5.,15.);
 
 	//extract results - corrected for the mass window cut
 	if(flavour==5) {
@@ -1253,8 +1767,8 @@ bool fitD0_2D(int flavour, double minpt, double maxpt, double& yield, double& er
 	std::vector<std::string> bkg_pdfs;
 	bkg_pdfs.push_back( "bkg" );
 
-	plot(DM, massVal-massScaleFact*80., massVal+massScaleFact*80., 40, ds, data_pdf, sig_pdfs, bkg_pdfs, dType+"_"+file+"_M_2D_"+ptStr, "m");
-	plot(DLOGIPCHI2, -5., 15., 20, ds, data_pdf, sig_pdfs, bkg_pdfs, dType+"_"+file+"_IPChi2_2D_"+ptStr, "log(IP#chi^{2})");
+	plotFit(DM, massVal-massScaleFact*80., massVal+massScaleFact*80., 40, ds, data_pdf, sig_pdfs, bkg_pdfs, dType+"_"+file+"_M_2D_"+ptStr, "m");
+	plotFit(DLOGIPCHI2, -5., 15., 20, ds, data_pdf, sig_pdfs, bkg_pdfs, dType+"_"+file+"_IPChi2_2D_"+ptStr, "log(IP#chi^{2})");
 
 	////print parameters
 	RooArgList params;
@@ -1270,7 +1784,7 @@ bool fitD0_2D(int flavour, double minpt, double maxpt, double& yield, double& er
 	//params.add(promptRhoR);
 	params.add(displacedMean);
 	params.add(displacedWidth);
-	print(dType+"_"+file+"_params2D_"+ptStr+".dat",params);
+	printParams(dType+"_"+file+"_params2D_"+ptStr+".dat",params);
 
 	return true;
 }
@@ -1312,20 +1826,24 @@ bool getD0Yields(TH1D* hist4, TH1D* hist5, TString file) {
 
 //function to fit features for a single sample
 TString fitSV(double& NC, double& eC, double& NB, double& eB, TString sample="100", double minPT=20000, double maxPT=30000){
+	std::cout << "INFO : fitting SV - 1D corrected mass and Ntrk fit to file " << sample << ", pT in (" << minPT << "," << maxPT << ")" << std::endl;
+
+	TString ptStr;
+	ptStr+=minPT; ptStr+="-"; ptStr+=maxPT;
 
 	TString ptCutStr;
 	ptCutStr = "JetPT>"; ptCutStr+=minPT; ptCutStr+=" && JetPT<"; ptCutStr+=maxPT;
 
-	TFile* f0 = TFile::Open("/eos/user/d/dcraik/jets-tuples-new-180914/for_yandex_data_new_101.root");
+	TFile* f0 = TFile::Open(lightSimFile);
 	TTree* t0 = dynamic_cast<TTree*>(f0->Get("T"));
 
-	TFile* f4 = TFile::Open("/eos/user/d/dcraik/jets-tuples-new-180914/for_yandex_data_new_14X.root");
+	TFile* f4 = TFile::Open(charmSimFile);
 	TTree* t4 = dynamic_cast<TTree*>(f4->Get("T"));
 
-	TFile* f5 = TFile::Open("/eos/user/d/dcraik/jets-tuples-new-180914/for_yandex_data_new_15X.root");
+	TFile* f5 = TFile::Open(beautySimFile);
 	TTree* t5 = dynamic_cast<TTree*>(f5->Get("T"));
 
-	TFile* fd = TFile::Open("/eos/user/d/dcraik/jets-tuples-new-181001/for_yandex_data_new_"+sample+".root");
+	TFile* fd = TFile::Open(dataFile);
 	TTree* td = dynamic_cast<TTree*>(fd->Get("T"));
 
 
@@ -1338,7 +1856,8 @@ TString fitSV(double& NC, double& eC, double& NB, double& eB, TString sample="10
 
 	svmcorsvn_4.Sumw2();
 	svmcorsvn_5.Sumw2();
-	
+	svmcorsvn_d.Sumw2();
+
 	std::vector<double>* SVN = new std::vector<double>();
 	std::vector<double>* SVMCor = new std::vector<double>();
 	double JetPT, JetTruePT;
@@ -1357,6 +1876,7 @@ TString fitSV(double& NC, double& eC, double& NB, double& eB, TString sample="10
 	td->SetBranchAddress("JetPT", &JetPT);
 	t4->SetBranchAddress("JetTruePT", &JetTruePT);
 	t5->SetBranchAddress("JetTruePT", &JetTruePT);
+	if(dataIsMC) td->SetBranchAddress("JetTruePT", &JetTruePT);
 
 	//get MC/backwards efficiencies for estimating total yields
 	int eff0denom(0.), eff4denom(0.), eff5denom(0.);
@@ -1368,14 +1888,19 @@ TString fitSV(double& NC, double& eC, double& NB, double& eB, TString sample="10
 
 	TH1D* mcWeights4 = new TH1D("mcWeights4","",npt,ptInputWeightBins);
 	TH1D* mcWeights5 = new TH1D("mcWeights5","",npt,ptInputWeightBins);
-	mcWeights4->SetBinContent(1,1.);
-	mcWeights4->SetBinContent(2,0.3);
-	mcWeights4->SetBinContent(3,0.12);
-	mcWeights4->SetBinContent(4,0.008);
-	mcWeights5->SetBinContent(1,1.);
-	mcWeights5->SetBinContent(2,0.2);
-	mcWeights5->SetBinContent(3,0.08);
-	mcWeights5->SetBinContent(4,0.006);
+	TH1D* mcWeightsD = new TH1D("mcWeightsD","",npt,ptInputWeightBins);//average to use for mixed sample
+	mcWeights4->SetBinContent(1, 1.);
+	mcWeights4->SetBinContent(2, 0.3);
+	mcWeights4->SetBinContent(3, 0.12);
+	mcWeights4->SetBinContent(4, 0.008);
+	mcWeights5->SetBinContent(1, 1.);
+	mcWeights5->SetBinContent(2, 0.2);
+	mcWeights5->SetBinContent(3, 0.08);
+	mcWeights5->SetBinContent(4, 0.006);
+	mcWeightsD->SetBinContent(1, 1.);
+	mcWeightsD->SetBinContent(2, 0.25);
+	mcWeightsD->SetBinContent(3, 0.10);
+	mcWeightsD->SetBinContent(4, 0.007);
 
 	for(int i=0; i<t0->GetEntries(); ++i) {
 		t0->GetEntry(i);
@@ -1421,13 +1946,15 @@ TString fitSV(double& NC, double& eC, double& NB, double& eB, TString sample="10
 	std::cout << svmcorsvn_5.Integral(1,19) << "\t" << svmcorsvn_5.Integral(20,28) << std::endl;
 
 	for(int i=0; i<td->GetEntries(); ++i) {
+		weight=1.;
+		if(dataIsMC) weight = mcWeightsD->GetBinContent(mcWeightsD->FindBin(JetTruePT));
 		td->GetEntry(i);
 		if(JetPT<minPT || JetPT>maxPT) continue;
 		if(SVN->size()<1) continue;
-		if(SVN->at(0)>1.5 && SVN->at(0)<10.5) svmcorsvn_d.Fill(SVN->at(0)+18.);
-		else if(SVN->at(0)>10.5) svmcorsvn_d.Fill(28.);
-		if(SVMCor->at(0)>0. && SVMCor->at(0)<10000.) svmcorsvn_d.Fill(SVMCor->at(0)/500. -0.5);
-		else if(SVMCor->at(0)>10000.) svmcorsvn_d.Fill(19.);
+		if(SVN->at(0)>1.5 && SVN->at(0)<10.5) svmcorsvn_d.Fill(SVN->at(0)+18.,weight);
+		else if(SVN->at(0)>10.5) svmcorsvn_d.Fill(28.,weight);
+		if(SVMCor->at(0)>0. && SVMCor->at(0)<10000.) svmcorsvn_d.Fill(SVMCor->at(0)/500. -0.5,weight);
+		else if(SVMCor->at(0)>10000.) svmcorsvn_d.Fill(19.,weight);
 	}
 	std::cout << svmcorsvn_d.Integral(1,19) << "\t" << svmcorsvn_d.Integral(20,28) << std::endl;
 
@@ -1459,7 +1986,9 @@ TString fitSV(double& NC, double& eC, double& NB, double& eB, TString sample="10
 	RooDataHist dh("dh", "dh", RooArgList(SVComb), &svmcorsvn_d);
 
 	// -- fit model pdf to the dataset ----------------------------------------------
+	gSystem->RedirectOutput(savedir+"/SVComb_"+sample+"_"+ptStr+"_fits.log","w");
 	/*RooFitResult * result =*/ data_pdf.fitTo( dh, RooFit::Extended(), RooFit::Save(), RooFit::NumCPU(4), RooFit::Range("FIT"));
+	gSystem->RedirectOutput(0);
 
 	//make plots
 	std::vector<std::string> sig_pdfs;
@@ -1468,8 +1997,8 @@ TString fitSV(double& NC, double& eC, double& NB, double& eB, TString sample="10
 	sig_pdfs.push_back( "pdfC" );
 	std::vector<std::string> bkg_pdfs;
 
-	TString plotName = "SVComb_"+sample+"_"; plotName+=minPT; plotName+="-"; plotName+=maxPT;
-	plot(SVComb, 0.5, 28.5, 28, &dh, data_pdf, sig_pdfs, bkg_pdfs, plotName, "M_{cor}, N_{trk}");
+	TString plotName = "SVComb_"+sample+"_"; plotName+=ptStr;
+	plotFit(SVComb, 0.5, 28.5, 28, &dh, data_pdf, sig_pdfs, bkg_pdfs, plotName, "M_{cor}, N_{trk}");
 
 	//print parameters
 	RooArgList params;
@@ -1477,7 +2006,7 @@ TString fitSV(double& NC, double& eC, double& NB, double& eB, TString sample="10
 	params.add(yieldC);
 	params.add(yieldQ);
 	TString paramsName = "params_comb_"+sample+"_"; paramsName+=minPT; paramsName+="-"; paramsName+=maxPT; paramsName+=".dat";
-	print(paramsName,params);
+	printParams(paramsName,params);
 
 	double NQ, Ntot;
 	double eQ;
@@ -1523,6 +2052,72 @@ bool getSVYields(TH1D* hist4, TH1D* hist5, TString file) {
 	return true;
 }
 
+bool getTruth(TH1D* trueD04, TH1D* trueD05, TH1D* trueSV4, TH1D* trueSV5, bool useTruePT=false) {
+	std::cout << "INFO : getting truth information" << std::endl;
+	if(!trueD04 || !trueD05 || !trueSV4 || !trueSV5) return false;
+
+	TFile* f = TFile::Open(dataFile);
+	TTree* t = dynamic_cast<TTree*>(f->Get("T"));
+
+	double JetPT;
+	double JetTruePT;
+	double JetTrueD0;
+	double JetTrueDSV;
+	double JetTrueBSV;
+
+	std::vector<double>* TRUEDID = new std::vector<double>();
+	std::vector<double>* TRUEDFROMB = new std::vector<double>();
+
+	std::vector<double>* SVN = new std::vector<double>();
+
+	t->SetBranchAddress("JetPT",      &JetPT);
+	t->SetBranchAddress("JetTruePT",  &JetTruePT);
+	t->SetBranchAddress("JetTRUED0",  &JetTrueD0);
+	t->SetBranchAddress("JetTRUEDSV", &JetTrueDSV);
+	t->SetBranchAddress("JetTRUEBSV", &JetTrueBSV);
+
+	t->SetBranchAddress("TRUEDID",    &TRUEDID);
+	t->SetBranchAddress("TRUEDFROMB", &TRUEDFROMB);
+
+	t->SetBranchAddress("SVN",        &SVN);
+
+	boost::progress_display progress( t->GetEntries() );
+	for(int i=0; i<t->GetEntries(); ++i) {
+		++progress;
+		t->GetEntry(i);
+		if(useTruePT) JetPT = JetTruePT;
+
+		double weight(1.);
+		if(JetTruePT>50000.) {
+			weight=0.007;
+		} else if(JetTruePT>20000.) {
+			weight=0.10;
+		} else if(JetTruePT>15000.) {
+			weight=0.25;
+		}
+
+		if(JetTrueD0) {
+			for(unsigned int id=0; id<TRUEDID->size(); ++id) {
+				if(TMath::Abs(TRUEDID->at(id))!=421.) continue;
+				if(TRUEDFROMB->at(id)) {
+					trueD05->Fill(JetPT,weight);
+				} else {
+					trueD04->Fill(JetPT,weight);
+				}
+				break;
+			}
+		}
+		if(JetTrueDSV) {
+			if(SVN->size()>0) trueSV4->Fill(JetPT,weight);
+		}
+		if(JetTrueBSV) {
+			if(SVN->size()>0) trueSV5->Fill(JetPT,weight);
+		}
+	}
+
+	return true;
+}
+
 TH1D* unfold(TH1D* input, TString file, jetType type) {
 	if(!input) return 0;
 
@@ -1530,15 +2125,19 @@ TH1D* unfold(TH1D* input, TString file, jetType type) {
 
 	switch(type) {
 		case jetRecoD04:
+			std::cout << "INFO : unfolding c2D0 results for file " << file << std::endl;
 			nameStr="_c2D0";
 			break;
 		case jetRecoSV4:
+			std::cout << "INFO : unfolding c2SV results for file " << file << std::endl;
 			nameStr="_c2SV";
 			break;
 		case jetRecoD05:
+			std::cout << "INFO : unfolding b2D0 results for file " << file << std::endl;
 			nameStr="_b2D0";
 			break;
 		case jetRecoSV5:
+			std::cout << "INFO : unfolding b2SV results for file " << file << std::endl;
 			nameStr="_b2SV";
 			break;
 		default:
@@ -1567,11 +2166,11 @@ TH1D* unfold(TH1D* input, TString file, jetType type) {
 
 	TCanvas c;
 	respMat->Draw("colz");
-	c.SaveAs("unfoldingResponse"+nameStr+".pdf");
+	c.SaveAs(savedir+"/unfoldingResponse"+nameStr+".pdf");
 
 	mcMeas->Draw();
 	mcTrue->Draw("same");
-	c.SaveAs("unfoldingMC"+nameStr+".pdf");
+	c.SaveAs(savedir+"/unfoldingMC"+nameStr+".pdf");
 
 	//apply response
 	RooUnfoldIds     unfold(response, input, 2);
@@ -1582,23 +2181,54 @@ TH1D* unfold(TH1D* input, TString file, jetType type) {
 
 int main(int argc, char** argv) {
 	gStyle->SetOptStat(0);
+	gErrorIgnoreLevel = kWarning;
+	RooMsgService::instance().setGlobalKillBelow(RooFit::WARNING);
 
+	//0-99 are MC closure tests, 100 is dijet tagged jets, 101 is jets with backwards SVs, 102 is J/psi tagged jets
 	TString file="100";
 	if(argc>1) file = argv[1];
-	if(argc>2) d0minpt = atoi(argv[2]);//5000
-	if(argc>3) d0maxpt = atoi(argv[3]);//-1
+	if(argc>2) savedir = argv[2];
+	if(argc>3) d0minpt = atoi(argv[3]);//5000
+	if(argc>4) d0maxpt = atoi(argv[4]);//-1
+
+	gSystem->Exec("mkdir -p "+savedir);
+
+	if(file.IsDec() && atoi(file)<100) {
+		std::cout << "Running MC closure test " << file << " (" << atoi(file) << ")" << std::endl;
+		makeTrainTestSamples(atoi(file));
+	} else {
+		if(file.BeginsWith("14") || file.BeginsWith("15") || file.BeginsWith("16") || file.BeginsWith("2") || file.BeginsWith("45")) {
+			dataIsMC=true;
+		}
+		dataFile = "/eos/user/d/dcraik/jets-tuples-new-181203/for_yandex_data_new_"+file+".root";
+	}
 
 	unsigned int npt=3;
 	double* binsPt  = new double[npt +1]{15000.,20000.,30000.,100000.};
 	//unsigned int npt=4;
 	//double* binsPt  = new double[npt +1]{10000.,15000.,20000.,30000.,100000.};
-	
+
 	//make input files
 	if(!addEffs(file)) return 1;
 	if(!weightMC(file,jetRecoD04)) return 1;
 	if(!weightMC(file,jetRecoD05)) return 1;
 	if(!weightMC(file,jetRecoSV4)) return 1;
 	if(!weightMC(file,jetRecoSV5)) return 1;
+
+	//truth histograms for MC studies
+	TH1D trueD04("trueD04","",npt,binsPt);
+	TH1D trueD05("trueD05","",npt,binsPt);
+	TH1D trueSV4("trueSV4","",npt,binsPt);
+	TH1D trueSV5("trueSV5","",npt,binsPt);
+	TH1D trueUnfldD04("trueUnfldD04","",npt,binsPt);
+	TH1D trueUnfldD05("trueUnfldD05","",npt,binsPt);
+	TH1D trueUnfldSV4("trueUnfldSV4","",npt,binsPt);
+	TH1D trueUnfldSV5("trueUnfldSV5","",npt,binsPt);
+	if(dataIsMC) {
+		getTruth(&trueD04,&trueD05,&trueSV4,&trueSV5);
+		getTruth(&trueUnfldD04,&trueUnfldD05,&trueUnfldSV4,&trueUnfldSV5,true);
+		testEffs(file,&trueD04);
+	}
 
 	//first do D0 fits for denominators
 	TH1D recoD04("recoD04","",npt,binsPt);
@@ -1631,38 +2261,88 @@ int main(int argc, char** argv) {
 	double bfffErr5 = TMath::Sqrt( (errFFb2D0/ffb2D0)*(errFFb2D0/ffb2D0) + (errBFD0/bfD0)*(errBFD0/bfD0) );
 
 	//D0 results
-	std::cout << "D0" << std::endl;
+	std::cout << "D0 reco4/5/unfld4/5/true4/5/trueunfld4/5" << std::endl;
 	for (unsigned int i=1; i<=npt; ++i) std::cout << recoD04.GetBinError(i)/recoD04.GetBinContent(i) << std::endl;
 	for (unsigned int i=1; i<=npt; ++i) std::cout << recoD05.GetBinError(i)/recoD05.GetBinContent(i) << std::endl;
 	std::cout << std::endl;
 
+	for (unsigned int i=1; i<=npt; ++i) std::cout << recoD04.GetBinContent(i) << " +/- " << recoD04.GetBinError(i) << std::endl;
+	for (unsigned int i=1; i<=npt; ++i) std::cout << recoD05.GetBinContent(i) << " +/- " << recoD05.GetBinError(i) << std::endl;
+	std::cout << std::endl;
+
+	for (unsigned int i=1; i<=npt; ++i) std::cout << unfoldedD04->GetBinContent(i) << " +/- " << unfoldedD04->GetBinError(i) << std::endl;
+	for (unsigned int i=1; i<=npt; ++i) std::cout << unfoldedD05->GetBinContent(i) << " +/- " << unfoldedD05->GetBinError(i) << std::endl;
+	std::cout << std::endl;
+
+	for (unsigned int i=1; i<=npt; ++i) std::cout << trueD04.GetBinContent(i) << " +/- " << trueD04.GetBinError(i) << std::endl;
+	for (unsigned int i=1; i<=npt; ++i) std::cout << trueD05.GetBinContent(i) << " +/- " << trueD05.GetBinError(i) << std::endl;
+	std::cout << std::endl;
+
+	for (unsigned int i=1; i<=npt; ++i) std::cout << trueUnfldD04.GetBinContent(i) << " +/- " << trueUnfldD04.GetBinError(i) << std::endl;
+	for (unsigned int i=1; i<=npt; ++i) std::cout << trueUnfldD05.GetBinContent(i) << " +/- " << trueUnfldD05.GetBinError(i) << std::endl;
+	std::cout << std::endl;
+
+	//D0 results scaled
+	std::cout << "jet reco4/5/unfld4/5/true4/5/trueunfld4/5" << std::endl;
 	for (unsigned int i=1; i<=npt; ++i) std::cout << recoD04.GetBinContent(i) / (bfD0 * ffc2D0) << " +/- " << recoD04.GetBinError(i) / (bfD0 * ffc2D0) << " +/- " << bfffErr4*recoD04.GetBinContent(i) / (bfD0 * ffc2D0) << std::endl;
 	for (unsigned int i=1; i<=npt; ++i) std::cout << recoD05.GetBinContent(i) / (bfD0 * ffb2D0) << " +/- " << recoD05.GetBinError(i) / (bfD0 * ffb2D0) << " +/- " << bfffErr5*recoD05.GetBinContent(i) / (bfD0 * ffb2D0) << std::endl;
 	std::cout << std::endl;
 
 	for (unsigned int i=1; i<=npt; ++i) std::cout << unfoldedD04->GetBinContent(i) / (bfD0 * ffc2D0) << " +/- " << unfoldedD04->GetBinError(i) / (bfD0 * ffc2D0) << " +/- " << bfffErr4*unfoldedD04->GetBinContent(i) / (bfD0 * ffc2D0) << std::endl;
 	for (unsigned int i=1; i<=npt; ++i) std::cout << unfoldedD05->GetBinContent(i) / (bfD0 * ffb2D0) << " +/- " << unfoldedD05->GetBinError(i) / (bfD0 * ffb2D0) << " +/- " << bfffErr5*unfoldedD05->GetBinContent(i) / (bfD0 * ffb2D0) << std::endl;
+	std::cout << std::endl;
+
+	for (unsigned int i=1; i<=npt; ++i) std::cout << trueD04.GetBinContent(i) / (bfD0 * ffc2D0) << " +/- " << trueD04.GetBinError(i) / (bfD0 * ffc2D0) << " +/- " << bfffErr4*trueD04.GetBinContent(i) / (bfD0 * ffc2D0) << std::endl;
+	for (unsigned int i=1; i<=npt; ++i) std::cout << trueD05.GetBinContent(i) / (bfD0 * ffb2D0) << " +/- " << trueD05.GetBinError(i) / (bfD0 * ffb2D0) << " +/- " << bfffErr5*trueD05.GetBinContent(i) / (bfD0 * ffb2D0) << std::endl;
+	std::cout << std::endl;
+
+	for (unsigned int i=1; i<=npt; ++i) std::cout << trueUnfldD04.GetBinContent(i) / (bfD0 * ffc2D0) << " +/- " << trueUnfldD04.GetBinError(i) / (bfD0 * ffc2D0) << " +/- " << bfffErr4*trueUnfldD04.GetBinContent(i) / (bfD0 * ffc2D0) << std::endl;
+	for (unsigned int i=1; i<=npt; ++i) std::cout << trueUnfldD05.GetBinContent(i) / (bfD0 * ffb2D0) << " +/- " << trueUnfldD05.GetBinError(i) / (bfD0 * ffb2D0) << " +/- " << bfffErr5*trueUnfldD05.GetBinContent(i) / (bfD0 * ffb2D0) << std::endl;
+	std::cout << std::endl;
 
 	//SV results
-	std::cout << "SV" << std::endl;
+	std::cout << "SV reco4/5/unfld4/5/true4/5/trueunfld4/5" << std::endl;
 	for (unsigned int i=1; i<=npt; ++i) std::cout << recoSV4.GetBinContent(i) << " +/- " << recoSV4.GetBinError(i) << "\t";
 	std::cout << std::endl;
-	for (unsigned int i=1; i<=npt; ++i) std::cout << unfoldedSV4->GetBinContent(i) << " +/- " << unfoldedSV4->GetBinError(i) << "\t";
-	std::cout << std::endl;
 	for (unsigned int i=1; i<=npt; ++i) std::cout << recoSV5.GetBinContent(i) << " +/- " << recoSV5.GetBinError(i) << "\t";
+	std::cout << std::endl;
+	std::cout << std::endl;
+	for (unsigned int i=1; i<=npt; ++i) std::cout << unfoldedSV4->GetBinContent(i) << " +/- " << unfoldedSV4->GetBinError(i) << "\t";
 	std::cout << std::endl;
 	for (unsigned int i=1; i<=npt; ++i) std::cout << unfoldedSV5->GetBinContent(i) << " +/- " << unfoldedSV5->GetBinError(i) << "\t";
 	std::cout << std::endl;
 	std::cout << std::endl;
+	for (unsigned int i=1; i<=npt; ++i) std::cout << trueSV4.GetBinContent(i) << " +/- " << trueSV4.GetBinError(i) << "\t";
+	std::cout << std::endl;
+	for (unsigned int i=1; i<=npt; ++i) std::cout << trueSV5.GetBinContent(i) << " +/- " << trueSV5.GetBinError(i) << "\t";
+	std::cout << std::endl;
+	std::cout << std::endl;
+	for (unsigned int i=1; i<=npt; ++i) std::cout << trueUnfldSV4.GetBinContent(i) << " +/- " << trueUnfldSV4.GetBinError(i) << "\t";
+	std::cout << std::endl;
+	for (unsigned int i=1; i<=npt; ++i) std::cout << trueUnfldSV5.GetBinContent(i) << " +/- " << trueUnfldSV5.GetBinError(i) << "\t";
+	std::cout << std::endl;
+	std::cout << std::endl;
 
 	//ratios
+	std::cout << "ratios reco4/5/unfld4/5/true4/5/trueunfld4/5" << std::endl;
 	for (unsigned int i=1; i<=npt; ++i) std::cout << recoSV4.GetBinContent(i) / (recoD04.GetBinContent(i) / (bfD0 * ffc2D0)) << "\t";
-	std::cout << std::endl;
-	for (unsigned int i=1; i<=npt; ++i) std::cout << unfoldedSV4->GetBinContent(i) / (unfoldedD04->GetBinContent(i) / (bfD0 * ffc2D0)) << "\t";
 	std::cout << std::endl;
 	for (unsigned int i=1; i<=npt; ++i) std::cout << recoSV5.GetBinContent(i) / (recoD05.GetBinContent(i) / (bfD0 * ffb2D0)) << "\t";
 	std::cout << std::endl;
+	std::cout << std::endl;
+	for (unsigned int i=1; i<=npt; ++i) std::cout << unfoldedSV4->GetBinContent(i) / (unfoldedD04->GetBinContent(i) / (bfD0 * ffc2D0)) << "\t";
+	std::cout << std::endl;
 	for (unsigned int i=1; i<=npt; ++i) std::cout << unfoldedSV5->GetBinContent(i) / (unfoldedD05->GetBinContent(i) / (bfD0 * ffb2D0)) << "\t";
+	std::cout << std::endl;
+	std::cout << std::endl;
+	for (unsigned int i=1; i<=npt; ++i) std::cout << trueSV4.GetBinContent(i) / (trueD04.GetBinContent(i) / (bfD0 * ffc2D0)) << "\t";
+	std::cout << std::endl;
+	for (unsigned int i=1; i<=npt; ++i) std::cout << trueSV5.GetBinContent(i) / (trueD05.GetBinContent(i) / (bfD0 * ffb2D0)) << "\t";
+	std::cout << std::endl;
+	std::cout << std::endl;
+	for (unsigned int i=1; i<=npt; ++i) std::cout << trueUnfldSV4.GetBinContent(i) / (trueUnfldD04.GetBinContent(i) / (bfD0 * ffc2D0)) << "\t";
+	std::cout << std::endl;
+	for (unsigned int i=1; i<=npt; ++i) std::cout << trueUnfldSV5.GetBinContent(i) / (trueUnfldD05.GetBinContent(i) / (bfD0 * ffb2D0)) << "\t";
 	std::cout << std::endl;
 	std::cout << std::endl;
 
@@ -1675,13 +2355,40 @@ int main(int argc, char** argv) {
 	unfoldedD05->SetLineColor(kRed);
 	unfoldedD04->SetLineStyle(kDashed);
 	unfoldedD05->SetLineStyle(kDashed);
+	trueD04.SetLineColor(kBlue);
+	trueD05.SetLineColor(kRed);
+	trueD04.SetLineStyle(kDotted);
+	trueD05.SetLineStyle(kDotted);
+
+	recoSV4.SetMinimum(0.);
+	recoSV4.SetMaximum(1.1*TMath::Max(TMath::Max(recoD04.GetMaximum(),recoD05.GetMaximum()),TMath::Max(unfoldedD04->GetMaximum(),unfoldedD05->GetMaximum())));
+	recoSV4.SetLineColor(kBlue);
+	recoSV5.SetLineColor(kRed);
+	unfoldedSV4->SetLineColor(kBlue);
+	unfoldedSV5->SetLineColor(kRed);
+	unfoldedSV4->SetLineStyle(kDashed);
+	unfoldedSV5->SetLineStyle(kDashed);
+	trueSV4.SetLineColor(kBlue);
+	trueSV5.SetLineColor(kRed);
+	trueSV4.SetLineStyle(kDotted);
+	trueSV5.SetLineStyle(kDotted);
 
 	TCanvas c;
 	recoD04.Draw();
 	unfoldedD04->Draw("same");
 	recoD05.Draw("same");
 	unfoldedD05->Draw("same");
-	c.SaveAs("dataUnfolding"+file+".pdf");
+	if(dataIsMC) trueD04.Draw("same");
+	if(dataIsMC) trueD05.Draw("same");
+	c.SaveAs(savedir+"/d0Unfolding"+file+".pdf");
+
+	recoSV4.Draw();
+	unfoldedSV4->Draw("same");
+	recoSV5.Draw("same");
+	unfoldedSV5->Draw("same");
+	if(dataIsMC) trueSV4.Draw("same");
+	if(dataIsMC) trueSV5.Draw("same");
+	c.SaveAs(savedir+"/svUnfolding"+file+".pdf");
 
 	return 0;
 }
