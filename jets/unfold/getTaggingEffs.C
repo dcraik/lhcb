@@ -65,7 +65,7 @@ TString dataFile      = "/eos/user/d/dcraik/jets-tuples-new-181204/for_yandex_da
 
 //efficiency inputs - update these with latest version numbers
 TString effFile = "../efficiencies/D0Effs_2XX_16x8bins_up181204.root";
-TString accFile = "../efficiencies/D0AccEffNewUp181204.root";
+TString accFile = "../efficiencies/D0AccEffNewUp181207.root";
 
 bool dataIsMC(false);
 bool dataIsResampledMC(false);
@@ -97,6 +97,20 @@ TH2D* cloneTH2D(TString name, TH2D* hist)
 			hist->GetXaxis()->GetXbins()->GetArray(),
 			hist->GetNbinsY(),
 			hist->GetYaxis()->GetXbins()->GetArray());
+	return cloneHist;
+}
+
+TH3D* cloneTH3D(TString name, TH3D* hist)
+{
+	if (!hist) return 0;
+	TH3D* cloneHist = new TH3D(name,
+			"",
+			hist->GetNbinsX(),
+			hist->GetXaxis()->GetXbins()->GetArray(),
+			hist->GetNbinsY(),
+			hist->GetYaxis()->GetXbins()->GetArray(),
+			hist->GetNbinsZ(),
+			hist->GetZaxis()->GetXbins()->GetArray());
 	return cloneHist;
 }
 
@@ -362,7 +376,8 @@ bool addEffs(TString file) {
 	if(!t0) return false;
 
 	TH2D* hacc = dynamic_cast<TH2D*>(f3->Get("eff"));
-	//TH2D* hrec = dynamic_cast<TH2D*>(f3->Get("reff")); //TODO this histogram has finer bins but there's currently a bug in its generation
+	TH2D* hrec4 = dynamic_cast<TH2D*>(f3->Get("reff4")); //TODO this histogram has finer bins but there's currently a bug in its generation
+	TH2D* hrec5 = dynamic_cast<TH2D*>(f3->Get("reff5")); //TODO this histogram has finer bins but there's currently a bug in its generation
 
 	TH2D* hpid(0);
 	if(dataIsMC) hpid = dynamic_cast<TH2D*>(f2->Get("pidmceffD045"));
@@ -370,9 +385,9 @@ bool addEffs(TString file) {
 	TH2D* hsel4 = dynamic_cast<TH2D*>(f2->Get("seleffD04"));
 	TH2D* hsel5 = dynamic_cast<TH2D*>(f2->Get("seleffD05"));
 	//TH2D* hacc  = dynamic_cast<TH2D*>(f2->Get("acceffD045")); //superseded by RapidSim version
-	TH2D* hrec  = dynamic_cast<TH2D*>(f2->Get("receffD045"));
+	//TH2D* hrec  = dynamic_cast<TH2D*>(f2->Get("receffD045"));
 
-	if(!hacc || !hrec || !hpid || !hsel4 || !hsel5) return false;
+	if(!hacc || !hrec4 || !hrec5 || !hpid || !hsel4 || !hsel5) return false;
 
 	std::vector<double> *vD0M = new std::vector<double>();
 	std::vector<double> *vD0IPCHI2 = new std::vector<double>();
@@ -467,20 +482,21 @@ bool addEffs(TString file) {
 			D0Eta       = D0P.Eta();
 
 			//get efficiency corrections
-			double effacc(0.), effrec(0.), effsel4(0.), effsel5(0.), effpid(0.);
+			double effacc(0.), effrec4(0.), effrec5(0.), effsel4(0.), effsel5(0.), effpid(0.);
 
 			if(D0PT>=100000.) D0PT=99999.;
 			effacc =      hacc ->GetBinContent(hacc ->FindBin(D0PT/1000.,D0Eta));
-			effrec =      hrec ->GetBinContent(hrec ->FindBin(D0PT/1000.,D0Eta));
+			effrec4=      hrec4->GetBinContent(hrec4->FindBin(D0PT/1000.,D0Eta));
+			effrec5=      hrec5->GetBinContent(hrec5->FindBin(D0PT/1000.,D0Eta));
 			effsel4=      hsel4->GetBinContent(hsel4->FindBin(D0PT      ,D0Eta));
 			effsel5=      hsel5->GetBinContent(hsel5->FindBin(D0PT      ,D0Eta));
 			effpid =      hpid ->GetBinContent(hpid ->FindBin(D0PT      ,D0Eta));
 
-			double eff4=effacc*effrec*effsel4*effpid;
-			double eff5=effacc*effrec*effsel5*effpid;
+			double eff4=effacc*effrec4*effsel4*effpid;
+			double eff5=effacc*effrec5*effsel5*effpid;
 
 			if(eff4<0.01 || eff5<0.01) {
-				std::cout << D0PT << "\t" << D0Eta << "\t" << effacc << "\t" << effrec << "\t" << effsel4 << "\t" << effsel5 << "\t" << effpid << std::endl;
+				std::cout << D0PT << "\t" << D0Eta << "\t" << effacc << "\t" << effrec4 << "\t" << effrec5 << "\t" << effsel4 << "\t" << effsel5 << "\t" << effpid << std::endl;
 				continue;
 			}
 
@@ -524,14 +540,16 @@ bool testEffs(TString file, TH1D* ptBinScheme) {
 	if(!t0) return false;
 
 	TH2D* hacc = dynamic_cast<TH2D*>(f3->Get("eff"));
-	//TH2D* hrec = dynamic_cast<TH2D*>(f3->Get("reff"));
+	TH2D* hrec(0);
+	if(file.BeginsWith("15")) hrec = dynamic_cast<TH2D*>(f3->Get("reff5"));
+	else hrec = dynamic_cast<TH2D*>(f3->Get("reff4"));
 
 	TH2D* hpid = dynamic_cast<TH2D*>(f2->Get("pidmceffD045"));
 	TH2D* hsel(0);
 	if(file.BeginsWith("15")) hsel = dynamic_cast<TH2D*>(f2->Get("seleffD05"));
 	else hsel = dynamic_cast<TH2D*>(f2->Get("seleffD04"));
 	//TH2D* hacc  = dynamic_cast<TH2D*>(f2->Get("acceffD045"));
-	TH2D* hrec  = dynamic_cast<TH2D*>(f2->Get("receffD045"));
+	//TH2D* hrec  = dynamic_cast<TH2D*>(f2->Get("receffD045"));
 
 	if(!hacc || !hrec || !hpid || !hsel) return false;
 
@@ -579,6 +597,27 @@ bool testEffs(TString file, TH1D* ptBinScheme) {
 	fndD0recoPT.push_back(cloneTH1D("fnd2recopt", ptBinScheme));
 	fndD0recoPT.push_back(cloneTH1D("fnd3recopt", ptBinScheme));
 	fndD0recoPT.push_back(cloneTH1D("fnd4recopt", ptBinScheme));
+
+	//entries in this vector are true and reco for each jet pT bin in ascending order
+	std::vector<TH2D*> d0Kinematics;
+	d0Kinematics.push_back(cloneTH2D("d0KineTrue0", hsel));
+	d0Kinematics.push_back(cloneTH2D("d0KineReco0", hsel));
+	d0Kinematics.push_back(cloneTH2D("d0KineTrue1", hsel));
+	d0Kinematics.push_back(cloneTH2D("d0KineReco1", hsel));
+	d0Kinematics.push_back(cloneTH2D("d0KineTrue2", hsel));
+	d0Kinematics.push_back(cloneTH2D("d0KineReco2", hsel));
+	d0Kinematics.push_back(cloneTH2D("d0KineTrue3", hsel));
+	d0Kinematics.push_back(cloneTH2D("d0KineReco3", hsel));
+	d0Kinematics.push_back(cloneTH2D("d0KineTrue4", hsel));
+	d0Kinematics.push_back(cloneTH2D("d0KineReco4", hsel));
+	for(unsigned int i=0; i<d0Kinematics.size(); ++i) {
+		d0Kinematics[i]->Sumw2();
+	}
+	std::vector<TH1D*> d0KinematicsPulls;
+	d0KinematicsPulls.push_back(new TH1D("pulls1", "", 30, -1., 1.));
+	d0KinematicsPulls.push_back(new TH1D("pulls2", "", 30, -1., 1.));
+	d0KinematicsPulls.push_back(new TH1D("pulls3", "", 30, -1., 1.));
+	d0KinematicsPulls.push_back(new TH1D("pulls4", "", 30, -1., 1.));
 
 	for(int i=0; i<5; ++i) {
 		truD0truePT.at(i)->Sumw2();
@@ -705,18 +744,23 @@ bool testEffs(TString file, TH1D* ptBinScheme) {
 			if(TRUEDTRK2IDX->at(d)!=-1) continue;
 			if(TRUEDPX->at(d)*TRUEDPX->at(d)+TRUEDPY->at(d)*TRUEDPY->at(d)<5000.*5000.) continue;
 
+			TVector3 TRUEDP (TRUEDPX->at(d)  ,TRUEDPY->at(d)  ,TRUEDPZ->at(d));
+
 			truD0recoPT.at(0)->Fill(JetPT);
 			truD0truePT.at(0)->Fill(JetTruePT);
+			d0Kinematics[0]->Fill(TRUEDP.Pt(),TRUEDP.Eta());
 
 			if(TRUEDTRK0INACC->at(d)!=1 || TRUEDTRK1INACC->at(d)!=1) continue;
 
 			truD0recoPT.at(1)->Fill(JetPT);
 			truD0truePT.at(1)->Fill(JetTruePT);
+			d0Kinematics[2]->Fill(TRUEDP.Pt(),TRUEDP.Eta());
 
 			if(TRUEDTRK0RECO->at(d)!=1 || TRUEDTRK1RECO->at(d)!=1) continue;
 
 			truD0recoPT.at(2)->Fill(JetPT);
 			truD0truePT.at(2)->Fill(JetTruePT);
+			d0Kinematics[4]->Fill(TRUEDP.Pt(),TRUEDP.Eta());
 
 			for(unsigned int s=0; s<D0TRUEIDX->size(); ++s) {
 				if(D0TRUEIDX->at(s)==d) {
@@ -732,11 +776,12 @@ bool testEffs(TString file, TH1D* ptBinScheme) {
 
 					truD0recoPT.at(3)->Fill(JetPT);
 					truD0truePT.at(3)->Fill(JetTruePT);
+					d0Kinematics[6]->Fill(TRUEDP.Pt(),TRUEDP.Eta());
 
-					//if(D0KPNNK->at(s)<0.2 || D0PIPNNPI->at(s)<0.1) continue;
-
+					//use weights for PID
 					truD0recoPT.at(4)->Fill(JetPT,D0KWEIGHT->at(s)*D0PIWEIGHT->at(s));
 					truD0truePT.at(4)->Fill(JetTruePT,D0KWEIGHT->at(s)*D0PIWEIGHT->at(s));
+					d0Kinematics[8]->Fill(TRUEDP.Pt(),TRUEDP.Eta(),D0KWEIGHT->at(s)*D0PIWEIGHT->at(s));
 
 					break;
 				}
@@ -755,7 +800,6 @@ bool testEffs(TString file, TH1D* ptBinScheme) {
 			//if(!(D0P.Eta()>2.2&&D0P.Eta()<4.0)) continue;//TODO test restrcting the eta(D0) range (turn on in two places 2/2)
 
 			//check PID cuts
-			//if(D0KPNNK->at(s)<0.2 || D0PIPNNPI->at(s)<0.1) continue;
 			double weight = D0KWEIGHT->at(s);// pion PID removed *D0PIWEIGHT->at(s);
 			if(D0P0.Pt()>25000. || D0P0.Mag()>500000.) weight = 1.; //PID turned off for high P or PT
 
@@ -793,6 +837,12 @@ bool testEffs(TString file, TH1D* ptBinScheme) {
 			fitD0truePT.at(2)->Fill(JetTruePT,weight*sbSubSwitch/(effpid*effsel));
 			fitD0truePT.at(1)->Fill(JetTruePT,weight*sbSubSwitch/(effpid*effsel*effrec));
 			fitD0truePT.at(0)->Fill(JetTruePT,weight*sbSubSwitch/(effpid*effsel*effrec*effacc));
+
+			d0Kinematics[9]->Fill(D0P.Pt(),D0P.Eta(),weight*sbSubSwitch);
+			d0Kinematics[7]->Fill(D0P.Pt(),D0P.Eta(),weight*sbSubSwitch/(effpid));
+			d0Kinematics[5]->Fill(D0P.Pt(),D0P.Eta(),weight*sbSubSwitch/(effpid*effsel));
+			d0Kinematics[3]->Fill(D0P.Pt(),D0P.Eta(),weight*sbSubSwitch/(effpid*effsel*effrec));
+			d0Kinematics[1]->Fill(D0P.Pt(),D0P.Eta(),weight*sbSubSwitch/(effpid*effsel*effrec*effacc));
 
 			//truth match to real, accepted and reconstructed D0
 			if(D0TRUEIDX->at(s)<0) break;
@@ -850,6 +900,79 @@ bool testEffs(TString file, TH1D* ptBinScheme) {
 			printf("\n");
 		}
 	}
+
+	gStyle->SetPalette(1,0);
+	const Int_t NRGBs = 5;
+	const Int_t NCont = 255;
+	Double_t stops[NRGBs]  = { 0.00, 0.25, 0.50, 0.75, 1.00};
+	Double_t reds[NRGBs]   = { 1.00, 1.00, 1.00, 0.00, 0.00};
+	Double_t greens[NRGBs] = { 0.00, 0.50, 1.00, 0.50, 0.00};
+	Double_t blues[NRGBs]  = { 0.00, 0.00, 1.00, 1.00, 1.00};
+	TColor::CreateGradientColorTable(NRGBs, stops, reds, greens, blues, NCont);
+	gStyle->SetNumberContours(NCont);
+	TCanvas c1;
+	c1.SetLogx();
+	d0Kinematics[9]->Divide(d0Kinematics[7]);
+	d0Kinematics[8]->Divide(d0Kinematics[6]);
+	d0Kinematics[9]->Divide(d0Kinematics[8]);
+	d0Kinematics[9]->SetMinimum(0.);
+	d0Kinematics[9]->SetMaximum(2.);
+	d0Kinematics[9]->Draw("colz");
+	c1.SaveAs(savedir+"/D0KinePIDRatio.pdf");
+	d0Kinematics[7]->Divide(d0Kinematics[5]);
+	d0Kinematics[6]->Divide(d0Kinematics[4]);
+	d0Kinematics[7]->Divide(d0Kinematics[6]);
+	d0Kinematics[7]->SetMinimum(0.);
+	d0Kinematics[7]->SetMaximum(2.);
+	d0Kinematics[7]->Draw("colz");
+	c1.SaveAs(savedir+"/D0KineSELRatio.pdf");
+	d0Kinematics[5]->Divide(d0Kinematics[3]);
+	d0Kinematics[4]->Divide(d0Kinematics[2]);
+	d0Kinematics[5]->Divide(d0Kinematics[4]);
+	d0Kinematics[5]->SetMinimum(0.);
+	d0Kinematics[5]->SetMaximum(2.);
+	d0Kinematics[5]->Draw("colz");
+	c1.SaveAs(savedir+"/D0KineRECRatio.pdf");
+	d0Kinematics[3]->Divide(d0Kinematics[1]);
+	d0Kinematics[2]->Divide(d0Kinematics[0]);
+	d0Kinematics[3]->Divide(d0Kinematics[2]);
+	d0Kinematics[3]->SetMinimum(0.);
+	d0Kinematics[3]->SetMaximum(2.);
+	d0Kinematics[3]->Draw("colz");
+	c1.SaveAs(savedir+"/D0KineACCRatio.pdf");
+	//for(unsigned int i=0; i<d0Kinematics.size(); ++i) {
+	//	d0Kinematics[i]->Draw("colz");
+	//	TString plotname("D0Kinematics");
+	//	plotname+=i;
+	//	plotname+=".pdf";
+	//	c1.SaveAs(savedir+"/"+plotname);
+	//}
+	
+	for(int i=1; i<=d0Kinematics[3]->GetNbinsX(); ++i) {
+		for(int j=1; j<=d0Kinematics[3]->GetNbinsY(); ++j) {
+			if(d0Kinematics[3]->GetBinContent(i,j)>0) {
+				d0KinematicsPulls[0]->Fill((d0Kinematics[3]->GetBinContent(i,j)-1.)/d0Kinematics[3]->GetBinError(i,j));
+			}
+			if(d0Kinematics[5]->GetBinContent(i,j)>0) {
+				d0KinematicsPulls[1]->Fill((d0Kinematics[5]->GetBinContent(i,j)-1.)/d0Kinematics[5]->GetBinError(i,j));
+			}
+			if(d0Kinematics[7]->GetBinContent(i,j)>0) {
+				d0KinematicsPulls[2]->Fill((d0Kinematics[7]->GetBinContent(i,j)-1.)/d0Kinematics[7]->GetBinError(i,j));
+			}
+			if(d0Kinematics[9]->GetBinContent(i,j)>0) {
+				d0KinematicsPulls[3]->Fill((d0Kinematics[9]->GetBinContent(i,j)-1.)/d0Kinematics[9]->GetBinError(i,j));
+			}
+		}
+	}
+	c1.SetLogx(0);
+	d0KinematicsPulls[0]->Draw();
+	c1.SaveAs(savedir+"/D0KineACCPulls.pdf");
+	d0KinematicsPulls[1]->Draw();
+	c1.SaveAs(savedir+"/D0KineRECPulls.pdf");
+	d0KinematicsPulls[2]->Draw();
+	c1.SaveAs(savedir+"/D0KineSELPulls.pdf");
+	d0KinematicsPulls[3]->Draw();
+	c1.SaveAs(savedir+"/D0KinePIDPulls.pdf");
 
 	return true;
 }
@@ -2200,7 +2323,7 @@ int main(int argc, char** argv) {
 		if(file.BeginsWith("14") || file.BeginsWith("15") || file.BeginsWith("16") || file.BeginsWith("2") || file.BeginsWith("45")) {
 			dataIsMC=true;
 		}
-		dataFile = "/eos/user/d/dcraik/jets-tuples-new-181203/for_yandex_data_new_"+file+".root";
+		dataFile = "/eos/user/d/dcraik/jets-tuples-new-181204/for_yandex_data_new_"+file+".root";
 	}
 
 	unsigned int npt=3;
@@ -2228,6 +2351,7 @@ int main(int argc, char** argv) {
 		getTruth(&trueD04,&trueD05,&trueSV4,&trueSV5);
 		getTruth(&trueUnfldD04,&trueUnfldD05,&trueUnfldSV4,&trueUnfldSV5,true);
 		testEffs(file,&trueD04);
+		return 0;//TODO
 	}
 
 	//first do D0 fits for denominators
