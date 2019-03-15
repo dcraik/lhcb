@@ -74,20 +74,21 @@ class Ntuple:
         pos = ['x', 'y', 'z']
         cov = ['dx', 'dy', 'dz', 'chi2', 'ndof']
         l0trig = ['%s_%s' % (line,dec) for line in ['l0_hadron','l0_photon','l0_electron','l0_muon','l0_dimuon'] for dec in ['dec','tis','tos']]
-        hlt1trig = ["%s_%s" % (line,dec) for line in ['hlt1_track','hlt1_ditrack'] for dec in ['dec','tis','tos']]
+        hlt1trig = ["%s_%s" % (line,dec) for line in ['hlt1_track','hlt1_ditrack','hlt1_hiptmu'] for dec in ['dec','tis','tos']]
+        hlt2trig = ["%s_%s" % (line,dec) for line in ['hlt2_hiptmu'] for dec in ['dec','tis','tos']]
         self.init('gen', ['idx_pvr', 'idx_jet', 'idx_prnt', 'pid', 'q'] + mom + pos + ['prnt_pid', 'res_pid', 'from_sig'])
         self.init('pvr', pos + cov)
         self.init('svr', ['idx_pvr', 'idx_jet'] + [
-                'idx_trk%i' % i for i in range(0, 10)] + 
+                'idx_trk%i' % i for i in range(0, 10)] +
                   mom + pos + ['dx', 'dy', 'dz', 'm', 'm_cor', 'm_cor_err', 'm_cor_err_full', 'fd_min', 'fd_chi2', 'chi2', 'ip_chi2', 'ip_chi2_sum', 'ip_chi2_min_trk', 'abs_q_sum', 'tau', 'ntrk', 'ntrk_jet', 'jet_dr', 'jet_pt', 'pass', 'bdt0', 'bdt1', 'in_mtr', 'backwards', 'nTBVs'] + l0trig + hlt1trig)
         self.init('jet', ['idx_pvr', 'ntrk', 'nneu'] + mom + l0trig + hlt1trig)
         self.init('trk', ['idx_gen', 'idx_pvr', 'idx_jet'] + mom +
                   ['pid', 'q', 'ip', 'ip_chi2', 'pnn_e', 'pnn_mu', 'pnn_pi',
-                   'pnn_k', 'pnn_p', 'pnn_ghost', 'ecal', 'hcal', 'prb_ghost', 'type', 'is_mu',
-                   'vid', 'x', 'y', 'z'] + l0trig + hlt1trig)# + ['vhit%i' % i for i in range(0, 61)])# + [
+                   'pnn_k', 'pnn_p', 'pnn_ghost', 'ecal', 'hcal', 'prb_ghost', 'type', 'chi2', 'ndof', 'is_mu',
+                   'vid', 'x', 'y', 'z'] + l0trig + hlt1trig + hlt2trig)# + ['vhit%i' % i for i in range(0, 61)])# + [
                    #'vz%i' % i for i in range(0, 61)])
         self.init('neu', ['idx_gen', 'idx_jet'] + mom + ['pid'] + l0trig + hlt1trig)
-        self.init('z0', ['idx_pvr','idx_jet_trk0', 'idx_jet_trk1', 'idx_jet_dr'] + mom + pos + ['m', 'ip', 'ip_chi2','dr_jet'] + ['idx_trk%i' % i for i in range(0, 2)] + l0trig + hlt1trig)
+        self.init('z0', ['idx_pvr','idx_jet_trk0', 'idx_jet_trk1', 'idx_jet_dr'] + mom + pos + ['m', 'ip', 'ip_chi2','dr_jet'] + ['idx_trk%i' % i for i in range(0, 2)] + l0trig + hlt1trig + hlt2trig)
         self.init('jpsi', ['idx_pvr','idx_jet','idx_jet_trk0', 'idx_jet_trk1', 'idx_jet_dr','dr_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 2)] + l0trig + hlt1trig)
         self.init('d0', ['idx_pvr','idx_jet','idx_jet_trk0', 'idx_jet_trk1', 'idx_jet_dr','dr_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 2)] + l0trig + hlt1trig)
         self.init('dp', ['idx_pvr','idx_jet','idx_jet_trk0', 'idx_jet_trk1', 'idx_jet_trk2', 'idx_jet_dr','dr_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 3)] + l0trig + hlt1trig)
@@ -112,12 +113,12 @@ class Ntuple:
         Generate the key for an object.
         """
         key = None
-        try: 
-            key = (obj.momentum().Px(), obj.momentum().Py(), 
+        try:
+            key = (obj.momentum().Px(), obj.momentum().Py(),
                    obj.momentum().Pz())
             try:
                 trk = obj.proto().track()
-                key = (trk.momentum().X(), trk.momentum().Y(), 
+                key = (trk.momentum().X(), trk.momentum().Y(),
                        trk.momentum().Z())
             except:
                 try:
@@ -215,7 +216,7 @@ class Ntuple:
             for key in self.vrs[pre]:
                 val = vrs[key] if key in vrs else -1
                 self.ntuple[pre + '_' + key].push_back(val)
-        elif key in self.ntuple: 
+        elif key in self.ntuple:
             if idx == None: self.ntuple[key].push_back(val)
             elif idx < len(self.ntuple[key]): self.ntuple[key][idx] = val
     def fillMom(self, obj, vrs):
@@ -245,12 +246,14 @@ class Ntuple:
         if not obj or not pid: return
         vrs['prb_ghost'] = obj.ghostProbability()
         vrs['type'] = obj.type()
+        vrs['chi2'] = obj.chi2()
+        vrs['ndof'] = obj.nDoF()
         vrs['vid'] = 1.0
         vids = []
         for vid in obj.lhcbIDs():
             if vid.isVelo():
                 vrs['vid'] *= float(vid.veloID().channelID())/1000000.0
-                vids += [(self.detTool.sensor(vid.veloID()).z(), 
+                vids += [(self.detTool.sensor(vid.veloID()).z(),
                           vid.veloID().channelID())]
                 #station = self.lookupVeloStation(vids[-1][0])
                 #vrs['vz%i' % (station)] = vids[-1][0]
@@ -300,7 +303,7 @@ class Ntuple:
         if not obj: return
         gen = None; wgt = 0; rels = self.genTool.relatedMCPs(obj)
         for rel in rels: gen = rel.to() if rel.weight() > wgt else gen
-        if gen: vrs['idx_gen'] = self.addGen(gen) 
+        if gen: vrs['idx_gen'] = self.addGen(gen)
     def fillTrig(self, obj, vrs):
         if not obj: return
         try:
@@ -314,6 +317,16 @@ class Ntuple:
             vrs['hlt1_ditrack_dec'] = dec.decision()
             vrs['hlt1_ditrack_tis'] = dec.tis()
             vrs['hlt1_ditrack_tos'] = dec.tos()
+            dec = self.hlt1Tool.triggerTisTos(obj,"Hlt1SingleMuonHighPTDecision")
+            vrs['hlt1_hiptmu_dec'] = dec.decision()
+            vrs['hlt1_hiptmu_tis'] = dec.tis()
+            vrs['hlt1_hiptmu_tos'] = dec.tos()
+            self.hlt2Tool.setOfflineInput()
+            self.hlt2Tool.addToOfflineInput(obj)
+            dec = self.hlt2Tool.triggerTisTos(obj,"Hlt2SingleMuonHighPTDecision")
+            vrs['hlt2_hiptmu_dec'] = dec.decision()
+            vrs['hlt2_hiptmu_tis'] = dec.tis()
+            vrs['hlt2_hiptmu_tos'] = dec.tos()
         except:
             pass
         if not self.hasL0: return
@@ -364,7 +377,7 @@ class Ntuple:
                     if bestDr > dr:
                         bestDr = dr
                         bestJet = idx
-            
+
             for dau in obj.daughters():
                 trks.append(self.addTrk(dau))
             pvr = self.pvrTool.relatedPV(obj, 'Rec/Vertex/Primary')
@@ -416,7 +429,7 @@ class Ntuple:
                 if bestDr > dr:
                     bestDr = dr
                     bestJetDr = idx
-            
+
             for dau in obj.daughters():
                 trks.append(self.addTrk(dau))
             pvr = self.pvrTool.relatedPV(obj, 'Rec/Vertex/Primary')
@@ -457,7 +470,7 @@ class Ntuple:
                 j1ty = jet1.numericalInfo()["6#Particle.slopes.y"]
                 j1p  = 1./jet1.numericalInfo()["7#Particle.1/p"]
                 j1m  = jet1.numericalInfo()["1#Particle.measuredMass"]
-                j1Denom = (1. + j1tx**2. + j1ty**2.)**.5 
+                j1Denom = (1. + j1tx**2. + j1ty**2.)**.5
                 j1px = j1p * j1tx / j1Denom
                 j1py = j1p * j1ty / j1Denom
                 j1pz = j1p  / j1Denom
@@ -467,7 +480,7 @@ class Ntuple:
                 j2ty = jet2.numericalInfo()["6#Particle.slopes.y"]
                 j2p  = 1./jet2.numericalInfo()["7#Particle.1/p"]
                 j2m  = jet2.numericalInfo()["1#Particle.measuredMass"]
-                j2Denom = (1. + j2tx**2. + j2ty**2.)**.5 
+                j2Denom = (1. + j2tx**2. + j2ty**2.)**.5
                 j2px = j2p * j2tx / j2Denom
                 j2py = j2p * j2ty / j2Denom
                 j2pz = j2p  / j2Denom
@@ -500,7 +513,7 @@ class Ntuple:
                 j2_nmu=0
                 j1_dr=0.5
                 j2_dr=0.5
-                
+
                 try:
                     jets = self.tes[self.jetPath]
                     for idx, jet in enumerate(jets):
@@ -548,7 +561,7 @@ class Ntuple:
                 vrs['j2_nmu'] = j2_nmu
 
                 self.fill(pre, vrs = vrs)
-           
+
     def addGen(self, obj, jet = -1, pre = 'gen', par = None):
         key = self.key(obj)
         if key in self.saved[pre]: return self.saved[pre][key]

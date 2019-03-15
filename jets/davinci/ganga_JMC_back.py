@@ -13,7 +13,8 @@ job_name = "RIIJ_JMC_back" + str(note) + str(polarity) + str(mode)
 print job_name
 print script
 
-DV = GaudiExec(directory="~/DaVinciDev_v42r6p1")
+#DV = GaudiExec(directory="~/DaVinciDev_v42r6p1")
+DV = GaudiExec(directory="~/DaVinciDev_v44r9")
 DV.options = [script]
 DV.useGaudiRun = False
 
@@ -52,7 +53,7 @@ else:
     j.splitter       = SplitByFiles(filesPerJob = 1, maxFiles = -1, ignoremissing=True)
     j.backend        = Dirac()
     j.outputfiles    = [DiracFile("*.root")]
-    
+
 
 #j.application.readInputData(path)
 j.parallel_submit = True

@@ -18,7 +18,7 @@ JetPtMin = 10 * Units.GeV
 
 ## Data.
 #from GaudiConf import IOHelper
-#IOHelper('ROOT').inputFiles(['/eos/lhcb/grid/prod/lhcb/LHCb/Collision16/EW.DST/00061346/0000/00061346_00007712_1.ew.dst'],#/tmp/dcraik/00042952_00000002_1.ldst'], #/data/dst/MC15.MD.49000004.1.00.dst'],
+#IOHelper('ROOT').inputFiles(['/eos/lhcb/grid/prod/lhcb/LHCb/Collision16/EW.DST/00069603/0000/00069603_00005740_1.ew.dst'],#'/eos/lhcb/grid/prod/lhcb/LHCb/Collision16/EW.DST/00061346/0000/00061346_00007712_1.ew.dst'],#/tmp/dcraik/00042952_00000002_1.ldst'], #/data/dst/MC15.MD.49000004.1.00.dst'],
 #                            clear = True)
 ##Type = 'MC'
 
@@ -53,7 +53,7 @@ genJB.Output = 'Phys/JB/MCParticles'
 # Create the reconstructed jets.
 from Configurables import HltParticleFlow, HltJetBuilder
 from StandardParticles import (StdLooseKsDD, StdLooseKsLL, StdLooseKsLD,
-                               StdLooseLambdaDD, StdLooseLambdaLL, 
+                               StdLooseLambdaDD, StdLooseLambdaLL,
                                StdLooseLambdaLD)
 recPF = HltParticleFlow('recPF')
 recPF.Inputs = [
@@ -138,7 +138,7 @@ evtmax = -1
 #except: evtmax = float('inf')
 evtnum = 0
 ntuple = Ntuple('output.root', tes, gaudi.toolsvc(), gaudi.detSvc(), recJB.Output, recSVs.outputLocation(), recMus.algorithm().Output)
-#gaudi.run(21000)#TODO
+#gaudi.run(39000)#TODO
 while evtmax < 0 or evtnum < evtmax:
     gaudi.run(1)
     if not bool(tes['/Event']): break

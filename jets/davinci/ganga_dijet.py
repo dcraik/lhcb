@@ -13,22 +13,39 @@ job_name = "RIIJ_dijet" +str(note) + str(polarity) + str(year)
 print job_name
 print script
 
-DV = GaudiExec(directory="~/DaVinciDev_v42r6p1")
+#DV = GaudiExec(directory="~/DaVinciDev_v42r6p1")
+DV = GaudiExec(directory="~/DaVinciDev_v44r9")
 DV.options = [script]
 DV.useGaudiRun = False
-#BK_locations = []
+BK_locations = []
 
 if year=='2016':
-    path = "datasets/LHCb_Collision16_90000000_Beam6500GeVVeloClosed"+polarity+"_Real Data_Reco16_Stripping28_BHADRONCOMPLETEEVENT.DST.py"
-if year=='2017A':
-    path = "datasets/LHCb_Collision17_Beam6500GeVVeloClosed"+polarity+"_Real Data_Reco17_Stripping29_90000000_BHADRONCOMPLETEEVENT.DST.py"
-if year=='2017B':
-    path = "datasets/LHCb_Collision17_Beam6500GeVVeloClosed"+polarity+"_Real Data_Reco17_Stripping29r1_90000000_BHADRONCOMPLETEEVENT.DST.py"
+    BK_locations = ['/LHCb/Collision16/Beam6500GeV-VeloClosed-'+polarity+'/Real Data/Reco16/Stripping28r1/90000000/BHADRONCOMPLETEEVENT.DST']
+elif year=='2017':
+    BK_locations = ['/LHCb/Collision17/Beam6500GeV-VeloClosed-'+polarity+'/Real Data/Reco17/Stripping29r2/90000000/BHADRONCOMPLETEEVENT.DST']
+elif year=='2018':
+    BK_locations = ['/LHCb/Collision18/Beam6500GeV-VeloClosed-'+polarity+'/Real Data/Reco18/Stripping34/90000000/BHADRONCOMPLETEEVENT.DST']
+else:
+    sys.exit()
+data = LHCbDataset()
+bk = BKQuery()
+
+if note not in ["test","testgrid"]:
+    for path in BK_locations:
+        bk.path = path
+        tmp = bk.getDataset()
+        print path, len(tmp.files)
+        if len(tmp.files) > 0:
+            data.extend( tmp )
+
+    if len(data.files) < 1:
+        sys.exit()
+
 
 j = Job(
   name           = job_name,
   application    = DV,
-  #inputdata      = data,
+  inputdata      = data,
   #do_auto_resubmit = True,
   inputfiles = [LocalFile('commonSelections.py'), LocalFile('Ntuple.py')]
   )
@@ -47,14 +64,8 @@ else:
     j.outputfiles    = [DiracFile("*.root")]
 
 if note in ["test","testgrid"]:
-    if year=='2016':
         j.inputdata = LHCbDataset(['LFN:/lhcb/LHCb/Collision16/BHADRONCOMPLETEEVENT.DST/00069603/0000/00069603_00001488_1.bhadroncompleteevent.dst'])
-    if year=='2017A':
-        j.inputdata = LHCbDataset(['LFN:/lhcb/LHCb/Collision17/BHADRONCOMPLETEEVENT.DST/00064383/0000/00064383_00000017_1.bhadroncompleteevent.dst'])
-    if year=='2017B':
-        j.inputdata = LHCbDataset(['LFN:/lhcb/LHCb/Collision17/BHADRONCOMPLETEEVENT.DST/00066597/0000/00066597_00000009_1.bhadroncompleteevent.dst'])
-else:
-    j.application.readInputData(path)
+
 j.parallel_submit = True
 
 queues.add(j.submit)

@@ -13,7 +13,8 @@ job_name = "RIIJ_DMC" + str(note) + str(polarity) + str(mode)
 print job_name
 print script
 
-DV = GaudiExec(directory="~/DaVinciDev_v42r6p1")
+#DV = GaudiExec(directory="~/DaVinciDev_v42r6p1")
+DV = GaudiExec(directory="~/DaVinciDev_v44r9")
 DV.options = [script]
 #DV.options = ['commonSelections.py','Ntuple.py','Run2Jets_DMC.py']
 DV.useGaudiRun = False
