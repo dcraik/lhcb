@@ -8,6 +8,8 @@ year = str(sys.argv[2]) #2015, 2016
 note = str(sys.argv[3])
 
 script=str('Run2Jets_dijet.py')
+if year=='2017':
+    script=str('~/git/lhcb/jets/davinci/Run2Jets_dijet17.py')
 
 job_name = "RIIJ_dijet" +str(note) + str(polarity) + str(year)
 print job_name
