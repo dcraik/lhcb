@@ -70,10 +70,10 @@ class Ntuple:
         self.tfile   = ROOT.TFile('output.root', 'RECREATE')
         self.ttree   = ROOT.TTree('data', 'data')
         self.vrs     = {}
-        mom = ['p','pt','px', 'py', 'pz', 'e']
+        mom = ['p','pt','px', 'py', 'pz', 'e', 'dp', 'dpt', 'dpx', 'dpy', 'dpz', 'de']
         pos = ['x', 'y', 'z']
         cov = ['dx', 'dy', 'dz', 'chi2', 'ndof']
-        l0trig = ['%s_%s' % (line,dec) for line in ['l0_hadron','l0_photon','l0_electron','l0_muon','l0_dimuon'] for dec in ['dec','tis','tos']]
+        l0trig = ['%s_%s' % (line,dec) for line in ['l0_hadron','l0_photon','l0_electron','l0_muon','l0_dimuon','l0_ewmuon'] for dec in ['dec','tis','tos']]
         hlt1trig = ["%s_%s" % (line,dec) for line in ['hlt1_track','hlt1_ditrack','hlt1_hiptmu'] for dec in ['dec','tis','tos']]
         hlt2trig = ["%s_%s" % (line,dec) for line in ['hlt2_hiptmu'] for dec in ['dec','tis','tos']]
         self.init('gen', ['idx_pvr', 'idx_jet', 'idx_prnt', 'pid', 'q'] + mom + pos + ['prnt_pid', 'res_pid', 'from_sig'])
@@ -219,7 +219,7 @@ class Ntuple:
         elif key in self.ntuple:
             if idx == None: self.ntuple[key].push_back(val)
             elif idx < len(self.ntuple[key]): self.ntuple[key][idx] = val
-    def fillMom(self, obj, vrs):
+    def fillMom(self, obj, vrs, cov=None):
         if not obj: return
         vrs['p'] = obj.P()
         vrs['pt'] = obj.Pt()
@@ -227,6 +227,14 @@ class Ntuple:
         vrs['py'] = obj.Py()
         vrs['pz'] = obj.Pz()
         vrs['e' ] = obj.E()
+        if cov:
+            vrs['dpx'] = cov[0][0]**.5
+            vrs['dpy'] = cov[1][1]**.5
+            vrs['dpz'] = cov[2][2]**.5
+            vrs['de']  = cov[3][3]**.5
+            vrs['dpt'] = ( cov[0][0]*(vrs['px']/vrs['pt'])**2. + cov[1][1]*(vrs['py']/vrs['pt'])**2. + 2*cov[0][1]*vrs['px']*vrs['py']/(vrs['pt'])**2.)**.5
+            vrs['dp']  = ( cov[0][0]*(vrs['px']/vrs['p'])**2. + cov[1][1]*(vrs['py']/vrs['p'])**2. + cov[2][2]*(vrs['pz']/vrs['p'])**2. \
+                       + 2*cov[0][1]*vrs['px']*vrs['py']/(vrs['p'])**2. + 2*cov[0][2]*vrs['px']*vrs['pz']/(vrs['p'])**2. + 2*cov[1][2]*vrs['py']*vrs['pz']/(vrs['p'])**2.)**.5
     def fillPid(self, obj, vrs):
         if not obj: return
         vrs['pid'] = obj.pid()
@@ -353,6 +361,10 @@ class Ntuple:
             vrs['l0_dimuon_dec'] = dec.decision()
             vrs['l0_dimuon_tis'] = dec.tis()
             vrs['l0_dimuon_tos'] = dec.tos()
+            dec = self.l0Tool.triggerTisTos("L0MuonEWDecision")
+            vrs['l0_ewmuon_dec'] = dec.decision()
+            vrs['l0_ewmuon_tis'] = dec.tis()
+            vrs['l0_ewmuon_tos'] = dec.tos()
         except:
             pass
 
@@ -385,7 +397,7 @@ class Ntuple:
             self.fillDst(obj, pvr, 'ip', vrs)
             ##self.fillDst(obj.endVertex(), pvr, 'fd', vrs)
             ##self.fillLifetime(obj, pvr, vrs)
-            self.fillMom(obj.momentum(), vrs)
+            self.fillMom(obj.momentum(), vrs, obj.momCovMatrix())
             ##self.fillPos(obj.endVertex(), vrs)
             ##self.fillVtx(obj.vertex(), vrs)
             self.fillTrig(obj, vrs)
@@ -437,7 +449,7 @@ class Ntuple:
             self.fillDst(obj, pvr, 'ip', vrs)
             self.fillDst(obj.endVertex(), pvr, 'fd', vrs)
             self.fillLifetime(obj, pvr, vrs)
-            self.fillMom(obj.momentum(), vrs)
+            self.fillMom(obj.momentum(), vrs, obj.momCovMatrix())
             self.fillPos(obj.endVertex(), vrs)
             self.fillVtx(obj.vertex(), vrs)
             self.fillTrig(obj, vrs)
@@ -711,7 +723,7 @@ class Ntuple:
         vrs = {}
         idx = len(self.saved[pre])
         pvr = self.pvrTool.relatedPV(obj, 'Rec/Vertex/Primary')
-        self.fillMom(obj.momentum(), vrs)
+        self.fillMom(obj.momentum(), vrs, obj.momCovMatrix())
         self.fillPid(obj.particleID(), vrs)
         self.fillPro(obj.proto(), vrs)
         self.fillDst(obj, pvr, 'ip', vrs)
