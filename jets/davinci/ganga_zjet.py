@@ -8,6 +8,8 @@ year = str(sys.argv[2]) #2016, 2017, 2018
 note = str(sys.argv[3])
 
 script=str('~/git/lhcb/jets/davinci/Run2Jets_zjet.py')
+if year=='2015':
+    script=str('~/git/lhcb/jets/davinci/Run2Jets_zjet15.py')
 if year=='2017':
     script=str('~/git/lhcb/jets/davinci/Run2Jets_zjet17.py')
 if year=='2018':
@@ -24,7 +26,9 @@ DV.useGaudiRun = False
 
 BK_locations = []
 
-if year=='2016':
+if year=='2015':
+    bk_locations = ['/LHCb/Collision15/Beam6500GeV-VeloClosed-'+polarity+'/Real Data/Reco15a/Stripping24r1/90000000/EW.DST']
+elif year=='2016':
     BK_locations = ['/LHCb/Collision16/Beam6500GeV-VeloClosed-'+polarity+'/Real Data/Reco16/Stripping28r1/90000000/EW.DST']
 elif year=='2017':
     BK_locations = ['/LHCb/Collision17/Beam6500GeV-VeloClosed-'+polarity+'/Real Data/Reco17/Stripping29r2/90000000/EW.DST']
