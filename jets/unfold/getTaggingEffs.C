@@ -50,22 +50,32 @@ enum fitType{
 	fitSBS1D
 };
 
+enum svFitType{
+	fitBoth,
+	fitMCorr,
+	fitNTrk
+};
+
 //globals to save passing these around
 fitType whichFit(fitSBS1D);
+svFitType whichSVFit(fitBoth);
 double d0minpt(5000);
 double d0maxpt(-1);
 TString savedir("output");
+bool useSimpleEff(false);
+bool useRhoZEffCor(true);
 
 //the following globals give the locations of input tuples
 //these may be overridden in certain cases, e.g. if doing an MC closure test
-TString charmSimFile  = "/eos/user/d/dcraik/jets-tuples-new-181204/for_yandex_data_new_14X.root";
-TString beautySimFile = "/eos/user/d/dcraik/jets-tuples-new-181204/for_yandex_data_new_15X.root";
-TString lightSimFile  = "/eos/user/d/dcraik/jets-tuples-new-181204/for_yandex_data_new_101.root";
-TString dataFile      = "/eos/user/d/dcraik/jets-tuples-new-181204/for_yandex_data_new_100.root";
+TString charmSimFile  = "/eos/user/d/dcraik/jets-tuples-new-190210/for_yandex_data_new_14X.root";
+TString beautySimFile = "/eos/user/d/dcraik/jets-tuples-new-190210/for_yandex_data_new_15X.root";
+TString lightSimFile  = "/eos/user/d/dcraik/jets-tuples-new-190210/for_yandex_data_new_101.root";
+TString dataFile      = "/eos/user/d/dcraik/jets-tuples-new-190210/for_yandex_data_new_100.root";
 
 //efficiency inputs - update these with latest version numbers
-TString effFile = "../efficiencies/D0Effs_2XX_16x8bins_up181204.root";
-TString accFile = "../efficiencies/D0AccEffNewUp181207.root";
+TString simpleEffFile = "../efficiencies/SimpleEffs_2XX_16x8bins_up190216.root";
+TString effFile = "../efficiencies/D0Effs_2XX_16x8bins_up190213.root";
+TString accFile = "../efficiencies/D0AccEffNewUp190205.root";
 
 bool dataIsMC(false);
 bool dataIsResampledMC(false);
@@ -150,6 +160,8 @@ void plotFit(RooRealVar& var, double min, double max, int nbins, RooAbsData* dh,
 
 	c1.SaveAs(savedir+"/"+name+"_fit.pdf");
 	c1.SaveAs(savedir+"/"+name+"_fit.png");
+	c1.SetLogy();
+	c1.SaveAs(savedir+"/"+name+"_fit_log.pdf");
 
 	delete plot;
 }
@@ -201,6 +213,52 @@ void printParams(TString file, const RooArgList& params) {
 		fprintf(pFile, format, title.Data(), value, error);
 	}
 	fclose(pFile);
+}
+
+double getPtCorrFactor(jetType type, double ptMin, double ptMax) {
+	TFile* f(0);
+	TTree* t(0);
+	TString cut1;
+	TString cut2;
+	double corr(1.);
+
+	cut1 = "JetPT>"; cut1+=ptMin; cut1+=" && JetPT<"; cut1+=ptMax;
+	cut2 = "JetPT>"; cut2+=ptMin; cut2+=" && JetPT<"; cut2+=ptMax;
+
+	switch(type) {
+		case jetRecoD04:
+			std::cout << "getting pT correction factor for c->D0 in " << ptMin << " to " << ptMax << " bin..." << std::endl;
+			return corr;//no correction needed
+		case jetRecoSV4:
+			std::cout << "getting pT correction factor for c->SV in " << ptMin << " to " << ptMax << " bin..." << std::endl;
+			f = TFile::Open(charmSimFile);
+			cut1+=" && JetTRUEc && !JetTRUEb && TRUEDID[0] && TRUEDPT>5000. && SVM[0]";
+			cut2+=" && JetTRUEc && !JetTRUEb && TRUEDID[0] && SVM[0]";
+			break;
+		case jetRecoD05:
+			std::cout << "getting pT correction factor for b->D0 in " << ptMin << " to " << ptMax << " bin..." << std::endl;
+			f = TFile::Open(beautySimFile);
+			//cut1+=" && JetTRUEb && !JetTRUEc && TRUEDID[0] && TRUEBID[0] && TRUEDTRUEB>-1 && TRUEBPT>5000.";
+			//cut2+=" && JetTRUEb && !JetTRUEc && TRUEDID[0] && TRUEBID[0] && TRUEDTRUEB>-1 && TRUEDPT>5000.";
+			cut1+=" && JetTRUEb && !JetTRUEc && TMath::Abs(TRUEDID)==421 && TRUEDTRK0IDX!=-1 && TRUEDTRK2IDX==-1 && TRUEDTRUEB!=-1 && TRUEBPT[TRUEDTRUEB]>5.e3";
+			cut2+=" && JetTRUEb && !JetTRUEc && TMath::Abs(TRUEDID)==421 && TRUEDTRK0IDX!=-1 && TRUEDTRK2IDX==-1 && TRUEDTRUEB!=-1 && TRUEDPT>5.e3";
+			break;
+		case jetRecoSV5:
+			std::cout << "getting pT correction factor for b->SV in " << ptMin << " to " << ptMax << " bin..." << std::endl;
+			f = TFile::Open(beautySimFile);
+			cut1+=" && JetTRUEb && !JetTRUEc && TRUEBID[0] && TRUEBPT>5000. && SVM[0]";
+			cut2+=" && JetTRUEb && !JetTRUEc && TRUEBID[0] && SVM[0]";
+			break;
+	}
+
+	if(!f) return 1.;
+	t = dynamic_cast<TTree*>(f->Get("T"));
+	if(!t) return 1.;
+
+	corr = t->GetEntries(cut1)/static_cast<double>(t->GetEntries(cut2));
+	std::cout << "Correction factor: " << corr << std::endl;
+	f->Close();
+	return corr;
 }
 
 void makeTrainTestSamples(int sample) {
@@ -363,8 +421,8 @@ RooUnfoldResponse* trainUnfold(TH1* binning, jetType type, TString file) {
 	return resp;
 }
 
-
-bool addEffs(TString file) {
+//this method doesn't try to correct acceptance and reconstruction for vertex-location effects
+bool addEffsOld(TString file) {
 	std::cout << "INFO : adding efficiencies to file " << file << std::endl;
 	TFile* f0 = TFile::Open(dataFile);
 
@@ -527,7 +585,377 @@ bool addEffs(TString file) {
 	return true;
 }
 
-bool testEffs(TString file, TH1D* ptBinScheme) {
+
+bool addEffs(TString file) {
+	std::cout << "INFO : adding efficiencies to file " << file << std::endl;
+	TFile* f0 = TFile::Open(dataFile);
+
+	TFile* f2 = TFile::Open(effFile);
+	TFile* f3 = TFile::Open(accFile);
+
+	TTree* t0 = dynamic_cast<TTree*>(f0->Get("T"));
+
+	if(!t0) return false;
+
+	TH2D* hacc = dynamic_cast<TH2D*>(f3->Get("eff"));
+	TH2D* hrec = dynamic_cast<TH2D*>(f3->Get("reff"));
+	//the following histogram give a vertex-position-dependent correction to the two-track efficiency
+	TH2D* hcor = dynamic_cast<TH2D*>(f3->Get("corr"));
+
+	TH2D* hpid(0);
+	//if(dataIsMC) hpid = dynamic_cast<TH2D*>(f2->Get("pidmceffD045"));
+	//else hpid = dynamic_cast<TH2D*>(f2->Get("pideffD045"));
+	hpid = dynamic_cast<TH2D*>(f2->Get("pideffD045"));
+	TH2D* hsel4 = dynamic_cast<TH2D*>(f2->Get("seleffD04"));
+	TH2D* hsel5 = dynamic_cast<TH2D*>(f2->Get("seleffD05"));
+	//TH2D* hacc  = dynamic_cast<TH2D*>(f2->Get("acceffD045")); //superseded by RapidSim version
+	//TH2D* hrec  = dynamic_cast<TH2D*>(f2->Get("receffD045"));
+
+	if(!hacc || !hrec || !hcor || !hpid || !hsel4 || !hsel5) return false;
+
+	//plot efficiency functions used
+	TCanvas c1;
+	hacc->GetXaxis()->SetTitle("#it{p}_{T}(#it{D}^{0}) [GeV/#it{c}^{2}]");
+	hacc->GetYaxis()->SetTitle("#it{#eta}(#it{D}^{0})");
+	hrec->GetXaxis()->SetTitle("#it{p}_{T}(#it{D}^{0}) [GeV/#it{c}^{2}]");
+	hrec->GetYaxis()->SetTitle("#it{#eta}(#it{D}^{0})");
+	hcor->GetXaxis()->SetTitle("#it{#rho}^{2}(#it{D}^{0}) [mm^{2}]");
+	hcor->GetYaxis()->SetTitle("#it{z}(#it{D}^{0}) [mm]");
+	hsel4->GetXaxis()->SetTitle("#it{p}_{T}(#it{D}^{0}) [MeV/#it{c}^{2}]");
+	hsel4->GetYaxis()->SetTitle("#it{#eta}(#it{D}^{0})");
+	hsel5->GetXaxis()->SetTitle("#it{p}_{T}(#it{D}^{0}) [MeV/#it{c}^{2}]");
+	hsel5->GetYaxis()->SetTitle("#it{#eta}(#it{D}^{0})");
+	hpid->GetXaxis()->SetTitle("#it{p}_{T}(#it{D}^{0}) [MeV/#it{c}^{2}]");
+	hpid->GetYaxis()->SetTitle("#it{#eta}(#it{D}^{0})");
+	hacc->Draw("colz");
+	c1.SaveAs(savedir+"/D0EffAcc.pdf");
+	hrec->Draw("colz");
+	c1.SaveAs(savedir+"/D0EffRec.pdf");
+	hcor->Draw("colz");
+	c1.SaveAs(savedir+"/D0EffRecCor.pdf");
+	hsel4->Draw("colz");
+	c1.SaveAs(savedir+"/D0EffSelPrompt.pdf");
+	hsel5->Draw("colz");
+	c1.SaveAs(savedir+"/D0EffSelDispl.pdf");
+	hpid->Draw("colz");
+	c1.SaveAs(savedir+"/D0EffPID.pdf");
+
+	std::vector<double> *vD0M = new std::vector<double>();
+	std::vector<double> *vD0IPCHI2 = new std::vector<double>();
+	std::vector<double> *vD0PT = new std::vector<double>();
+	std::vector<double> *vD0PX = new std::vector<double>();
+	std::vector<double> *vD0PY = new std::vector<double>();
+	std::vector<double> *vD0PZ = new std::vector<double>();
+	std::vector<double> *vD0E = new std::vector<double>();
+	std::vector<double> *vD0X = new std::vector<double>();
+	std::vector<double> *vD0Y = new std::vector<double>();
+	std::vector<double> *vD0Z = new std::vector<double>();
+	std::vector<double> *vD0KP = new std::vector<double>();
+	std::vector<double> *vD0KPT = new std::vector<double>();
+	std::vector<double> *vD0KPX = new std::vector<double>();
+	std::vector<double> *vD0KPY = new std::vector<double>();
+	std::vector<double> *vD0KPZ = new std::vector<double>();
+	std::vector<double> *vD0PIP = new std::vector<double>();
+	std::vector<double> *vD0PIPT = new std::vector<double>();
+	std::vector<double> *vD0PIPX = new std::vector<double>();
+	std::vector<double> *vD0PIPY = new std::vector<double>();
+	std::vector<double> *vD0PIPZ = new std::vector<double>();
+	std::vector<double> *vD0KPNNK = new std::vector<double>();
+	std::vector<double> *vD0PIPNNPI = new std::vector<double>();
+	std::vector<double> *vD0KWEIGHT = new std::vector<double>();
+	std::vector<double> *vD0PIWEIGHT = new std::vector<double>();
+
+	double JetPT;
+	double JetEta;
+	double JetTruePT;
+
+	t0->SetBranchAddress("D0M",           &vD0M);
+	t0->SetBranchAddress("D0IPCHI2",      &vD0IPCHI2);
+	t0->SetBranchAddress("D0PT",          &vD0PT);
+	t0->SetBranchAddress("D0PX",          &vD0PX);
+	t0->SetBranchAddress("D0PY",          &vD0PY);
+	t0->SetBranchAddress("D0PZ",          &vD0PZ);
+	t0->SetBranchAddress("D0E",           &vD0E);
+	t0->SetBranchAddress("D0X",           &vD0X);
+	t0->SetBranchAddress("D0Y",           &vD0Y);
+	t0->SetBranchAddress("D0Z",           &vD0Z);
+	t0->SetBranchAddress("D0KP",          &vD0KP);
+	t0->SetBranchAddress("D0KPT",         &vD0KPT);
+	t0->SetBranchAddress("D0KPX",         &vD0KPX);
+	t0->SetBranchAddress("D0KPY",         &vD0KPY);
+	t0->SetBranchAddress("D0KPZ",         &vD0KPZ);
+	t0->SetBranchAddress("D0PIP",         &vD0PIP);
+	t0->SetBranchAddress("D0PIPT",        &vD0PIPT);
+	t0->SetBranchAddress("D0PIPX",        &vD0PIPX);
+	t0->SetBranchAddress("D0PIPY",        &vD0PIPY);
+	t0->SetBranchAddress("D0PIPZ",        &vD0PIPZ);
+	t0->SetBranchAddress("D0KPNNK",       &vD0KPNNK);
+	t0->SetBranchAddress("D0PIPNNPI",     &vD0PIPNNPI);
+	t0->SetBranchAddress("D0KWEIGHT",     &vD0KWEIGHT);
+	t0->SetBranchAddress("D0PIWEIGHT",    &vD0PIWEIGHT);
+
+	t0->SetBranchAddress("JetPT",         &JetPT);
+	t0->SetBranchAddress("JetEta",        &JetEta);
+	if(dataIsMC) t0->SetBranchAddress("JetTruePT",     &JetTruePT);
+
+	unsigned int nentries0 = t0->GetEntries();
+
+	TFile* fout = TFile::Open("D0jets"+file+".root","RECREATE");
+	TTree* tout = new TTree("T","");
+
+	double D0M(0.), D0PT(0.), D0Eta(0.), D0LogIPChi2(0.), weight4(0.), weight5(0.);
+	double D0RhoSq(0.), D0Z(0.);
+
+	tout->Branch("JetPT",        &JetPT);
+	tout->Branch("JetEta",       &JetEta);
+	tout->Branch("D0M",          &D0M);
+	tout->Branch("D0PT",         &D0PT);
+	tout->Branch("D0Eta",        &D0Eta);
+	tout->Branch("D0LogIPChi2",  &D0LogIPChi2);
+	tout->Branch("weight4",      &weight4);
+	tout->Branch("weight5",      &weight5);
+
+	if(dataIsMC) tout->Branch("JetTruePT", &JetTruePT);
+
+	//first make non-vector tree for fits
+	boost::progress_display progress( nentries0 );
+	for(unsigned int ientry=0; ientry<nentries0; ++ientry) {
+		++progress;
+		t0->GetEntry(ientry);
+
+		for(unsigned int s=0; s<vD0M->size(); ++s) {
+			//first check in our tight acceptance
+			TVector3 D0P (vD0PX->at(s)  ,vD0PY->at(s)  ,vD0PZ->at(s));
+			TVector3 D0P0(vD0KPX->at(s) ,vD0KPY->at(s) ,vD0KPZ->at(s));
+			TVector3 D0P1(vD0PIPX->at(s),vD0PIPY->at(s),vD0PIPZ->at(s));
+
+			if(!(D0P0.Eta()>2. && D0P0.Eta()<4.5 && D0P0.Pt()>500. && D0P0.Mag()>5000.)) continue;
+			if(!(D0P1.Eta()>2. && D0P1.Eta()<4.5 && D0P1.Pt()>500. && D0P1.Mag()>5000.)) continue;
+			if(!(D0P.Pt()>d0minpt)) continue;
+			if(!(d0maxpt==-1 || D0P.Pt() < d0maxpt) ) continue;
+
+			//check PID cuts
+			if(!dataIsMC && vD0KPNNK->at(s)<0.2 && D0P0.Pt()<25000. && D0P0.Mag()<500000.) continue; //kaon PID turned off for high p or pT
+			//if(!dataIsMC && vD0PIPNNPI->at(s)<0.1 && D0P0.Pt()<25000. && D0P0.Mag()<500000.) continue; //pion PID turned off
+
+			D0M         = vD0M->at(s);
+			D0LogIPChi2 = TMath::Log(vD0IPCHI2->at(s));
+			D0PT        = D0P.Pt();
+			D0Eta       = D0P.Eta();
+			D0RhoSq     = vD0X->at(s)*vD0X->at(s) + vD0Y->at(s)*vD0Y->at(s);
+			D0Z         = vD0Z->at(s);
+
+			//get efficiency corrections
+			double effacc(0.), effrec(0.), effcor(1.), effsel4(0.), effsel5(0.), effpid(0.);
+
+			if(D0PT>=100000.) D0PT=99999.;
+			effacc =      hacc ->GetBinContent(hacc ->FindBin(D0PT/1000.,D0Eta));
+			effrec =      hrec ->GetBinContent(hrec ->FindBin(D0PT/1000.,D0Eta));
+			if(useRhoZEffCor) effcor = hcor ->GetBinContent(hcor ->FindBin(D0RhoSq   ,D0Z  ));
+			effsel4=      hsel4->GetBinContent(hsel4->FindBin(D0PT      ,D0Eta));
+			effsel5=      hsel5->GetBinContent(hsel5->FindBin(D0PT      ,D0Eta));
+			effpid =      hpid ->GetBinContent(hpid ->FindBin(D0PT      ,D0Eta));
+
+			double eff4=effacc*effrec*effcor*effsel4*effpid;
+			double eff5=effacc*effrec*effcor*effsel5*effpid;
+
+			if(eff4<0.01 || eff5<0.01) {
+				std::cout << D0PT << "\t" << D0Eta << "\t" << effacc << "\t" << effrec << "\t" << effcor << "\t" << effsel4 << "\t" << effsel5 << "\t" << effpid << std::endl;
+				if(effcor==0) std::cout << D0RhoSq << "\t" << D0Z << std::endl;//TODO
+				continue;
+			}
+
+			weight4 = 1./eff4;
+			weight5 = 1./eff5;
+
+			if(dataIsMC) {
+				//put the PID efficiency into the weights for MC
+				if(D0P0.Pt()<25000. && D0P0.Mag()<500000.) {
+					weight4 *= vD0KWEIGHT->at(s);
+					weight5 *= vD0KWEIGHT->at(s);
+				}
+				//currently no pion PID
+				//if(D0P1.Pt()<25000. && D0P1.Mag()<500000.) {
+				//	weight4 *= vD0PIWEIGHT->at(s);
+				//	weight5 *= vD0PIWEIGHT->at(s);
+				//}
+				//scale weights for roughly continuous jet true pT
+				if(JetTruePT>50000.) {
+					weight4*=0.007;
+					weight5*=0.007;
+				} else if(JetTruePT>20000.) {
+					weight4*=0.10;
+					weight5*=0.10;
+				} else if(JetTruePT>15000.) {
+					weight4*=0.25;
+					weight5*=0.25;
+				}
+			}
+
+			tout->Fill();
+			break;//only keep one D0 candidate per entry
+		}
+	}
+
+	tout->AutoSave();
+	fout->Close();
+
+	return true;
+}
+
+bool addEffsSimple(TString file) {
+	std::cout << "INFO : adding efficiencies to file " << file << std::endl;
+	TFile* f0 = TFile::Open(dataFile);
+
+	TFile* f2 = TFile::Open(simpleEffFile);
+
+	TTree* t0 = dynamic_cast<TTree*>(f0->Get("T"));
+
+	if(!t0) return false;
+
+	TH2D* heff4 = dynamic_cast<TH2D*>(f2->Get("effD04"));
+	TH2D* heff5 = dynamic_cast<TH2D*>(f2->Get("effD05"));
+
+	if(!heff4 || !heff5) return false;
+
+	std::vector<double> *vD0M = new std::vector<double>();
+	std::vector<double> *vD0IPCHI2 = new std::vector<double>();
+	std::vector<double> *vD0PT = new std::vector<double>();
+	std::vector<double> *vD0PX = new std::vector<double>();
+	std::vector<double> *vD0PY = new std::vector<double>();
+	std::vector<double> *vD0PZ = new std::vector<double>();
+	std::vector<double> *vD0E = new std::vector<double>();
+	std::vector<double> *vD0X = new std::vector<double>();
+	std::vector<double> *vD0Y = new std::vector<double>();
+	std::vector<double> *vD0Z = new std::vector<double>();
+	std::vector<double> *vD0KP = new std::vector<double>();
+	std::vector<double> *vD0KPT = new std::vector<double>();
+	std::vector<double> *vD0KPX = new std::vector<double>();
+	std::vector<double> *vD0KPY = new std::vector<double>();
+	std::vector<double> *vD0KPZ = new std::vector<double>();
+	std::vector<double> *vD0PIP = new std::vector<double>();
+	std::vector<double> *vD0PIPT = new std::vector<double>();
+	std::vector<double> *vD0PIPX = new std::vector<double>();
+	std::vector<double> *vD0PIPY = new std::vector<double>();
+	std::vector<double> *vD0PIPZ = new std::vector<double>();
+	std::vector<double> *vD0KPNNK = new std::vector<double>();
+	std::vector<double> *vD0PIPNNPI = new std::vector<double>();
+
+	double JetPT;
+	double JetEta;
+	double JetTruePT;
+
+	t0->SetBranchAddress("D0M",           &vD0M);
+	t0->SetBranchAddress("D0IPCHI2",      &vD0IPCHI2);
+	t0->SetBranchAddress("D0PT",          &vD0PT);
+	t0->SetBranchAddress("D0PX",          &vD0PX);
+	t0->SetBranchAddress("D0PY",          &vD0PY);
+	t0->SetBranchAddress("D0PZ",          &vD0PZ);
+	t0->SetBranchAddress("D0E",           &vD0E);
+	t0->SetBranchAddress("D0X",           &vD0X);
+	t0->SetBranchAddress("D0Y",           &vD0Y);
+	t0->SetBranchAddress("D0Z",           &vD0Z);
+	t0->SetBranchAddress("D0KP",          &vD0KP);
+	t0->SetBranchAddress("D0KPT",         &vD0KPT);
+	t0->SetBranchAddress("D0KPX",         &vD0KPX);
+	t0->SetBranchAddress("D0KPY",         &vD0KPY);
+	t0->SetBranchAddress("D0KPZ",         &vD0KPZ);
+	t0->SetBranchAddress("D0PIP",         &vD0PIP);
+	t0->SetBranchAddress("D0PIPT",        &vD0PIPT);
+	t0->SetBranchAddress("D0PIPX",        &vD0PIPX);
+	t0->SetBranchAddress("D0PIPY",        &vD0PIPY);
+	t0->SetBranchAddress("D0PIPZ",        &vD0PIPZ);
+	t0->SetBranchAddress("D0KPNNK",       &vD0KPNNK);
+	t0->SetBranchAddress("D0PIPNNPI",     &vD0PIPNNPI);
+
+	t0->SetBranchAddress("JetPT",         &JetPT);
+	t0->SetBranchAddress("JetEta",        &JetEta);
+	if(dataIsMC) t0->SetBranchAddress("JetTruePT",     &JetTruePT);
+
+	unsigned int nentries0 = t0->GetEntries();
+
+	TFile* fout = TFile::Open("D0jets"+file+".root","RECREATE");
+	TTree* tout = new TTree("T","");
+
+	double D0M(0.), D0PT(0.), D0Eta(0.), D0LogIPChi2(0.), weight4(0.), weight5(0.);
+
+	tout->Branch("JetPT",        &JetPT);
+	tout->Branch("JetEta",       &JetEta);
+	tout->Branch("D0M",          &D0M);
+	tout->Branch("D0PT",         &D0PT);
+	tout->Branch("D0Eta",        &D0Eta);
+	tout->Branch("D0LogIPChi2",  &D0LogIPChi2);
+	tout->Branch("weight4",      &weight4);
+	tout->Branch("weight5",      &weight5);
+
+	if(dataIsMC) tout->Branch("JetTruePT", &JetTruePT);
+
+	//first make non-vector tree for fits
+	boost::progress_display progress( nentries0 );
+	for(unsigned int ientry=0; ientry<nentries0; ++ientry) {
+		++progress;
+		t0->GetEntry(ientry);
+
+		for(unsigned int s=0; s<vD0M->size(); ++s) {
+			//first check in our tight acceptance
+			TVector3 D0P (vD0PX->at(s)  ,vD0PY->at(s)  ,vD0PZ->at(s));
+			TVector3 D0P0(vD0KPX->at(s) ,vD0KPY->at(s) ,vD0KPZ->at(s));
+			TVector3 D0P1(vD0PIPX->at(s),vD0PIPY->at(s),vD0PIPZ->at(s));
+
+			if(!(D0P0.Eta()>2. && D0P0.Eta()<4.5 && D0P0.Pt()>500. && D0P0.Mag()>5000.)) continue;
+			if(!(D0P1.Eta()>2. && D0P1.Eta()<4.5 && D0P1.Pt()>500. && D0P1.Mag()>5000.)) continue;
+			if(!(D0P.Pt()>d0minpt)) continue;
+			if(!(d0maxpt==-1 || D0P.Pt() < d0maxpt) ) continue;
+
+			//check PID cuts
+			if(vD0KPNNK->at(s)<0.2 && D0P0.Pt()<25000. && D0P0.Mag()<500000.) continue; //kaon PID turned off for high p or pT
+			//if(vD0PIPNNPI->at(s)<0.1) continue; //pion PID turned off
+
+			D0M         = vD0M->at(s);
+			D0LogIPChi2 = TMath::Log(vD0IPCHI2->at(s));
+			D0PT        = D0P.Pt();
+			D0Eta       = D0P.Eta();
+
+			//get efficiency corrections
+			double eff4(0.), eff5(0.);
+
+			if(D0PT>=100000.) D0PT=99999.;
+			eff4   =      heff4->GetBinContent(heff4->FindBin(D0PT      ,D0Eta));
+			eff5   =      heff5->GetBinContent(heff5->FindBin(D0PT      ,D0Eta));
+
+			if(eff4<0.01 || eff5<0.01) {
+				std::cout << D0PT << "\t" << D0Eta << "\t" << eff4 << "\t" << eff5 << std::endl;
+				continue;
+			}
+
+			weight4 = 1./eff4;
+			weight5 = 1./eff5;
+
+			if(dataIsMC) {//scale weights for roughly continuous jet true pT
+				if(JetTruePT>50000.) {
+					weight4*=0.007;
+					weight5*=0.007;
+				} else if(JetTruePT>20000.) {
+					weight4*=0.10;
+					weight5*=0.10;
+				} else if(JetTruePT>15000.) {
+					weight4*=0.25;
+					weight5*=0.25;
+				}
+			}
+
+			tout->Fill();
+			break;//only keep one D0 candidate per entry
+		}
+	}
+
+	tout->AutoSave();
+	fout->Close();
+
+	return true;
+}
+
+bool testEffsOld(TString file, TH1D* ptBinScheme) {
 	if(!dataIsMC) return false;
 	std::cout << "INFO : testing efficiencies for file " << file << std::endl;
 	TFile* f0 = TFile::Open(dataFile);
@@ -779,9 +1207,11 @@ bool testEffs(TString file, TH1D* ptBinScheme) {
 					d0Kinematics[6]->Fill(TRUEDP.Pt(),TRUEDP.Eta());
 
 					//use weights for PID
-					truD0recoPT.at(4)->Fill(JetPT,D0KWEIGHT->at(s)*D0PIWEIGHT->at(s));
-					truD0truePT.at(4)->Fill(JetTruePT,D0KWEIGHT->at(s)*D0PIWEIGHT->at(s));
-					d0Kinematics[8]->Fill(TRUEDP.Pt(),TRUEDP.Eta(),D0KWEIGHT->at(s)*D0PIWEIGHT->at(s));
+					double weight = D0KWEIGHT->at(s);// pion PID removed *D0PIWEIGHT->at(s);
+					if(D0P0.Pt()>25000. || D0P0.Mag()>500000.) weight = 1.; //PID turned off for high P or PT
+					truD0recoPT.at(4)->Fill(JetPT,weight);
+					truD0truePT.at(4)->Fill(JetTruePT,weight);
+					d0Kinematics[8]->Fill(TRUEDP.Pt(),TRUEDP.Eta(),weight);
 
 					break;
 				}
@@ -974,6 +1404,982 @@ bool testEffs(TString file, TH1D* ptBinScheme) {
 	d0KinematicsPulls[3]->Draw();
 	c1.SaveAs(savedir+"/D0KinePIDPulls.pdf");
 
+	return true;
+}
+
+bool testEffs(TString file, TH1D* ptBinScheme) {
+	if(!dataIsMC) return false;
+	std::cout << "INFO : testing efficiencies for file " << file << std::endl;
+	TFile* f0 = TFile::Open(dataFile);
+
+	TFile* f2 = TFile::Open(effFile);
+	TFile* f3 = TFile::Open(accFile);
+
+	TTree* t0 = dynamic_cast<TTree*>(f0->Get("T"));
+
+	if(!t0) return false;
+
+	TH2D* hacc = dynamic_cast<TH2D*>(f3->Get("eff"));
+	TH2D* hrec = dynamic_cast<TH2D*>(f3->Get("reff"));
+	TH2D* hcor = dynamic_cast<TH2D*>(f3->Get("corr"));
+
+	TH2D* hpid = dynamic_cast<TH2D*>(f2->Get("pideffD045"));
+	//TH2D* hpid = dynamic_cast<TH2D*>(f2->Get("pidmceffD045"));//TODO
+	TH2D* hsel(0);
+	if(file.BeginsWith("15")) hsel = dynamic_cast<TH2D*>(f2->Get("seleffD05"));
+	else hsel = dynamic_cast<TH2D*>(f2->Get("seleffD04"));
+	//TH2D* hacc  = dynamic_cast<TH2D*>(f2->Get("acceffD045"));
+	//TH2D* hrec  = dynamic_cast<TH2D*>(f2->Get("receffD045"));
+
+	if(!hacc || !hrec || !hcor || !hpid || !hsel) return false;
+
+	//yield histograms - 0=all; 1=passAcc; 2=passRec; 3=passSel; 4=passPID.
+	//tru=truth D0; fit=eff-corrected reco D0; fnd=eff-corrected truth-matched reco D0.
+	std::vector<TString> stages;
+	stages.push_back("all");
+	stages.push_back("geometric");
+	stages.push_back("reconstruction");
+	stages.push_back("selection");
+	stages.push_back("PID");
+	std::vector<TH1D*> truD0truePT;
+	truD0truePT.push_back(cloneTH1D("tru0truept", ptBinScheme));
+	truD0truePT.push_back(cloneTH1D("tru1truept", ptBinScheme));
+	truD0truePT.push_back(cloneTH1D("tru2truept", ptBinScheme));
+	truD0truePT.push_back(cloneTH1D("tru3truept", ptBinScheme));
+	truD0truePT.push_back(cloneTH1D("tru4truept", ptBinScheme));
+	std::vector<TH1D*> effD0truePT;//each of these consists of the "true" distribution for the next stage efficiency corrected for a single stage
+	effD0truePT.push_back(cloneTH1D("eff0truept", ptBinScheme));
+	effD0truePT.push_back(cloneTH1D("eff1truept", ptBinScheme));
+	effD0truePT.push_back(cloneTH1D("eff2truept", ptBinScheme));
+	effD0truePT.push_back(cloneTH1D("eff3truept", ptBinScheme));
+	effD0truePT.push_back(cloneTH1D("eff4truept", ptBinScheme));
+	std::vector<TH1D*> fitD0truePT;
+	fitD0truePT.push_back(cloneTH1D("fit0truept", ptBinScheme));
+	fitD0truePT.push_back(cloneTH1D("fit1truept", ptBinScheme));
+	fitD0truePT.push_back(cloneTH1D("fit2truept", ptBinScheme));
+	fitD0truePT.push_back(cloneTH1D("fit3truept", ptBinScheme));
+	fitD0truePT.push_back(cloneTH1D("fit4truept", ptBinScheme));
+	std::vector<TH1D*> fndD0truePT;
+	fndD0truePT.push_back(cloneTH1D("fnd0truept", ptBinScheme));
+	fndD0truePT.push_back(cloneTH1D("fnd1truept", ptBinScheme));
+	fndD0truePT.push_back(cloneTH1D("fnd2truept", ptBinScheme));
+	fndD0truePT.push_back(cloneTH1D("fnd3truept", ptBinScheme));
+	fndD0truePT.push_back(cloneTH1D("fnd4truept", ptBinScheme));
+	std::vector<TH1D*> truD0recoPT;
+	truD0recoPT.push_back(cloneTH1D("tru0recopt", ptBinScheme));
+	truD0recoPT.push_back(cloneTH1D("tru1recopt", ptBinScheme));
+	truD0recoPT.push_back(cloneTH1D("tru2recopt", ptBinScheme));
+	truD0recoPT.push_back(cloneTH1D("tru3recopt", ptBinScheme));
+	truD0recoPT.push_back(cloneTH1D("tru4recopt", ptBinScheme));
+	std::vector<TH1D*> effD0recoPT;//each of these consists of the "true" distribution for the next stage efficiency corrected for a single stage
+	effD0recoPT.push_back(cloneTH1D("eff0recopt", ptBinScheme));
+	effD0recoPT.push_back(cloneTH1D("eff1recopt", ptBinScheme));
+	effD0recoPT.push_back(cloneTH1D("eff2recopt", ptBinScheme));
+	effD0recoPT.push_back(cloneTH1D("eff3recopt", ptBinScheme));
+	effD0recoPT.push_back(cloneTH1D("eff4recopt", ptBinScheme));
+	std::vector<TH1D*> fitD0recoPT;
+	fitD0recoPT.push_back(cloneTH1D("fit0recopt", ptBinScheme));
+	fitD0recoPT.push_back(cloneTH1D("fit1recopt", ptBinScheme));
+	fitD0recoPT.push_back(cloneTH1D("fit2recopt", ptBinScheme));
+	fitD0recoPT.push_back(cloneTH1D("fit3recopt", ptBinScheme));
+	fitD0recoPT.push_back(cloneTH1D("fit4recopt", ptBinScheme));
+	std::vector<TH1D*> fndD0recoPT;
+	fndD0recoPT.push_back(cloneTH1D("fnd0recopt", ptBinScheme));
+	fndD0recoPT.push_back(cloneTH1D("fnd1recopt", ptBinScheme));
+	fndD0recoPT.push_back(cloneTH1D("fnd2recopt", ptBinScheme));
+	fndD0recoPT.push_back(cloneTH1D("fnd3recopt", ptBinScheme));
+	fndD0recoPT.push_back(cloneTH1D("fnd4recopt", ptBinScheme));
+
+	//entries in this vector are true and reco for each jet pT bin in ascending order
+	std::vector<TH2D*> d0Kinematics;
+	d0Kinematics.push_back(cloneTH2D("d0KineTrue0", hsel));
+	d0Kinematics.push_back(cloneTH2D("d0KineReco0", hsel));
+	d0Kinematics.push_back(cloneTH2D("d0KineTrue1", hsel));
+	d0Kinematics.push_back(cloneTH2D("d0KineReco1", hsel));
+	d0Kinematics.push_back(cloneTH2D("d0KineTrue2", hsel));
+	d0Kinematics.push_back(cloneTH2D("d0KineReco2", hsel));
+	d0Kinematics.push_back(cloneTH2D("d0KineTrue3", hsel));
+	d0Kinematics.push_back(cloneTH2D("d0KineReco3", hsel));
+	d0Kinematics.push_back(cloneTH2D("d0KineTrue4", hsel));
+	d0Kinematics.push_back(cloneTH2D("d0KineReco4", hsel));
+	for(unsigned int i=0; i<d0Kinematics.size(); ++i) {
+		d0Kinematics[i]->Sumw2();
+	}
+	std::vector<TH1D*> d0KinematicsPulls;
+	d0KinematicsPulls.push_back(new TH1D("pulls1", "", 30, -1., 1.));
+	d0KinematicsPulls.push_back(new TH1D("pulls2", "", 30, -1., 1.));
+	d0KinematicsPulls.push_back(new TH1D("pulls3", "", 30, -1., 1.));
+	d0KinematicsPulls.push_back(new TH1D("pulls4", "", 30, -1., 1.));
+
+	for(int i=0; i<5; ++i) {
+		truD0truePT.at(i)->Sumw2();
+		effD0truePT.at(i)->Sumw2();
+		fitD0truePT.at(i)->Sumw2();
+		fndD0truePT.at(i)->Sumw2();
+		truD0recoPT.at(i)->Sumw2();
+		effD0recoPT.at(i)->Sumw2();
+		fitD0recoPT.at(i)->Sumw2();
+		fndD0recoPT.at(i)->Sumw2();
+	}
+
+	std::vector<double> *D0M = new std::vector<double>();
+	std::vector<double> *D0IPCHI2 = new std::vector<double>();
+	std::vector<double> *D0PT = new std::vector<double>();
+	std::vector<double> *D0PX = new std::vector<double>();
+	std::vector<double> *D0PY = new std::vector<double>();
+	std::vector<double> *D0PZ = new std::vector<double>();
+	std::vector<double> *D0E = new std::vector<double>();
+	std::vector<double> *D0X = new std::vector<double>();
+	std::vector<double> *D0Y = new std::vector<double>();
+	std::vector<double> *D0Z = new std::vector<double>();
+	std::vector<double> *D0KP = new std::vector<double>();
+	std::vector<double> *D0KPT = new std::vector<double>();
+	std::vector<double> *D0KPX = new std::vector<double>();
+	std::vector<double> *D0KPY = new std::vector<double>();
+	std::vector<double> *D0KPZ = new std::vector<double>();
+	std::vector<double> *D0PIP = new std::vector<double>();
+	std::vector<double> *D0PIPT = new std::vector<double>();
+	std::vector<double> *D0PIPX = new std::vector<double>();
+	std::vector<double> *D0PIPY = new std::vector<double>();
+	std::vector<double> *D0PIPZ = new std::vector<double>();
+	std::vector<double> *D0KWEIGHT = new std::vector<double>();
+	std::vector<double> *D0PIWEIGHT = new std::vector<double>();
+	std::vector<double> *D0TRUEIDX = new std::vector<double>();
+	std::vector<double> *D0TRUETRK0 = new std::vector<double>();
+	std::vector<double> *D0TRUETRK1 = new std::vector<double>();
+
+	std::vector<double> *TRUEDID = new std::vector<double>();
+	std::vector<double> *TRUEDPX = new std::vector<double>();
+	std::vector<double> *TRUEDPY = new std::vector<double>();
+	std::vector<double> *TRUEDPZ = new std::vector<double>();
+	std::vector<double> *TRUEDE = new std::vector<double>();
+	std::vector<double> *TRUEDX = new std::vector<double>();
+	std::vector<double> *TRUEDY = new std::vector<double>();
+	std::vector<double> *TRUEDZ = new std::vector<double>();
+	std::vector<double> *TRUEDFROMB = new std::vector<double>();
+	std::vector<double> *TRUEDTRK0P = new std::vector<double>();
+	std::vector<double> *TRUEDTRK0PT = new std::vector<double>();
+	std::vector<double> *TRUEDTRK0INACC = new std::vector<double>();
+	std::vector<double> *TRUEDTRK0RECO = new std::vector<double>();
+	std::vector<double> *TRUEDTRK1P = new std::vector<double>();
+	std::vector<double> *TRUEDTRK1PT = new std::vector<double>();
+	std::vector<double> *TRUEDTRK1INACC = new std::vector<double>();
+	std::vector<double> *TRUEDTRK1RECO = new std::vector<double>();
+	std::vector<double> *TRUEDTRK0IDX = new std::vector<double>();
+	std::vector<double> *TRUEDTRK1IDX = new std::vector<double>();
+	std::vector<double> *TRUEDTRK2IDX = new std::vector<double>();
+	std::vector<double> *TRUEDTRK3IDX = new std::vector<double>();
+	std::vector<double> *TRUEDTRK0ID = new std::vector<double>();
+	std::vector<double> *TRUEDTRK1ID = new std::vector<double>();
+	std::vector<double> *TRUEDTRK2ID = new std::vector<double>();
+	std::vector<double> *TRUEDTRK3ID = new std::vector<double>();
+
+	double JetPT;
+	double JetEta;
+	double JetTruePT;
+
+	t0->SetBranchAddress("D0M",           &D0M);
+	t0->SetBranchAddress("D0IPCHI2",      &D0IPCHI2);
+	t0->SetBranchAddress("D0PT",          &D0PT);
+	t0->SetBranchAddress("D0PX",          &D0PX);
+	t0->SetBranchAddress("D0PY",          &D0PY);
+	t0->SetBranchAddress("D0PZ",          &D0PZ);
+	t0->SetBranchAddress("D0E",           &D0E);
+	t0->SetBranchAddress("D0X",           &D0X);
+	t0->SetBranchAddress("D0Y",           &D0Y);
+	t0->SetBranchAddress("D0Z",           &D0Z);
+	t0->SetBranchAddress("D0KP",          &D0KP);
+	t0->SetBranchAddress("D0KPT",         &D0KPT);
+	t0->SetBranchAddress("D0KPX",         &D0KPX);
+	t0->SetBranchAddress("D0KPY",         &D0KPY);
+	t0->SetBranchAddress("D0KPZ",         &D0KPZ);
+	t0->SetBranchAddress("D0PIP",         &D0PIP);
+	t0->SetBranchAddress("D0PIPT",        &D0PIPT);
+	t0->SetBranchAddress("D0PIPX",        &D0PIPX);
+	t0->SetBranchAddress("D0PIPY",        &D0PIPY);
+	t0->SetBranchAddress("D0PIPZ",        &D0PIPZ);
+	t0->SetBranchAddress("D0KWEIGHT",     &D0KWEIGHT);
+	t0->SetBranchAddress("D0PIWEIGHT",    &D0PIWEIGHT);
+	t0->SetBranchAddress("D0TRUEIDX",     &D0TRUEIDX);
+	t0->SetBranchAddress("D0TRUETRK0",    &D0TRUETRK0);
+	t0->SetBranchAddress("D0TRUETRK1",    &D0TRUETRK1);
+
+	t0->SetBranchAddress("TRUEDID",       &TRUEDID);
+	t0->SetBranchAddress("TRUEDPX",       &TRUEDPX);
+	t0->SetBranchAddress("TRUEDPY",       &TRUEDPY);
+	t0->SetBranchAddress("TRUEDPZ",       &TRUEDPZ);
+	t0->SetBranchAddress("TRUEDE",        &TRUEDE);
+	t0->SetBranchAddress("TRUEDX",        &TRUEDX);
+	t0->SetBranchAddress("TRUEDY",        &TRUEDY);
+	t0->SetBranchAddress("TRUEDZ",        &TRUEDZ);
+	t0->SetBranchAddress("TRUEDFROMB",    &TRUEDFROMB);
+	t0->SetBranchAddress("TRUEDTRK0P",    &TRUEDTRK0P);
+	t0->SetBranchAddress("TRUEDTRK0PT",   &TRUEDTRK0PT);
+	t0->SetBranchAddress("TRUEDTRK0INACC",&TRUEDTRK0INACC);
+	t0->SetBranchAddress("TRUEDTRK0RECO", &TRUEDTRK0RECO);
+	t0->SetBranchAddress("TRUEDTRK1P",    &TRUEDTRK1P);
+	t0->SetBranchAddress("TRUEDTRK1PT",   &TRUEDTRK1PT);
+	t0->SetBranchAddress("TRUEDTRK1INACC",&TRUEDTRK1INACC);
+	t0->SetBranchAddress("TRUEDTRK1RECO", &TRUEDTRK1RECO);
+	t0->SetBranchAddress("TRUEDTRK0IDX",  &TRUEDTRK0IDX);
+	t0->SetBranchAddress("TRUEDTRK1IDX",  &TRUEDTRK1IDX);
+	t0->SetBranchAddress("TRUEDTRK2IDX",  &TRUEDTRK2IDX);
+	t0->SetBranchAddress("TRUEDTRK3IDX",  &TRUEDTRK3IDX);
+	t0->SetBranchAddress("TRUEDTRK0ID",  &TRUEDTRK0ID);
+	t0->SetBranchAddress("TRUEDTRK1ID",  &TRUEDTRK1ID);
+	t0->SetBranchAddress("TRUEDTRK2ID",  &TRUEDTRK2ID);
+	t0->SetBranchAddress("TRUEDTRK3ID",  &TRUEDTRK3ID);
+
+	t0->SetBranchAddress("JetPT",         &JetPT);
+	t0->SetBranchAddress("JetEta",        &JetEta);
+	t0->SetBranchAddress("JetTruePT",     &JetTruePT);
+
+	unsigned int nentries0 = t0->GetEntries();
+
+	double dpt(0.), deta(0.);
+
+	boost::progress_display progress( nentries0 );
+	for(unsigned int ientry=0; ientry<nentries0; ++ientry) {
+		++progress;
+		t0->GetEntry(ientry);
+
+		std::vector<int> trueD0s, foundD0s;
+
+		for(unsigned int d=0; d<TRUEDID->size(); ++d) {
+			//only use D0->Kpi with Pt>5GeV
+			if(TMath::Abs(TRUEDID->at(d))!=421) continue;
+			if(TRUEDTRK0IDX->at(d)==-1) continue;
+			if(TRUEDTRK2IDX->at(d)!=-1) continue;
+			if(TRUEDPX->at(d)*TRUEDPX->at(d)+TRUEDPY->at(d)*TRUEDPY->at(d)<5000.*5000.) continue;
+
+			TVector3 TRUEDP (TRUEDPX->at(d)  ,TRUEDPY->at(d)  ,TRUEDPZ->at(d));
+
+			dpt        = TRUEDP.Pt();
+			deta       = TRUEDP.Eta();
+			double rhoSq = TRUEDX->at(d)*TRUEDX->at(d) + TRUEDY->at(d)*TRUEDY->at(d);
+			double z = TRUEDZ->at(d);
+			if(rhoSq>=100) rhoSq=99.9;//TODO
+
+			//get efficiency corrections
+			double effacc(0.), effrec(0.), effsel(0.), effpid(0.);
+
+			if(dpt>=100000.) dpt=99999.;
+			effacc =      hacc ->GetBinContent(hacc ->FindBin(dpt/1000.,deta));
+			effrec =      hrec ->GetBinContent(hrec ->FindBin(dpt/1000.,deta));
+			//apply correction to the reco efficiency
+			if(useRhoZEffCor) effrec*= hcor ->GetBinContent(hcor ->FindBin(rhoSq    ,z));//TODO need new datasets
+			effsel =      hsel ->GetBinContent(hsel ->FindBin(dpt      ,deta));
+			effpid =      hpid ->GetBinContent(hpid ->FindBin(dpt      ,deta));
+
+			truD0recoPT.at(0)->Fill(JetPT);
+			truD0truePT.at(0)->Fill(JetTruePT);
+			d0Kinematics[0]->Fill(TRUEDP.Pt(),TRUEDP.Eta());
+
+			if(TRUEDTRK0INACC->at(d)!=1 || TRUEDTRK1INACC->at(d)!=1) continue;
+
+			truD0recoPT.at(1)->Fill(JetPT);
+			truD0truePT.at(1)->Fill(JetTruePT);
+			if(effacc>0.) {
+				effD0recoPT.at(0)->Fill(JetPT,1./effacc);
+				effD0truePT.at(0)->Fill(JetTruePT,1./effacc);
+			} else {
+				std::cout << "ACC=" << effacc << " at " << dpt << "," << deta << std::endl;
+			}
+			d0Kinematics[2]->Fill(TRUEDP.Pt(),TRUEDP.Eta());
+
+			if(TRUEDTRK0RECO->at(d)!=1 || TRUEDTRK1RECO->at(d)!=1) continue;
+
+			truD0recoPT.at(2)->Fill(JetPT);
+			truD0truePT.at(2)->Fill(JetTruePT);
+			if(effrec>0.) {
+				effD0recoPT.at(1)->Fill(JetPT,1./effrec);
+				effD0truePT.at(1)->Fill(JetTruePT,1./effrec);
+			} else {
+				std::cout << "REC=" << effrec << " at " << dpt << "," << deta << std::endl;
+			}
+			d0Kinematics[4]->Fill(TRUEDP.Pt(),TRUEDP.Eta());
+
+			for(unsigned int s=0; s<D0TRUEIDX->size(); ++s) {
+				if(D0TRUEIDX->at(s)==d) {
+					TVector3 D0P (D0PX->at(s)  ,D0PY->at(s)  ,D0PZ->at(s));
+					TVector3 D0P0(D0KPX->at(s) ,D0KPY->at(s) ,D0KPZ->at(s));
+					TVector3 D0P1(D0PIPX->at(s),D0PIPY->at(s),D0PIPZ->at(s));
+
+					if(!(D0P0.Eta()>2.0 && D0P0.Eta()<4.5 && D0P0.Pt()>500. && D0P0.Mag()>5000.)) continue;
+					if(!(D0P1.Eta()>2.0 && D0P1.Eta()<4.5 && D0P1.Pt()>500. && D0P1.Mag()>5000.)) continue;
+					if(!(D0P.Pt()>d0minpt)) continue;
+					if(!(d0maxpt==-1 || D0P.Pt() < d0maxpt) ) continue;
+					//if(!(D0P.Eta()>2.5&&D0P.Eta()<4.0)) continue;//TODO test restricting the eta(D0) range (turn on in two places 1/2)
+
+					truD0recoPT.at(3)->Fill(JetPT);
+					truD0truePT.at(3)->Fill(JetTruePT);
+					if(effsel>0.) {
+						effD0recoPT.at(2)->Fill(JetPT,1./effsel);
+						effD0truePT.at(2)->Fill(JetTruePT,1./effsel);
+					} else {
+						std::cout << "SEL=" << effsel << " at " << dpt << "," << deta << std::endl;
+					}
+					d0Kinematics[6]->Fill(TRUEDP.Pt(),TRUEDP.Eta());
+
+					//use weights for PID
+					double weight = D0KWEIGHT->at(s);// pion PID removed *D0PIWEIGHT->at(s);
+					if(D0P0.Pt()>25000. || D0P0.Mag()>500000.) weight = 1.; //PID turned off for high P or PT
+					truD0recoPT.at(4)->Fill(JetPT,weight);
+					truD0truePT.at(4)->Fill(JetTruePT,weight);
+					if(effpid>0.) {
+						effD0recoPT.at(3)->Fill(JetPT,weight/effpid);
+						effD0truePT.at(3)->Fill(JetTruePT,weight/effpid);
+					} else {
+						std::cout << "PID=" << effpid << " at " << dpt << "," << deta << std::endl;
+					}
+					d0Kinematics[8]->Fill(TRUEDP.Pt(),TRUEDP.Eta(),weight);
+
+					trueD0s.push_back(d*100+s);
+
+					break;
+				}
+			}
+		}
+		for(unsigned int s=0; s<D0M->size(); ++s) {
+			//first check in our tight acceptance
+			TVector3 D0P (D0PX->at(s)  ,D0PY->at(s)  ,D0PZ->at(s));
+			TVector3 D0P0(D0KPX->at(s) ,D0KPY->at(s) ,D0KPZ->at(s));
+			TVector3 D0P1(D0PIPX->at(s),D0PIPY->at(s),D0PIPZ->at(s));
+			double rhoSq = D0X->at(s)*D0X->at(s) + D0Y->at(s)*D0Y->at(s);
+			double z = D0Z->at(s);
+			if(rhoSq>=100) rhoSq=99.9;//TODO
+
+			if(!(D0P0.Eta()>2.0 && D0P0.Eta()<4.5 && D0P0.Pt()>500. && D0P0.Mag()>5000.)) continue;
+			if(!(D0P1.Eta()>2.0 && D0P1.Eta()<4.5 && D0P1.Pt()>500. && D0P1.Mag()>5000.)) continue;
+			if(!(D0P.Pt()>d0minpt)) continue;
+			if(!(d0maxpt==-1 || D0P.Pt() < d0maxpt) ) continue;
+			//if(!(D0P.Eta()>2.2&&D0P.Eta()<4.0)) continue;//TODO test restrcting the eta(D0) range (turn on in two places 2/2)
+
+			//check PID cuts
+			double weight = D0KWEIGHT->at(s);// pion PID removed *D0PIWEIGHT->at(s);
+			if(D0P0.Pt()>25000. || D0P0.Mag()>500000.) weight = 1.; //PID turned off for high P or PT
+
+			dpt        = D0P.Pt();
+			deta       = D0P.Eta();
+
+			//get efficiency corrections
+			double effacc(0.), effrec(0.), effsel(0.), effpid(0.);
+
+			if(dpt>=100000.) dpt=99999.;
+			effacc =      hacc ->GetBinContent(hacc ->FindBin(dpt/1000.,deta));
+			effrec =      hrec ->GetBinContent(hrec ->FindBin(dpt/1000.,deta));
+			//apply correction to the reco efficiency
+			if(useRhoZEffCor) effrec*= hcor ->GetBinContent(hcor ->FindBin(rhoSq    ,z));
+			effsel =      hsel ->GetBinContent(hsel ->FindBin(dpt      ,deta));
+			effpid =      hpid ->GetBinContent(hpid ->FindBin(dpt      ,deta));
+
+			double eff=effacc*effrec*effsel*effpid;
+
+			if(eff<0.01) {
+				std::cout << dpt << "\t" << deta << "\t" << effacc << "\t" << effrec << "\t" << effsel << "\t" << effpid << std::endl;
+				//if(D0TRUEIDX->at(s)>-1) {
+				//	int d = D0TRUEIDX->at(s);
+				//	if(TRUEDTRK0IDX->at(d)!=-1 && TRUEDTRK2IDX->at(d)==-1 && TRUEDPX->at(d)*TRUEDPX->at(d)+TRUEDPY->at(d)*TRUEDPY->at(d)>=5000.*5000.) {
+				//		if(TRUEDTRK0INACC->at(d)==1 && TRUEDTRK1INACC->at(d)==1) {
+				//			if(TRUEDTRK0RECO->at(d)==1 && TRUEDTRK1RECO->at(d)==1) {
+				//				std::cout << "LOST TRUE D0" << std::endl;
+				//std::cout << dpt << "\t" << deta << "\t" << eff << "\t" << effacc << "\t" << effrec << "\t" << effsel << "\t" << effpid << std::endl;
+				//std::cout << rhoSq << "\t" << z << "\t" << hrec ->GetBinContent(hrec ->FindBin(dpt/1000.,deta)) << "\t" << hcor ->GetBinContent(hcor ->FindBin(rhoSq,z)) << std::endl;
+				//			}
+				//		}
+				//	}
+				//}
+				continue;
+			}
+
+			double sbSubSwitch(0.);
+			if(TMath::Abs(D0M->at(s)-1865)<40.) sbSubSwitch = 1.;
+			else if(TMath::Abs(D0M->at(s)-1865)<80.) sbSubSwitch = -1.;
+
+			fitD0recoPT.at(4)->Fill(JetPT,weight*sbSubSwitch);
+			fitD0recoPT.at(3)->Fill(JetPT,weight*sbSubSwitch/effpid);
+			fitD0recoPT.at(2)->Fill(JetPT,weight*sbSubSwitch/(effpid*effsel));
+			fitD0recoPT.at(1)->Fill(JetPT,weight*sbSubSwitch/(effpid*effsel*effrec));
+			fitD0recoPT.at(0)->Fill(JetPT,weight*sbSubSwitch/(effpid*effsel*effrec*effacc));
+
+			fitD0truePT.at(4)->Fill(JetTruePT,weight*sbSubSwitch);
+			fitD0truePT.at(3)->Fill(JetTruePT,weight*sbSubSwitch/effpid);
+			fitD0truePT.at(2)->Fill(JetTruePT,weight*sbSubSwitch/(effpid*effsel));
+			fitD0truePT.at(1)->Fill(JetTruePT,weight*sbSubSwitch/(effpid*effsel*effrec));
+			fitD0truePT.at(0)->Fill(JetTruePT,weight*sbSubSwitch/(effpid*effsel*effrec*effacc));
+
+			d0Kinematics[9]->Fill(D0P.Pt(),D0P.Eta(),weight*sbSubSwitch);
+			d0Kinematics[7]->Fill(D0P.Pt(),D0P.Eta(),weight*sbSubSwitch/(effpid));
+			d0Kinematics[5]->Fill(D0P.Pt(),D0P.Eta(),weight*sbSubSwitch/(effpid*effsel));
+			d0Kinematics[3]->Fill(D0P.Pt(),D0P.Eta(),weight*sbSubSwitch/(effpid*effsel*effrec));
+			d0Kinematics[1]->Fill(D0P.Pt(),D0P.Eta(),weight*sbSubSwitch/(effpid*effsel*effrec*effacc));
+
+			//truth match to real, accepted and reconstructed D0
+			if(D0TRUEIDX->at(s)<0) continue;
+			int d = D0TRUEIDX->at(s);
+			if(TRUEDTRK0IDX->at(d)==-1) continue;
+			if(TRUEDTRK2IDX->at(d)!=-1) continue;
+			if(TRUEDPX->at(d)*TRUEDPX->at(d)+TRUEDPY->at(d)*TRUEDPY->at(d)<5000.*5000.) continue;
+			if(TRUEDTRK0INACC->at(d)!=1 || TRUEDTRK1INACC->at(d)!=1) continue;
+			if(TRUEDTRK0RECO->at(d)!=1 || TRUEDTRK1RECO->at(d)!=1) continue;
+
+			fndD0recoPT.at(4)->Fill(JetPT,weight);
+			fndD0recoPT.at(3)->Fill(JetPT,weight/effpid);
+			fndD0recoPT.at(2)->Fill(JetPT,weight/(effpid*effsel));
+			fndD0recoPT.at(1)->Fill(JetPT,weight/(effpid*effsel*effrec));
+			fndD0recoPT.at(0)->Fill(JetPT,weight/(effpid*effsel*effrec*effacc));
+
+			fndD0truePT.at(4)->Fill(JetTruePT,weight);
+			fndD0truePT.at(3)->Fill(JetTruePT,weight/effpid);
+			fndD0truePT.at(2)->Fill(JetTruePT,weight/(effpid*effsel));
+			fndD0truePT.at(1)->Fill(JetTruePT,weight/(effpid*effsel*effrec));
+			fndD0truePT.at(0)->Fill(JetTruePT,weight/(effpid*effsel*effrec*effacc));
+
+			foundD0s.push_back(d*100+s);
+
+		//TODO	break;//only keep one D0 candidate per entry
+		}
+		for(unsigned int i=0; i<trueD0s.size(); ++i) {
+			bool matched(false);
+			for(unsigned int j=0; j<foundD0s.size(); ++j) {
+				if(foundD0s[j]==trueD0s[i]) {
+					matched=true;
+					break;
+				}
+			}
+			if(!matched) std::cout << ientry << ": truD0 " << trueD0s[i] << " has no matching fndD0" << std::endl;
+		}
+		for(unsigned int i=0; i<foundD0s.size(); ++i) {
+			bool matched(false);
+			for(unsigned int j=0; j<trueD0s.size(); ++j) {
+				if(foundD0s[i]==trueD0s[j]) {
+					matched=true;
+					break;
+				}
+			}
+			if(!matched) std::cout << ientry << ": fndD0 " << trueD0s[i] << " has no matching truD0" << std::endl;
+		}
+	}
+
+	printf("bins of true jet pT\n");
+	for(int i=0; i<5; ++i) {
+		printf("stage %d (%s)\n",i,stages[i].Data());
+		for(int j=1; j<=truD0truePT.at(i)->GetNbinsX(); ++j) {
+			printf("%6.0f-%6.0f\t",truD0truePT.at(i)->GetBinLowEdge(j),truD0truePT.at(i)->GetBinLowEdge(j+1));
+			printf("%5.0f\t%5.0f\t%5.0f\t%5.0f",truD0truePT.at(i)->GetBinContent(j),effD0truePT.at(i)->GetBinContent(j),fndD0truePT.at(i)->GetBinContent(j),fitD0truePT.at(i)->GetBinContent(j));
+			if(i>0) {
+				printf("\t%5.3f", effD0truePT.at(i-1)->GetBinContent(j)/truD0truePT.at(i-1)->GetBinContent(j));
+				printf("\t%5.3f\t%5.3f", truD0truePT.at(i)->GetBinContent(j)/truD0truePT.at(i-1)->GetBinContent(j),
+						         fndD0truePT.at(i)->GetBinContent(j)/fndD0truePT.at(i-1)->GetBinContent(j));
+				printf("\t%5.3f", (fndD0truePT.at(i)->GetBinContent(j)/fndD0truePT.at(i-1)->GetBinContent(j))/
+						  (truD0truePT.at(i)->GetBinContent(j)/truD0truePT.at(i-1)->GetBinContent(j)));
+			}
+			printf("\n");
+		}
+	}
+	printf("bins of reco jet pT\n");
+
+	for(int i=0; i<5; ++i) {
+		printf("stage %d (%s)\n",i,stages[i].Data());
+		for(int j=1; j<=truD0recoPT.at(i)->GetNbinsX(); ++j) {
+			printf("%6.0f-%6.0f\t",truD0recoPT.at(i)->GetBinLowEdge(j),truD0recoPT.at(i)->GetBinLowEdge(j+1));
+			printf("%5.0f\t%5.0f\t%5.0f\t%5.0f\t",truD0recoPT.at(i)->GetBinContent(j),effD0recoPT.at(i)->GetBinContent(j),fndD0recoPT.at(i)->GetBinContent(j),fitD0recoPT.at(i)->GetBinContent(j));
+			if(i>0) {
+				printf("\t%5.3f", effD0recoPT.at(i-1)->GetBinContent(j)/truD0recoPT.at(i-1)->GetBinContent(j));
+				printf("\t%5.3f\t%5.3f", truD0recoPT.at(i)->GetBinContent(j)/truD0recoPT.at(i-1)->GetBinContent(j),
+						         fndD0recoPT.at(i)->GetBinContent(j)/fndD0recoPT.at(i-1)->GetBinContent(j));
+				printf("\t%5.3f", (fndD0recoPT.at(i)->GetBinContent(j)/fndD0recoPT.at(i-1)->GetBinContent(j))/
+						  (truD0recoPT.at(i)->GetBinContent(j)/truD0recoPT.at(i-1)->GetBinContent(j)));
+			}
+			printf("\n");
+		}
+	}
+
+	gStyle->SetPalette(1,0);
+	const Int_t NRGBs = 5;
+	const Int_t NCont = 255;
+	Double_t stops[NRGBs]  = { 0.00, 0.25, 0.50, 0.75, 1.00};
+	Double_t reds[NRGBs]   = { 1.00, 1.00, 1.00, 0.00, 0.00};
+	Double_t greens[NRGBs] = { 0.00, 0.50, 1.00, 0.50, 0.00};
+	Double_t blues[NRGBs]  = { 0.00, 0.00, 1.00, 1.00, 1.00};
+	TColor::CreateGradientColorTable(NRGBs, stops, reds, greens, blues, NCont);
+	gStyle->SetNumberContours(NCont);
+	TCanvas c1;
+	c1.SetLogx();
+	d0Kinematics[9]->Divide(d0Kinematics[7]);
+	d0Kinematics[8]->Divide(d0Kinematics[6]);
+	d0Kinematics[9]->Divide(d0Kinematics[8]);
+	d0Kinematics[9]->SetMinimum(0.);
+	d0Kinematics[9]->SetMaximum(2.);
+	d0Kinematics[9]->Draw("colz");
+	c1.SaveAs(savedir+"/D0KinePIDRatio.pdf");
+	d0Kinematics[7]->Divide(d0Kinematics[5]);
+	d0Kinematics[6]->Divide(d0Kinematics[4]);
+	d0Kinematics[7]->Divide(d0Kinematics[6]);
+	d0Kinematics[7]->SetMinimum(0.);
+	d0Kinematics[7]->SetMaximum(2.);
+	d0Kinematics[7]->Draw("colz");
+	c1.SaveAs(savedir+"/D0KineSELRatio.pdf");
+	d0Kinematics[5]->Divide(d0Kinematics[3]);
+	d0Kinematics[4]->Divide(d0Kinematics[2]);
+	d0Kinematics[5]->Divide(d0Kinematics[4]);
+	d0Kinematics[5]->SetMinimum(0.);
+	d0Kinematics[5]->SetMaximum(2.);
+	d0Kinematics[5]->Draw("colz");
+	c1.SaveAs(savedir+"/D0KineRECRatio.pdf");
+	d0Kinematics[3]->Divide(d0Kinematics[1]);
+	d0Kinematics[2]->Divide(d0Kinematics[0]);
+	d0Kinematics[3]->Divide(d0Kinematics[2]);
+	d0Kinematics[3]->SetMinimum(0.);
+	d0Kinematics[3]->SetMaximum(2.);
+	d0Kinematics[3]->Draw("colz");
+	c1.SaveAs(savedir+"/D0KineACCRatio.pdf");
+	//for(unsigned int i=0; i<d0Kinematics.size(); ++i) {
+	//	d0Kinematics[i]->Draw("colz");
+	//	TString plotname("D0Kinematics");
+	//	plotname+=i;
+	//	plotname+=".pdf";
+	//	c1.SaveAs(savedir+"/"+plotname);
+	//}
+	
+	for(int i=1; i<=d0Kinematics[3]->GetNbinsX(); ++i) {
+		for(int j=1; j<=d0Kinematics[3]->GetNbinsY(); ++j) {
+			if(d0Kinematics[3]->GetBinContent(i,j)>0) {
+				d0KinematicsPulls[0]->Fill((d0Kinematics[3]->GetBinContent(i,j)-1.)/d0Kinematics[3]->GetBinError(i,j));
+			}
+			if(d0Kinematics[5]->GetBinContent(i,j)>0) {
+				d0KinematicsPulls[1]->Fill((d0Kinematics[5]->GetBinContent(i,j)-1.)/d0Kinematics[5]->GetBinError(i,j));
+			}
+			if(d0Kinematics[7]->GetBinContent(i,j)>0) {
+				d0KinematicsPulls[2]->Fill((d0Kinematics[7]->GetBinContent(i,j)-1.)/d0Kinematics[7]->GetBinError(i,j));
+			}
+			if(d0Kinematics[9]->GetBinContent(i,j)>0) {
+				d0KinematicsPulls[3]->Fill((d0Kinematics[9]->GetBinContent(i,j)-1.)/d0Kinematics[9]->GetBinError(i,j));
+			}
+		}
+	}
+	c1.SetLogx(0);
+	d0KinematicsPulls[0]->Draw();
+	c1.SaveAs(savedir+"/D0KineACCPulls.pdf");
+	d0KinematicsPulls[1]->Draw();
+	c1.SaveAs(savedir+"/D0KineRECPulls.pdf");
+	d0KinematicsPulls[2]->Draw();
+	c1.SaveAs(savedir+"/D0KineSELPulls.pdf");
+	d0KinematicsPulls[3]->Draw();
+	c1.SaveAs(savedir+"/D0KinePIDPulls.pdf");
+
+	return true;
+}
+
+bool testEffsSimple(TString file, TH1D* ptBinScheme) {
+	if(!dataIsMC) return false;
+	std::cout << "INFO : testing efficiencies for file " << file << std::endl;
+	TFile* f0 = TFile::Open(dataFile);
+
+	TFile* f2 = TFile::Open(simpleEffFile);
+
+	TTree* t0 = dynamic_cast<TTree*>(f0->Get("T"));
+
+	if(!t0) return false;
+
+	TH2D* heff(0);
+	if(file.BeginsWith("15")) heff = dynamic_cast<TH2D*>(f2->Get("effD05"));
+	else heff = dynamic_cast<TH2D*>(f2->Get("effD04"));
+
+	if(!heff) return false;
+
+	//yield histograms - 0=all; 1=passAcc; 2=passRec; 3=passSel; 4=passPID.
+	//tru=truth D0; fit=eff-corrected reco D0; fnd=eff-corrected truth-matched reco D0.
+	std::vector<TString> stages;
+	stages.push_back("all");
+	stages.push_back("geometric");
+	stages.push_back("reconstruction");
+	stages.push_back("selection");
+	stages.push_back("PID");
+	std::vector<TH1D*> truD0truePT;
+	truD0truePT.push_back(cloneTH1D("tru0truept", ptBinScheme));
+	truD0truePT.push_back(cloneTH1D("tru1truept", ptBinScheme));
+	truD0truePT.push_back(cloneTH1D("tru2truept", ptBinScheme));
+	truD0truePT.push_back(cloneTH1D("tru3truept", ptBinScheme));
+	truD0truePT.push_back(cloneTH1D("tru4truept", ptBinScheme));
+	std::vector<TH1D*> fitD0truePT;
+	fitD0truePT.push_back(cloneTH1D("fit0truept", ptBinScheme));
+	fitD0truePT.push_back(cloneTH1D("fit1truept", ptBinScheme));
+	fitD0truePT.push_back(cloneTH1D("fit2truept", ptBinScheme));
+	fitD0truePT.push_back(cloneTH1D("fit3truept", ptBinScheme));
+	fitD0truePT.push_back(cloneTH1D("fit4truept", ptBinScheme));
+	std::vector<TH1D*> fndD0truePT;
+	fndD0truePT.push_back(cloneTH1D("fnd0truept", ptBinScheme));
+	fndD0truePT.push_back(cloneTH1D("fnd1truept", ptBinScheme));
+	fndD0truePT.push_back(cloneTH1D("fnd2truept", ptBinScheme));
+	fndD0truePT.push_back(cloneTH1D("fnd3truept", ptBinScheme));
+	fndD0truePT.push_back(cloneTH1D("fnd4truept", ptBinScheme));
+	std::vector<TH1D*> truD0recoPT;
+	truD0recoPT.push_back(cloneTH1D("tru0recopt", ptBinScheme));
+	truD0recoPT.push_back(cloneTH1D("tru1recopt", ptBinScheme));
+	truD0recoPT.push_back(cloneTH1D("tru2recopt", ptBinScheme));
+	truD0recoPT.push_back(cloneTH1D("tru3recopt", ptBinScheme));
+	truD0recoPT.push_back(cloneTH1D("tru4recopt", ptBinScheme));
+	std::vector<TH1D*> fitD0recoPT;
+	fitD0recoPT.push_back(cloneTH1D("fit0recopt", ptBinScheme));
+	fitD0recoPT.push_back(cloneTH1D("fit1recopt", ptBinScheme));
+	fitD0recoPT.push_back(cloneTH1D("fit2recopt", ptBinScheme));
+	fitD0recoPT.push_back(cloneTH1D("fit3recopt", ptBinScheme));
+	fitD0recoPT.push_back(cloneTH1D("fit4recopt", ptBinScheme));
+	std::vector<TH1D*> fndD0recoPT;
+	fndD0recoPT.push_back(cloneTH1D("fnd0recopt", ptBinScheme));
+	fndD0recoPT.push_back(cloneTH1D("fnd1recopt", ptBinScheme));
+	fndD0recoPT.push_back(cloneTH1D("fnd2recopt", ptBinScheme));
+	fndD0recoPT.push_back(cloneTH1D("fnd3recopt", ptBinScheme));
+	fndD0recoPT.push_back(cloneTH1D("fnd4recopt", ptBinScheme));
+
+	//entries in this vector are true and reco for each jet pT bin in ascending order
+	std::vector<TH2D*> d0Kinematics;
+	d0Kinematics.push_back(cloneTH2D("d0KineTrue0", heff));
+	d0Kinematics.push_back(cloneTH2D("d0KineReco0", heff));
+	d0Kinematics.push_back(cloneTH2D("d0KineTrue1", heff));
+	d0Kinematics.push_back(cloneTH2D("d0KineReco1", heff));
+	d0Kinematics.push_back(cloneTH2D("d0KineTrue2", heff));
+	d0Kinematics.push_back(cloneTH2D("d0KineReco2", heff));
+	d0Kinematics.push_back(cloneTH2D("d0KineTrue3", heff));
+	d0Kinematics.push_back(cloneTH2D("d0KineReco3", heff));
+	d0Kinematics.push_back(cloneTH2D("d0KineTrue4", heff));
+	d0Kinematics.push_back(cloneTH2D("d0KineReco4", heff));
+	for(unsigned int i=0; i<d0Kinematics.size(); ++i) {
+		d0Kinematics[i]->Sumw2();
+	}
+	std::vector<TH1D*> d0KinematicsPulls;
+	d0KinematicsPulls.push_back(new TH1D("pulls1", "", 30, -1., 1.));
+	d0KinematicsPulls.push_back(new TH1D("pulls2", "", 30, -1., 1.));
+	d0KinematicsPulls.push_back(new TH1D("pulls3", "", 30, -1., 1.));
+	d0KinematicsPulls.push_back(new TH1D("pulls4", "", 30, -1., 1.));
+
+	for(int i=0; i<5; ++i) {
+		truD0truePT.at(i)->Sumw2();
+		fitD0truePT.at(i)->Sumw2();
+		fndD0truePT.at(i)->Sumw2();
+		truD0recoPT.at(i)->Sumw2();
+		fitD0recoPT.at(i)->Sumw2();
+		fndD0recoPT.at(i)->Sumw2();
+	}
+
+	std::vector<TH1D*> d0masstru;
+	std::vector<TH1D*> d0massfit;
+	std::vector<TH1D*> d0massfnd;
+	for(int i=0; i< ptBinScheme->GetNbinsX(); ++i) {
+		TString suffix("_");
+		suffix+=i;
+		d0masstru.push_back(new TH1D("d0masstru"+suffix, "", 80, 1865.-80., 1865.+80.));
+		d0massfit.push_back(new TH1D("d0massfit"+suffix, "", 80, 1865.-80., 1865.+80.));
+		d0massfnd.push_back(new TH1D("d0massfnd"+suffix, "", 80, 1865.-80., 1865.+80.));
+	}
+
+	std::vector<double> *D0M = new std::vector<double>();
+	std::vector<double> *D0IPCHI2 = new std::vector<double>();
+	std::vector<double> *D0PT = new std::vector<double>();
+	std::vector<double> *D0PX = new std::vector<double>();
+	std::vector<double> *D0PY = new std::vector<double>();
+	std::vector<double> *D0PZ = new std::vector<double>();
+	std::vector<double> *D0E = new std::vector<double>();
+	std::vector<double> *D0X = new std::vector<double>();
+	std::vector<double> *D0Y = new std::vector<double>();
+	std::vector<double> *D0Z = new std::vector<double>();
+	std::vector<double> *D0KP = new std::vector<double>();
+	std::vector<double> *D0KPT = new std::vector<double>();
+	std::vector<double> *D0KPX = new std::vector<double>();
+	std::vector<double> *D0KPY = new std::vector<double>();
+	std::vector<double> *D0KPZ = new std::vector<double>();
+	std::vector<double> *D0PIP = new std::vector<double>();
+	std::vector<double> *D0PIPT = new std::vector<double>();
+	std::vector<double> *D0PIPX = new std::vector<double>();
+	std::vector<double> *D0PIPY = new std::vector<double>();
+	std::vector<double> *D0PIPZ = new std::vector<double>();
+	std::vector<double> *D0KWEIGHT = new std::vector<double>();
+	std::vector<double> *D0PIWEIGHT = new std::vector<double>();
+	std::vector<double> *D0TRUEIDX = new std::vector<double>();
+	std::vector<double> *D0TRUETRK0 = new std::vector<double>();
+	std::vector<double> *D0TRUETRK1 = new std::vector<double>();
+
+	std::vector<double> *TRUEDID = new std::vector<double>();
+	std::vector<double> *TRUEDPX = new std::vector<double>();
+	std::vector<double> *TRUEDPY = new std::vector<double>();
+	std::vector<double> *TRUEDPZ = new std::vector<double>();
+	std::vector<double> *TRUEDE = new std::vector<double>();
+	std::vector<double> *TRUEDFROMB = new std::vector<double>();
+	std::vector<double> *TRUEDTRK0P = new std::vector<double>();
+	std::vector<double> *TRUEDTRK0PT = new std::vector<double>();
+	std::vector<double> *TRUEDTRK0INACC = new std::vector<double>();
+	std::vector<double> *TRUEDTRK0RECO = new std::vector<double>();
+	std::vector<double> *TRUEDTRK1P = new std::vector<double>();
+	std::vector<double> *TRUEDTRK1PT = new std::vector<double>();
+	std::vector<double> *TRUEDTRK1INACC = new std::vector<double>();
+	std::vector<double> *TRUEDTRK1RECO = new std::vector<double>();
+	std::vector<double> *TRUEDTRK0IDX = new std::vector<double>();
+	std::vector<double> *TRUEDTRK1IDX = new std::vector<double>();
+	std::vector<double> *TRUEDTRK2IDX = new std::vector<double>();
+	std::vector<double> *TRUEDTRK3IDX = new std::vector<double>();
+	std::vector<double> *TRUEDTRK0ID = new std::vector<double>();
+	std::vector<double> *TRUEDTRK1ID = new std::vector<double>();
+	std::vector<double> *TRUEDTRK2ID = new std::vector<double>();
+	std::vector<double> *TRUEDTRK3ID = new std::vector<double>();
+
+	double JetPT;
+	double JetEta;
+	double JetTruePT;
+
+	t0->SetBranchAddress("D0M",           &D0M);
+	t0->SetBranchAddress("D0IPCHI2",      &D0IPCHI2);
+	t0->SetBranchAddress("D0PT",          &D0PT);
+	t0->SetBranchAddress("D0PX",          &D0PX);
+	t0->SetBranchAddress("D0PY",          &D0PY);
+	t0->SetBranchAddress("D0PZ",          &D0PZ);
+	t0->SetBranchAddress("D0E",           &D0E);
+	t0->SetBranchAddress("D0X",           &D0X);
+	t0->SetBranchAddress("D0Y",           &D0Y);
+	t0->SetBranchAddress("D0Z",           &D0Z);
+	t0->SetBranchAddress("D0KP",          &D0KP);
+	t0->SetBranchAddress("D0KPT",         &D0KPT);
+	t0->SetBranchAddress("D0KPX",         &D0KPX);
+	t0->SetBranchAddress("D0KPY",         &D0KPY);
+	t0->SetBranchAddress("D0KPZ",         &D0KPZ);
+	t0->SetBranchAddress("D0PIP",         &D0PIP);
+	t0->SetBranchAddress("D0PIPT",        &D0PIPT);
+	t0->SetBranchAddress("D0PIPX",        &D0PIPX);
+	t0->SetBranchAddress("D0PIPY",        &D0PIPY);
+	t0->SetBranchAddress("D0PIPZ",        &D0PIPZ);
+	t0->SetBranchAddress("D0KWEIGHT",     &D0KWEIGHT);
+	t0->SetBranchAddress("D0PIWEIGHT",    &D0PIWEIGHT);
+	t0->SetBranchAddress("D0TRUEIDX",     &D0TRUEIDX);
+	t0->SetBranchAddress("D0TRUETRK0",    &D0TRUETRK0);
+	t0->SetBranchAddress("D0TRUETRK1",    &D0TRUETRK1);
+
+	t0->SetBranchAddress("TRUEDID",       &TRUEDID);
+	t0->SetBranchAddress("TRUEDPX",       &TRUEDPX);
+	t0->SetBranchAddress("TRUEDPY",       &TRUEDPY);
+	t0->SetBranchAddress("TRUEDPZ",       &TRUEDPZ);
+	t0->SetBranchAddress("TRUEDE",        &TRUEDE);
+	t0->SetBranchAddress("TRUEDFROMB",    &TRUEDFROMB);
+	t0->SetBranchAddress("TRUEDTRK0P",    &TRUEDTRK0P);
+	t0->SetBranchAddress("TRUEDTRK0PT",   &TRUEDTRK0PT);
+	t0->SetBranchAddress("TRUEDTRK0INACC",&TRUEDTRK0INACC);
+	t0->SetBranchAddress("TRUEDTRK0RECO", &TRUEDTRK0RECO);
+	t0->SetBranchAddress("TRUEDTRK1P",    &TRUEDTRK1P);
+	t0->SetBranchAddress("TRUEDTRK1PT",   &TRUEDTRK1PT);
+	t0->SetBranchAddress("TRUEDTRK1INACC",&TRUEDTRK1INACC);
+	t0->SetBranchAddress("TRUEDTRK1RECO", &TRUEDTRK1RECO);
+	t0->SetBranchAddress("TRUEDTRK0IDX",  &TRUEDTRK0IDX);
+	t0->SetBranchAddress("TRUEDTRK1IDX",  &TRUEDTRK1IDX);
+	t0->SetBranchAddress("TRUEDTRK2IDX",  &TRUEDTRK2IDX);
+	t0->SetBranchAddress("TRUEDTRK3IDX",  &TRUEDTRK3IDX);
+	t0->SetBranchAddress("TRUEDTRK0ID",  &TRUEDTRK0ID);
+	t0->SetBranchAddress("TRUEDTRK1ID",  &TRUEDTRK1ID);
+	t0->SetBranchAddress("TRUEDTRK2ID",  &TRUEDTRK2ID);
+	t0->SetBranchAddress("TRUEDTRK3ID",  &TRUEDTRK3ID);
+
+	t0->SetBranchAddress("JetPT",         &JetPT);
+	t0->SetBranchAddress("JetEta",        &JetEta);
+	t0->SetBranchAddress("JetTruePT",     &JetTruePT);
+
+	unsigned int nentries0 = t0->GetEntries();
+
+	double dpt(0.), deta(0.);
+
+	boost::progress_display progress( nentries0 );
+	for(unsigned int ientry=0; ientry<nentries0; ++ientry) {
+		++progress;
+		t0->GetEntry(ientry);
+
+		int ptBin = ptBinScheme->FindBin(JetPT);
+		if(ptBin<1||ptBin>ptBinScheme->GetNbinsX()) continue;
+
+		for(unsigned int d=0; d<TRUEDID->size(); ++d) {
+			//only use D0->Kpi with Pt>5GeV
+			if(TMath::Abs(TRUEDID->at(d))!=421) continue;
+			if(TRUEDTRK0IDX->at(d)==-1) continue;
+			if(TRUEDTRK2IDX->at(d)!=-1) continue;
+			if(TRUEDPX->at(d)*TRUEDPX->at(d)+TRUEDPY->at(d)*TRUEDPY->at(d)<5000.*5000.) continue;
+
+			TVector3 TRUEDP (TRUEDPX->at(d)  ,TRUEDPY->at(d)  ,TRUEDPZ->at(d));
+
+			truD0recoPT.at(0)->Fill(JetPT);
+			truD0truePT.at(0)->Fill(JetTruePT);
+			d0Kinematics[0]->Fill(TRUEDP.Pt(),TRUEDP.Eta());
+
+			if(TRUEDTRK0INACC->at(d)!=1 || TRUEDTRK1INACC->at(d)!=1) continue;
+
+			truD0recoPT.at(1)->Fill(JetPT);
+			truD0truePT.at(1)->Fill(JetTruePT);
+			d0Kinematics[2]->Fill(TRUEDP.Pt(),TRUEDP.Eta());
+
+			if(TRUEDTRK0RECO->at(d)!=1 || TRUEDTRK1RECO->at(d)!=1) continue;
+
+			truD0recoPT.at(2)->Fill(JetPT);
+			truD0truePT.at(2)->Fill(JetTruePT);
+			d0Kinematics[4]->Fill(TRUEDP.Pt(),TRUEDP.Eta());
+
+			for(unsigned int s=0; s<D0TRUEIDX->size(); ++s) {
+				if(D0TRUEIDX->at(s)==d) {
+					TVector3 D0P (D0PX->at(s)  ,D0PY->at(s)  ,D0PZ->at(s));
+					TVector3 D0P0(D0KPX->at(s) ,D0KPY->at(s) ,D0KPZ->at(s));
+					TVector3 D0P1(D0PIPX->at(s),D0PIPY->at(s),D0PIPZ->at(s));
+
+					if(!(D0P0.Eta()>2.0 && D0P0.Eta()<4.5 && D0P0.Pt()>500. && D0P0.Mag()>5000.)) continue;
+					if(!(D0P1.Eta()>2.0 && D0P1.Eta()<4.5 && D0P1.Pt()>500. && D0P1.Mag()>5000.)) continue;
+					if(!(D0P.Pt()>d0minpt)) continue;
+					if(!(d0maxpt==-1 || D0P.Pt() < d0maxpt) ) continue;
+					//if(!(D0P.Eta()>2.5&&D0P.Eta()<4.0)) continue;//TODO test restricting the eta(D0) range (turn on in two places 1/2)
+
+					truD0recoPT.at(3)->Fill(JetPT);
+					truD0truePT.at(3)->Fill(JetTruePT);
+					d0Kinematics[6]->Fill(TRUEDP.Pt(),TRUEDP.Eta());
+
+					//use weights for PID
+					double weight = D0KWEIGHT->at(s);// pion PID removed *D0PIWEIGHT->at(s);
+					if(D0P0.Pt()>25000. || D0P0.Mag()>500000.) weight = 1.; //PID turned off for high P or PT
+					truD0recoPT.at(4)->Fill(JetPT,weight);
+					truD0truePT.at(4)->Fill(JetTruePT,weight);
+					d0Kinematics[8]->Fill(TRUEDP.Pt(),TRUEDP.Eta(),weight);
+					d0masstru.at(ptBin-1)->Fill(D0M->at(s),weight);
+
+					break;
+				}
+			}
+		}
+		for(unsigned int s=0; s<D0M->size(); ++s) {
+			//first check in our tight acceptance
+			TVector3 D0P (D0PX->at(s)  ,D0PY->at(s)  ,D0PZ->at(s));
+			TVector3 D0P0(D0KPX->at(s) ,D0KPY->at(s) ,D0KPZ->at(s));
+			TVector3 D0P1(D0PIPX->at(s),D0PIPY->at(s),D0PIPZ->at(s));
+
+			if(!(D0P0.Eta()>2.0 && D0P0.Eta()<4.5 && D0P0.Pt()>500. && D0P0.Mag()>5000.)) continue;
+			if(!(D0P1.Eta()>2.0 && D0P1.Eta()<4.5 && D0P1.Pt()>500. && D0P1.Mag()>5000.)) continue;
+			if(!(D0P.Pt()>d0minpt)) continue;
+			if(!(d0maxpt==-1 || D0P.Pt() < d0maxpt) ) continue;
+			//if(!(D0P.Eta()>2.2&&D0P.Eta()<4.0)) continue;//TODO test restrcting the eta(D0) range (turn on in two places 2/2)
+
+			//check PID cuts
+			double weight = D0KWEIGHT->at(s);// pion PID removed *D0PIWEIGHT->at(s);
+			if(D0P0.Pt()>25000. || D0P0.Mag()>500000.) weight = 1.; //PID turned off for high P or PT
+
+			dpt        = D0P.Pt();
+			deta       = D0P.Eta();
+
+			//get efficiency corrections
+			double eff(0.);
+
+			if(dpt>=100000.) dpt=99999.;
+			eff    =      heff ->GetBinContent(heff ->FindBin(dpt      ,deta));
+
+			if(eff<0.01) {
+				std::cout << dpt << "\t" << deta << "\t" << eff << std::endl;
+				continue;
+			}
+
+			double sbSubSwitch(0.);
+			if(TMath::Abs(D0M->at(s)-1865)<40.) sbSubSwitch = 1.;
+			else if(TMath::Abs(D0M->at(s)-1865)<80.) sbSubSwitch = -1.;
+
+			fitD0recoPT.at(4)->Fill(JetPT,weight*sbSubSwitch);
+			fitD0recoPT.at(0)->Fill(JetPT,weight*sbSubSwitch/(eff));
+
+			fitD0truePT.at(4)->Fill(JetTruePT,weight*sbSubSwitch);
+			fitD0truePT.at(0)->Fill(JetTruePT,weight*sbSubSwitch/(eff));
+
+			d0Kinematics[9]->Fill(D0P.Pt(),D0P.Eta(),weight*sbSubSwitch);
+			d0Kinematics[1]->Fill(D0P.Pt(),D0P.Eta(),weight*sbSubSwitch/(eff));
+			d0massfit.at(ptBin-1)->Fill(D0M->at(s),weight);
+
+			//truth match to real, accepted and reconstructed D0
+			if(D0TRUEIDX->at(s)<0) break;
+			int d = D0TRUEIDX->at(s);
+			if(TRUEDTRK0IDX->at(d)==-1) continue;
+			if(TRUEDTRK2IDX->at(d)!=-1) continue;
+			if(TRUEDPX->at(d)*TRUEDPX->at(d)+TRUEDPY->at(d)*TRUEDPY->at(d)<5000.*5000.) continue;
+			if(TRUEDTRK0INACC->at(d)!=1 || TRUEDTRK1INACC->at(d)!=1) continue;
+			if(TRUEDTRK0RECO->at(d)!=1 || TRUEDTRK1RECO->at(d)!=1) continue;
+
+			fndD0recoPT.at(4)->Fill(JetPT,weight);
+			fndD0recoPT.at(0)->Fill(JetPT,weight/(eff));
+
+			fndD0truePT.at(4)->Fill(JetTruePT,weight);
+			fndD0truePT.at(0)->Fill(JetTruePT,weight/(eff));
+
+			d0massfnd.at(ptBin-1)->Fill(D0M->at(s),weight);
+
+			break;//only keep one D0 candidate per entry
+		}
+	}
+
+	printf("bins of true jet pT\n");
+	for(int i=0; i<5; ++i) {
+		printf("stage %d (%s)\n",i,stages[i].Data());
+		for(int j=1; j<=truD0truePT.at(i)->GetNbinsX(); ++j) {
+			printf("%6.0f-%6.0f\t",truD0truePT.at(i)->GetBinLowEdge(j),truD0truePT.at(i)->GetBinLowEdge(j+1));
+			printf("%5.0f\t%5.0f\t%5.0f",truD0truePT.at(i)->GetBinContent(j),fndD0truePT.at(i)->GetBinContent(j),fitD0truePT.at(i)->GetBinContent(j));
+			if(i>0) {
+				printf("\t%5.3f\t%5.3f", truD0truePT.at(i)->GetBinContent(j)/truD0truePT.at(i-1)->GetBinContent(j),
+						         fndD0truePT.at(i)->GetBinContent(j)/fndD0truePT.at(i-1)->GetBinContent(j));
+				printf("\t%5.3f", (fndD0truePT.at(i)->GetBinContent(j)/fndD0truePT.at(i-1)->GetBinContent(j))/
+						  (truD0truePT.at(i)->GetBinContent(j)/truD0truePT.at(i-1)->GetBinContent(j)));
+			}
+			printf("\n");
+		}
+	}
+	printf("bins of reco jet pT\n");
+
+	for(int i=0; i<5; ++i) {
+		printf("stage %d (%s)\n",i,stages[i].Data());
+		for(int j=1; j<=truD0recoPT.at(i)->GetNbinsX(); ++j) {
+			printf("%6.0f-%6.0f\t",truD0recoPT.at(i)->GetBinLowEdge(j),truD0recoPT.at(i)->GetBinLowEdge(j+1));
+			printf("%5.0f\t%5.0f\t%5.0f\t",truD0recoPT.at(i)->GetBinContent(j),fndD0recoPT.at(i)->GetBinContent(j),fitD0recoPT.at(i)->GetBinContent(j));
+			if(i>0) {
+				printf("\t%5.3f\t%5.3f", truD0recoPT.at(i)->GetBinContent(j)/truD0recoPT.at(i-1)->GetBinContent(j),
+						         fndD0recoPT.at(i)->GetBinContent(j)/fndD0recoPT.at(i-1)->GetBinContent(j));
+				printf("\t%5.3f", (fndD0recoPT.at(i)->GetBinContent(j)/fndD0recoPT.at(i-1)->GetBinContent(j))/
+						  (truD0recoPT.at(i)->GetBinContent(j)/truD0recoPT.at(i-1)->GetBinContent(j)));
+			}
+			printf("\n");
+		}
+	}
+
+	gStyle->SetPalette(1,0);
+	const Int_t NRGBs = 5;
+	const Int_t NCont = 255;
+	Double_t stops[NRGBs]  = { 0.00, 0.25, 0.50, 0.75, 1.00};
+	Double_t reds[NRGBs]   = { 1.00, 1.00, 1.00, 0.00, 0.00};
+	Double_t greens[NRGBs] = { 0.00, 0.50, 1.00, 0.50, 0.00};
+	Double_t blues[NRGBs]  = { 0.00, 0.00, 1.00, 1.00, 1.00};
+	TColor::CreateGradientColorTable(NRGBs, stops, reds, greens, blues, NCont);
+	gStyle->SetNumberContours(NCont);
+	TCanvas c1;
+	c1.SetLogx();
+	d0Kinematics[9]->Divide(d0Kinematics[1]);
+	d0Kinematics[8]->Divide(d0Kinematics[0]);
+	d0Kinematics[9]->Divide(d0Kinematics[8]);
+	d0Kinematics[9]->SetMinimum(0.);
+	d0Kinematics[9]->SetMaximum(2.);
+	d0Kinematics[9]->Draw("colz");
+	c1.SaveAs(savedir+"/D0KineRatio.pdf");
+	c1.SetLogx(0);
+	
+	for(int i=0; i< ptBinScheme->GetNbinsX(); ++i) {
+		TString suffix("_");
+		suffix+=i;
+		double sbSub = (d0massfit.at(i)->Integral(1,20) + d0massfit.at(i)->Integral(61,80))/40.;
+		for(int j=1; j<81; ++j) {
+			d0massfit.at(i)->SetBinContent(j, d0massfit.at(i)->GetBinContent(j) - sbSub);
+		}
+		std::cout << d0masstru.at(i)->Integral() << "\t" << d0massfit.at(i)->Integral() << "\t" << d0massfnd.at(i)->Integral() << std::endl;
+		std::cout << d0masstru.at(i)->Integral(21,60) << "\t" << d0massfit.at(i)->Integral(21,60) << "\t" << d0massfnd.at(i)->Integral(21,60) << std::endl;
+		d0masstru[i]->SetMaximum(1.1*TMath::Max(TMath::Max(d0masstru[i]->GetMaximum(),d0massfit[i]->GetMaximum()),d0massfnd[i]->GetMaximum()));
+		d0massfit[i]->SetLineColor(kRed);
+		d0massfnd[i]->SetLineColor(kMagenta);
+		d0masstru[i]->Draw();
+		d0massfit[i]->Draw("same");
+		d0massfnd[i]->Draw("same");
+		c1.SaveAs(savedir+"/D0Mass"+suffix+".pdf");
+	}
+	
 	return true;
 }
 
@@ -1604,6 +3010,10 @@ bool fitD0_SBS1D(int flavour, double minpt, double maxpt, double& yield, double&
 	TH1D hside("hside","",nbins,-5.,15.);
 	TH1D hsub ("hsub" ,"",nbins,-5.,15.);
 
+	TH1D mpeak("mpeak","",80,massVal-massScaleFact*80.,massVal+massScaleFact*80.);
+	TH1D mside("mside","",80,massVal-massScaleFact*80.,massVal+massScaleFact*80.);
+	TH1D mall ("mall" ,"",80,massVal-massScaleFact*80.,massVal+massScaleFact*80.);
+
 	hpeak.Sumw2();
 	hside.Sumw2();
 	hsub.Sumw2();
@@ -1641,21 +3051,43 @@ bool fitD0_SBS1D(int flavour, double minpt, double maxpt, double& yield, double&
 	t0->Draw(dType+"LogIPChi2>>hpeak",peakCut);
 	t0->Draw(dType+"LogIPChi2>>hside",sideCut);
 
-	hsub.Add(&hpeak,&hside,1.,-1.);
-	for(int ibin=1; ibin<=hsub.GetNbinsX(); ++ibin) {
-		if(hsub.GetBinContent(ibin)<0.) {
-			std::cout << "Resetting negative bin " << ibin << " (" << hsub.GetBinContent(ibin) << " +/- " << hsub.GetBinError(ibin) << ") to 0+/-1." << std::endl;
-			hsub.SetBinContent(ibin,0.);
-			hsub.SetBinError(ibin,1.);
-		}
-	}
+	t0->Draw(dType+"M>>mpeak",peakCut);
+	t0->Draw(dType+"M>>mside",sideCut);
+	t0->Draw(dType+"M>>mall");
 
+	hsub.Add(&hpeak,&hside,1.,-1.);
+	//TODO for(int ibin=1; ibin<=hsub.GetNbinsX(); ++ibin) {
+	//TODO 	if(hsub.GetBinContent(ibin)<0.) {
+	//TODO 		std::cout << "Resetting negative bin " << ibin << " (" << hsub.GetBinContent(ibin) << " +/- " << hsub.GetBinError(ibin) << ") to 0+/-1." << std::endl;
+	//TODO 		hsub.SetBinContent(ibin,0.);
+	//TODO 		hsub.SetBinError(ibin,1.);
+	//TODO 	}
+	//TODO }
+
+	TString axisStr = "Events / ("; axisStr+=massScaleFact*2; axisStr+=" MeV/#it{c}^{2})";
 	TCanvas c;
-	hpeak.Draw();
+	mpeak.GetXaxis()->SetTitle("#it{m}(#it{D}^{0}) [MeV/#it{c}^{2}]");
+	mpeak.GetYaxis()->SetTitle(axisStr);
+	mpeak.SetLineColor(kBlue);
+	mpeak.SetFillColor(kBlue);
+	mpeak.SetFillStyle(3004);
+	mpeak.Draw();
+	mside.SetLineColor(kRed);
+	mside.SetFillColor(kRed);
+	mside.SetFillStyle(3005);
+	mside.Draw("same");
+	mall.SetLineColor(kBlack);
+	mall.Draw("same");
+	c.SaveAs(savedir+"/"+dType+"_"+file+"_M_SBS_"+ptStr+".pdf");
+
+	hpeak.GetXaxis()->SetTitle("log #it{#chi}^{2}_{IP}(#it{D}^{0})");
+	hpeak.GetYaxis()->SetTitle("Events / (0.5)");
+	hpeak.SetLineColor(kBlue);
+	hpeak.Draw("E1");
 	hsub.SetLineColor(kGreen+2);
-	hsub.Draw("same");
+	hsub.Draw("E1 same");
 	hside.SetLineColor(kRed);
-	hside.Draw("same");
+	hside.Draw("E1 same");
 	c.SaveAs(savedir+"/"+dType+"_"+file+"_IPChi2_SBS_"+ptStr+".pdf");
 
 	//now fit log(chi^2_IP)
@@ -1934,14 +3366,16 @@ bool getD0Yields(TH1D* hist4, TH1D* hist5, TString file) {
 
 	for(int i=1; i<=hist4->GetNbinsX(); ++i) {
 		if(!fitD0(4,hist4->GetBinLowEdge(i),hist4->GetBinLowEdge(i+1),yield,error,file)) return false;
-		hist4->SetBinContent(i,yield);
-		hist4->SetBinError(  i,error);
+		double corr = getPtCorrFactor(jetRecoD04,hist4->GetBinLowEdge(i),hist4->GetBinLowEdge(i+1));
+		hist4->SetBinContent(i,yield*corr);
+		hist4->SetBinError(  i,error*corr);
 	}
 
 	for(int i=1; i<=hist5->GetNbinsX(); ++i) {
 		if(!fitD0(5,hist5->GetBinLowEdge(i),hist5->GetBinLowEdge(i+1),yield,error,file)) return false;
-		hist5->SetBinContent(i,yield);
-		hist5->SetBinError(  i,error);
+		double corr = getPtCorrFactor(jetRecoD05,hist5->GetBinLowEdge(i),hist5->GetBinLowEdge(i+1));
+		hist5->SetBinContent(i,yield*corr);
+		hist5->SetBinError(  i,error*corr);
 	}
 
 	return true;
@@ -1972,10 +3406,28 @@ TString fitSV(double& NC, double& eC, double& NB, double& eB, TString sample="10
 
 	if(!t0 || !t4 || !t5 || !td) return "FAIL";
 
-	TH1D svmcorsvn_0("svmcorsvn_0","",28,0.5,28.5);
-	TH1D svmcorsvn_4("svmcorsvn_4","",28,0.5,28.5);
-	TH1D svmcorsvn_5("svmcorsvn_5","",28,0.5,28.5);
-	TH1D svmcorsvn_d("svmcorsvn_d","",28,0.5,28.5);
+	double mmin(500.), mmax(10000.);
+	int nmbins(96.);
+	//int nmbins(20.);
+	int nbin(nmbins+4);
+	double scaleNtrk=4./nmbins;//scale down Ntrks part for nicer plots
+	double min(0.), max(nbin);
+	double scale(1./(1.+scaleNtrk));//scale to correct for ntrks part when extracting yields
+	if(whichSVFit==fitMCorr) {
+		nbin=nmbins;
+		max=nmbins;
+		scale=1.;
+	} else if(whichSVFit==fitNTrk) {
+		nbin=4;
+		min=nmbins;
+		scale=1.;
+		scaleNtrk=1.;
+	}
+
+	TH1D svmcorsvn_0("svmcorsvn_0","",nbin,min,max);
+	TH1D svmcorsvn_4("svmcorsvn_4","",nbin,min,max);
+	TH1D svmcorsvn_5("svmcorsvn_5","",nbin,min,max);
+	TH1D svmcorsvn_d("svmcorsvn_d","",nbin,min,max);
 
 	svmcorsvn_4.Sumw2();
 	svmcorsvn_5.Sumw2();
@@ -2031,12 +3483,12 @@ TString fitSV(double& NC, double& eC, double& NB, double& eB, TString sample="10
 		++eff0denom;
 		if(SVN->size()<1) continue;
 		++eff0num;
-		if(SVN->at(0)>1.5 && SVN->at(0)<10.5) svmcorsvn_0.Fill(SVN->at(0)+18.);
-		else if(SVN->at(0)>10.5) svmcorsvn_0.Fill(28.);
-		if(SVMCor->at(0)>500. && SVMCor->at(0)<10000.) svmcorsvn_0.Fill(SVMCor->at(0)/500. -0.5);
-		else if(SVMCor->at(0)>10000.) svmcorsvn_0.Fill(19.);
+		if(SVN->at(0)>1.5 && SVN->at(0)<4.5) svmcorsvn_0.Fill(SVN->at(0)+nmbins-2,scaleNtrk);
+		else if(SVN->at(0)>4.5) svmcorsvn_0.Fill(nmbins+3,scaleNtrk);
+		if(SVMCor->at(0)>mmin && SVMCor->at(0)<mmax) svmcorsvn_0.Fill((nmbins-1)*(SVMCor->at(0)-mmin)/(mmax-mmin));
+		else if(SVMCor->at(0)>mmax) svmcorsvn_0.Fill(nmbins-1);
 	}
-	std::cout << svmcorsvn_0.Integral(1,19) << "\t" << svmcorsvn_0.Integral(20,28) << std::endl;
+	std::cout << svmcorsvn_0.Integral(1,nmbins) << "\t" << svmcorsvn_0.Integral(nmbins+1,nbin)/scaleNtrk << std::endl;
 
 	for(int i=0; i<t4->GetEntries(); ++i) {
 		t4->GetEntry(i);
@@ -2046,12 +3498,12 @@ TString fitSV(double& NC, double& eC, double& NB, double& eB, TString sample="10
 		++eff4num;
 		if(JetTruePT>=100000.) JetTruePT=99999.;
 		weight = mcWeights4->GetBinContent(mcWeights4->FindBin(JetTruePT));
-		if(SVN->at(0)>1.5 && SVN->at(0)<10.5) svmcorsvn_4.Fill(SVN->at(0)+18.,weight);
-		else if(SVN->at(0)>10.5) svmcorsvn_4.Fill(28.,weight);
-		if(SVMCor->at(0)>500. && SVMCor->at(0)<10000.) svmcorsvn_4.Fill(SVMCor->at(0)/500. -0.5,weight);
-		else if(SVMCor->at(0)>10000.) svmcorsvn_4.Fill(19.,weight);
+		if(SVN->at(0)>1.5 && SVN->at(0)<4.5) svmcorsvn_4.Fill(SVN->at(0)+nmbins-2,weight*scaleNtrk);
+		else if(SVN->at(0)>4.5) svmcorsvn_4.Fill(nmbins+3,weight*scaleNtrk);
+		if(SVMCor->at(0)>mmin && SVMCor->at(0)<mmax) svmcorsvn_4.Fill((nmbins-1)*(SVMCor->at(0)-mmin)/(mmax-mmin),weight);
+		else if(SVMCor->at(0)>mmax) svmcorsvn_4.Fill(nmbins-1,weight);
 	}
-	std::cout << svmcorsvn_4.Integral(1,19) << "\t" << svmcorsvn_4.Integral(20,28) << std::endl;
+	std::cout << svmcorsvn_4.Integral(1,nmbins) << "\t" << svmcorsvn_4.Integral(nmbins+1,nbin)/scaleNtrk << std::endl;
 
 	for(int i=0; i<t5->GetEntries(); ++i) {
 		t5->GetEntry(i);
@@ -2061,12 +3513,12 @@ TString fitSV(double& NC, double& eC, double& NB, double& eB, TString sample="10
 		++eff5num;
 		if(JetTruePT>=100000.) JetTruePT=99999.;
 		weight = mcWeights5->GetBinContent(mcWeights5->FindBin(JetTruePT));
-		if(SVN->at(0)>1.5 && SVN->at(0)<10.5) svmcorsvn_5.Fill(SVN->at(0)+18.,weight);
-		else if(SVN->at(0)>10.5) svmcorsvn_5.Fill(28.,weight);
-		if(SVMCor->at(0)>0. && SVMCor->at(0)<10000.) svmcorsvn_5.Fill(SVMCor->at(0)/500. -0.5,weight);
-		else if(SVMCor->at(0)>10000.) svmcorsvn_5.Fill(19.,weight);
+		if(SVN->at(0)>1.5 && SVN->at(0)<4.5) svmcorsvn_5.Fill(SVN->at(0)+nmbins-2,weight*scaleNtrk);
+		else if(SVN->at(0)>4.5) svmcorsvn_5.Fill(nmbins+3,weight*scaleNtrk);
+		if(SVMCor->at(0)>mmin && SVMCor->at(0)<mmax) svmcorsvn_5.Fill((nmbins-1)*(SVMCor->at(0)-mmin)/(mmax-mmin),weight);
+		else if(SVMCor->at(0)>mmax) svmcorsvn_5.Fill(nmbins-1,weight);
 	}
-	std::cout << svmcorsvn_5.Integral(1,19) << "\t" << svmcorsvn_5.Integral(20,28) << std::endl;
+	std::cout << svmcorsvn_5.Integral(1,nmbins) << "\t" << svmcorsvn_5.Integral(nmbins+1,nbin)/scaleNtrk << std::endl;
 
 	for(int i=0; i<td->GetEntries(); ++i) {
 		weight=1.;
@@ -2074,16 +3526,16 @@ TString fitSV(double& NC, double& eC, double& NB, double& eB, TString sample="10
 		td->GetEntry(i);
 		if(JetPT<minPT || JetPT>maxPT) continue;
 		if(SVN->size()<1) continue;
-		if(SVN->at(0)>1.5 && SVN->at(0)<10.5) svmcorsvn_d.Fill(SVN->at(0)+18.,weight);
-		else if(SVN->at(0)>10.5) svmcorsvn_d.Fill(28.,weight);
-		if(SVMCor->at(0)>0. && SVMCor->at(0)<10000.) svmcorsvn_d.Fill(SVMCor->at(0)/500. -0.5,weight);
-		else if(SVMCor->at(0)>10000.) svmcorsvn_d.Fill(19.,weight);
+		if(SVN->at(0)>1.5 && SVN->at(0)<4.5) svmcorsvn_d.Fill(SVN->at(0)+nmbins-2,weight*scaleNtrk);
+		else if(SVN->at(0)>4.5) svmcorsvn_d.Fill(nmbins+3,weight*scaleNtrk);
+		if(SVMCor->at(0)>mmin && SVMCor->at(0)<mmax) svmcorsvn_d.Fill((nmbins-1)*(SVMCor->at(0)-mmin)/(mmax-mmin),weight);
+		else if(SVMCor->at(0)>mmax) svmcorsvn_d.Fill(nmbins-1,weight);
 	}
-	std::cout << svmcorsvn_d.Integral(1,19) << "\t" << svmcorsvn_d.Integral(20,28) << std::endl;
+	std::cout << svmcorsvn_d.Integral(1,nmbins) << "\t" << svmcorsvn_d.Integral(nmbins+1,nbin)/scaleNtrk << std::endl;
 
 	// -- variables from datasets
-	RooRealVar SVComb(  "SVComb",  "SVComb",  0.5,  28.5,  ""); 
-	SVComb.setBins(28);
+	RooRealVar SVComb(  "SVComb",  "SVComb",  min, max,  ""); 
+	SVComb.setBins(nbin);
 
 	// -- variables for shape
 	RooRealVar yieldB(  "yieldB",   "yieldB",  0.4*svmcorsvn_d.Integral(), 0., svmcorsvn_d.Integral());
@@ -2112,6 +3564,10 @@ TString fitSV(double& NC, double& eC, double& NB, double& eB, TString sample="10
 	gSystem->RedirectOutput(savedir+"/SVComb_"+sample+"_"+ptStr+"_fits.log","w");
 	/*RooFitResult * result =*/ data_pdf.fitTo( dh, RooFit::Extended(), RooFit::Save(), RooFit::NumCPU(4), RooFit::Range("FIT"));
 	gSystem->RedirectOutput(0);
+	////TODO fudge c+10% from b
+	//double fudgeShift = yieldC.getValV()*0.1;
+	//yieldC.setVal(yieldC.getVal()+fudgeShift);
+	//yieldB.setVal(yieldB.getVal()-fudgeShift);
 
 	//make plots
 	std::vector<std::string> sig_pdfs;
@@ -2121,7 +3577,7 @@ TString fitSV(double& NC, double& eC, double& NB, double& eB, TString sample="10
 	std::vector<std::string> bkg_pdfs;
 
 	TString plotName = "SVComb_"+sample+"_"; plotName+=ptStr;
-	plotFit(SVComb, 0.5, 28.5, 28, &dh, data_pdf, sig_pdfs, bkg_pdfs, plotName, "M_{cor}, N_{trk}");
+	plotFit(SVComb, min, max, nbin, &dh, data_pdf, sig_pdfs, bkg_pdfs, plotName, "M_{cor}, N_{trk}");
 
 	//print parameters
 	RooArgList params;
@@ -2135,13 +3591,13 @@ TString fitSV(double& NC, double& eC, double& NB, double& eB, TString sample="10
 	double eQ;
 
 	Ntot = yieldB.getValV()+yieldC.getValV()+yieldQ.getValV();
-	NB = yieldB.getValV()/2.;
-	NC = yieldC.getValV()/2.;
-	NQ = yieldQ.getValV()/2.;
-	eB = yieldB.getError()/2.;
-	eC = yieldC.getError()/2.;
-	eQ = yieldQ.getError()/2.;
-	Ntot/=2.;
+	NB = yieldB.getValV()*scale;
+	NC = yieldC.getValV()*scale;
+	NQ = yieldQ.getValV()*scale;
+	eB = yieldB.getError()*scale;
+	eC = yieldC.getError()*scale;
+	eQ = yieldQ.getError()*scale;
+	Ntot*=scale;
 	double eff5 = static_cast<double>(eff5num)/eff5denom;
 	double eff4 = static_cast<double>(eff4num)/eff4denom;
 	double eff0 = static_cast<double>(eff0num)/eff0denom;
@@ -2166,10 +3622,12 @@ bool getSVYields(TH1D* hist4, TH1D* hist5, TString file) {
 
 	for(int i=1; i<=hist4->GetNbinsX(); ++i) {
 		if(!fitSV(nC,eC,nB,eB,file,hist4->GetBinLowEdge(i),hist4->GetBinLowEdge(i+1))) return false;
-		hist4->SetBinContent(i,nC);
-		hist4->SetBinError(  i,eC);
-		hist5->SetBinContent(i,nB);
-		hist5->SetBinError(  i,eB);
+		double corrC = getPtCorrFactor(jetRecoSV4,hist4->GetBinLowEdge(i),hist4->GetBinLowEdge(i+1));
+		double corrB = getPtCorrFactor(jetRecoSV5,hist5->GetBinLowEdge(i),hist5->GetBinLowEdge(i+1));
+		hist4->SetBinContent(i,nC*corrC);
+		hist4->SetBinError(  i,eC*corrC);
+		hist5->SetBinContent(i,nB*corrB);
+		hist5->SetBinError(  i,eB*corrB);
 	}
 
 	return true;
@@ -2323,20 +3781,25 @@ int main(int argc, char** argv) {
 		if(file.BeginsWith("14") || file.BeginsWith("15") || file.BeginsWith("16") || file.BeginsWith("2") || file.BeginsWith("45")) {
 			dataIsMC=true;
 		}
-		dataFile = "/eos/user/d/dcraik/jets-tuples-new-181204/for_yandex_data_new_"+file+".root";
+		dataFile = "/eos/user/d/dcraik/jets-tuples-new-190210/for_yandex_data_new_"+file+".root";
 	}
 
 	unsigned int npt=3;
-	double* binsPt  = new double[npt +1]{15000.,20000.,30000.,100000.};
+	double* binsPt  = new double[npt +1]{15000.,20000.,30000.,50000.};
+	//double* binsPt  = new double[npt +1]{15000.,20000.,30000.,100000.};
 	//unsigned int npt=4;
 	//double* binsPt  = new double[npt +1]{10000.,15000.,20000.,30000.,100000.};
 
 	//make input files
-	if(!addEffs(file)) return 1;
-	if(!weightMC(file,jetRecoD04)) return 1;
-	if(!weightMC(file,jetRecoD05)) return 1;
-	if(!weightMC(file,jetRecoSV4)) return 1;
-	if(!weightMC(file,jetRecoSV5)) return 1;
+	if(useSimpleEff) {
+		if(!addEffsSimple(file)) return 1;
+	} else {
+		if(!addEffs(file)) return 1;
+	}
+//TODO	if(!weightMC(file,jetRecoD04)) return 1;
+//TODO	if(!weightMC(file,jetRecoD05)) return 1;
+//TODO	if(!weightMC(file,jetRecoSV4)) return 1;
+//TODO	if(!weightMC(file,jetRecoSV5)) return 1;
 
 	//truth histograms for MC studies
 	TH1D trueD04("trueD04","",npt,binsPt);
@@ -2350,8 +3813,16 @@ int main(int argc, char** argv) {
 	if(dataIsMC) {
 		getTruth(&trueD04,&trueD05,&trueSV4,&trueSV5);
 		getTruth(&trueUnfldD04,&trueUnfldD05,&trueUnfldSV4,&trueUnfldSV5,true);
-		testEffs(file,&trueD04);
-		return 0;//TODO
+		//for the real MC samples, test D0 efficiencies and return
+		//for permutations, compare truth results to extracted yields
+		if(!dataIsResampledMC) {
+			if(useSimpleEff) {
+				testEffsSimple(file,&trueD04);
+			} else {
+				testEffs(file,&trueD04);
+			}
+			return 0;//TODO
+		}
 	}
 
 	//first do D0 fits for denominators
@@ -2448,15 +3919,41 @@ int main(int argc, char** argv) {
 	std::cout << std::endl;
 
 	//ratios
+	std::vector<double> ratioRec4;
+	std::vector<double> ratioRec5;
+	std::vector<double> ratioUnfld4;
+	std::vector<double> ratioUnfld5;
+	std::vector<double> ratioTrue4;
+	std::vector<double> ratioTrue5;
+	std::vector<double> ratioTrueUnfld4;
+	std::vector<double> ratioTrueUnfld5;
+	std::vector<double> errorRec4;
+	std::vector<double> errorRec5;
+	std::vector<double> errorUnfld4;
+	std::vector<double> errorUnfld5;
+	for (unsigned int i=1; i<=npt; ++i) {
+		ratioRec4.push_back(recoSV4.GetBinContent(i) / (recoD04.GetBinContent(i) / (bfD0 * ffc2D0)));
+		ratioRec5.push_back(recoSV5.GetBinContent(i) / (recoD05.GetBinContent(i) / (bfD0 * ffb2D0)));
+		ratioUnfld4.push_back(unfoldedSV4->GetBinContent(i) / (unfoldedD04->GetBinContent(i) / (bfD0 * ffc2D0)));
+		ratioUnfld5.push_back(unfoldedSV5->GetBinContent(i) / (unfoldedD05->GetBinContent(i) / (bfD0 * ffb2D0)));
+		ratioTrue4.push_back(trueSV4.GetBinContent(i) / (trueD04.GetBinContent(i) / (bfD0 * ffc2D0)));
+		ratioTrue5.push_back(trueSV5.GetBinContent(i) / (trueD05.GetBinContent(i) / (bfD0 * ffb2D0)));
+		ratioTrueUnfld4.push_back(trueUnfldSV4.GetBinContent(i) / (trueUnfldD04.GetBinContent(i) / (bfD0 * ffc2D0)));
+		ratioTrueUnfld5.push_back(trueUnfldSV5.GetBinContent(i) / (trueUnfldD05.GetBinContent(i) / (bfD0 * ffb2D0)));
+		errorRec4.push_back(ratioRec4[i-1]*TMath::Sqrt(TMath::Power(recoSV4.GetBinError(i)/recoSV4.GetBinContent(i),2)+TMath::Power(recoD04.GetBinError(i)/recoD04.GetBinContent(i),2)));
+		errorRec5.push_back(ratioRec5[i-1]*TMath::Sqrt(TMath::Power(recoSV5.GetBinError(i)/recoSV5.GetBinContent(i),2)+TMath::Power(recoD05.GetBinError(i)/recoD05.GetBinContent(i),2)));
+		errorUnfld4.push_back(ratioUnfld4[i-1]*TMath::Sqrt(TMath::Power(unfoldedSV4->GetBinError(i)/unfoldedSV4->GetBinContent(i),2)+TMath::Power(unfoldedD04->GetBinError(i)/unfoldedD04->GetBinContent(i),2)));
+		errorUnfld5.push_back(ratioUnfld5[i-1]*TMath::Sqrt(TMath::Power(unfoldedSV5->GetBinError(i)/unfoldedSV5->GetBinContent(i),2)+TMath::Power(unfoldedD05->GetBinError(i)/unfoldedD05->GetBinContent(i),2)));
+	}
 	std::cout << "ratios reco4/5/unfld4/5/true4/5/trueunfld4/5" << std::endl;
-	for (unsigned int i=1; i<=npt; ++i) std::cout << recoSV4.GetBinContent(i) / (recoD04.GetBinContent(i) / (bfD0 * ffc2D0)) << "\t";
+	for (unsigned int i=0; i<npt; ++i) std::cout << ratioRec4[i] << "+/-" << errorRec4[i] << "+/-" << ratioRec4[i]*bfffErr4 << "\t";
+	std::cout << std::endl;                                                              
+	for (unsigned int i=0; i<npt; ++i) std::cout << ratioRec5[i] << "+/-" << errorRec5[i] << "+/-" << ratioRec5[i]*bfffErr5 << "\t";
 	std::cout << std::endl;
-	for (unsigned int i=1; i<=npt; ++i) std::cout << recoSV5.GetBinContent(i) / (recoD05.GetBinContent(i) / (bfD0 * ffb2D0)) << "\t";
 	std::cout << std::endl;
+	for (unsigned int i=0; i<npt; ++i) std::cout << ratioUnfld4[i] << "+/-" << errorUnfld4[i] << "+/-" << ratioUnfld4[i]*bfffErr4 << "\t";
 	std::cout << std::endl;
-	for (unsigned int i=1; i<=npt; ++i) std::cout << unfoldedSV4->GetBinContent(i) / (unfoldedD04->GetBinContent(i) / (bfD0 * ffc2D0)) << "\t";
-	std::cout << std::endl;
-	for (unsigned int i=1; i<=npt; ++i) std::cout << unfoldedSV5->GetBinContent(i) / (unfoldedD05->GetBinContent(i) / (bfD0 * ffb2D0)) << "\t";
+	for (unsigned int i=0; i<npt; ++i) std::cout << ratioUnfld5[i] << "+/-" << errorUnfld5[i] << "+/-" << ratioUnfld5[i]*bfffErr5 << "\t";
 	std::cout << std::endl;
 	std::cout << std::endl;
 	for (unsigned int i=1; i<=npt; ++i) std::cout << trueSV4.GetBinContent(i) / (trueD04.GetBinContent(i) / (bfD0 * ffc2D0)) << "\t";

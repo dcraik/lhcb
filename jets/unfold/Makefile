@@ -57,3 +57,9 @@ massFitExample.o : massFitExample.C
 
 massFitExample : massFitExample.o
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS) RooUnfold/libRooUnfold.so
+
+fitZJetSVs.o : fitZJetSVs.C
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCPATH) -c $< -o $@
+
+fitZJetSVs : fitZJetSVs.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS) RooUnfold/libRooUnfold.so
