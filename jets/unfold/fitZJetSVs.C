@@ -335,6 +335,7 @@ TString fitSV(double& NC, double& eC, double& NJ, double& eJ, double minPT=20000
 	gSystem->RedirectOutput(savedir+"/SVComb_"+ptStr+"_fits.log","w");
 	/*RooFitResult * result =*/ data_pdf.fitTo( dh, RooFit::Extended(), RooFit::Save(), RooFit::NumCPU(4), RooFit::Range("FIT"));
 	gSystem->RedirectOutput(0);
+	///*RooFitResult * result =*/ data_pdf.chi2FitTo( dh, RooFit::Extended(), RooFit::Save(), RooFit::NumCPU(4), RooFit::Range("FIT"));
 
 	//make plots
 	std::vector<std::string> sig_pdfs;

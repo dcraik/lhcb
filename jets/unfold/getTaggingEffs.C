@@ -1,4 +1,5 @@
 #include <vector>
+#include <fstream>
 
 #include "TCanvas.h"
 #include "TChain.h"
@@ -554,8 +555,8 @@ bool addEffsOld(TString file) {
 			double eff5=effacc*effrec5*effsel5*effpid;
 
 			if(eff4<0.01 || eff5<0.01) {
-				std::cout << D0PT << "\t" << D0Eta << "\t" << effacc << "\t" << effrec4 << "\t" << effrec5 << "\t" << effsel4 << "\t" << effsel5 << "\t" << effpid << std::endl;
-				continue;
+//TODO//				std::cout << D0PT << "\t" << D0Eta << "\t" << effacc << "\t" << effrec4 << "\t" << effrec5 << "\t" << effsel4 << "\t" << effsel5 << "\t" << effpid << std::endl;
+//TODO//				continue;
 			}
 
 			weight4 = 1./eff4;
@@ -760,8 +761,8 @@ bool addEffs(TString file) {
 			double eff5=effacc*effrec*effcor*effsel5*effpid;
 
 			if(eff4<0.01 || eff5<0.01) {
-				std::cout << D0PT << "\t" << D0Eta << "\t" << effacc << "\t" << effrec << "\t" << effcor << "\t" << effsel4 << "\t" << effsel5 << "\t" << effpid << std::endl;
-				if(effcor==0) std::cout << D0RhoSq << "\t" << D0Z << std::endl;//TODO
+//TODO//				std::cout << D0PT << "\t" << D0Eta << "\t" << effacc << "\t" << effrec << "\t" << effcor << "\t" << effsel4 << "\t" << effsel5 << "\t" << effpid << std::endl;
+//TODO//				if(effcor==0) std::cout << D0RhoSq << "\t" << D0Z << std::endl;//TODO
 				continue;
 			}
 
@@ -924,7 +925,7 @@ bool addEffsSimple(TString file) {
 			eff5   =      heff5->GetBinContent(heff5->FindBin(D0PT      ,D0Eta));
 
 			if(eff4<0.01 || eff5<0.01) {
-				std::cout << D0PT << "\t" << D0Eta << "\t" << eff4 << "\t" << eff5 << std::endl;
+//TODO//				std::cout << D0PT << "\t" << D0Eta << "\t" << eff4 << "\t" << eff5 << std::endl;
 				continue;
 			}
 
@@ -1248,7 +1249,7 @@ bool testEffsOld(TString file, TH1D* ptBinScheme) {
 			double eff=effacc*effrec*effsel*effpid;
 
 			if(eff<0.01) {
-				std::cout << dpt << "\t" << deta << "\t" << effacc << "\t" << effrec << "\t" << effsel << "\t" << effpid << std::endl;
+//TODO				std::cout << dpt << "\t" << deta << "\t" << effacc << "\t" << effrec << "\t" << effsel << "\t" << effpid << std::endl;
 				continue;
 			}
 
@@ -1776,7 +1777,7 @@ bool testEffs(TString file, TH1D* ptBinScheme) {
 			double eff=effacc*effrec*effsel*effpid;
 
 			if(eff<0.01) {
-				std::cout << dpt << "\t" << deta << "\t" << effacc << "\t" << effrec << "\t" << effsel << "\t" << effpid << std::endl;
+				//TODO//std::cout << dpt << "\t" << deta << "\t" << effacc << "\t" << effrec << "\t" << effsel << "\t" << effpid << std::endl;
 				//if(D0TRUEIDX->at(s)>-1) {
 				//	int d = D0TRUEIDX->at(s);
 				//	if(TRUEDTRK0IDX->at(d)!=-1 && TRUEDTRK2IDX->at(d)==-1 && TRUEDPX->at(d)*TRUEDPX->at(d)+TRUEDPY->at(d)*TRUEDPY->at(d)>=5000.*5000.) {
@@ -3796,10 +3797,10 @@ int main(int argc, char** argv) {
 	} else {
 		if(!addEffs(file)) return 1;
 	}
-//TODO	if(!weightMC(file,jetRecoD04)) return 1;
-//TODO	if(!weightMC(file,jetRecoD05)) return 1;
-//TODO	if(!weightMC(file,jetRecoSV4)) return 1;
-//TODO	if(!weightMC(file,jetRecoSV5)) return 1;
+	if(!weightMC(file,jetRecoD04)) return 1;
+	if(!weightMC(file,jetRecoD05)) return 1;
+	if(!weightMC(file,jetRecoSV4)) return 1;
+	if(!weightMC(file,jetRecoSV5)) return 1;
 
 	//truth histograms for MC studies
 	TH1D trueD04("trueD04","",npt,binsPt);
@@ -3917,6 +3918,13 @@ int main(int argc, char** argv) {
 	for (unsigned int i=1; i<=npt; ++i) std::cout << trueUnfldSV5.GetBinContent(i) << " +/- " << trueUnfldSV5.GetBinError(i) << "\t";
 	std::cout << std::endl;
 	std::cout << std::endl;
+
+	std::ofstream fout("toysSVResults.log",std::ofstream::app);
+	fout << file << "\t";
+	for (unsigned int i=1; i<=npt; ++i) fout << recoSV4.GetBinContent(i) << "\t" << recoSV4.GetBinError(i) << "\t";
+	for (unsigned int i=1; i<=npt; ++i) fout << recoSV5.GetBinContent(i) << "\t" << recoSV5.GetBinError(i) << "\t";
+	fout << std::endl;
+	fout.close();
 
 	//ratios
 	std::vector<double> ratioRec4;
