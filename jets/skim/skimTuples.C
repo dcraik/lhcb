@@ -485,6 +485,8 @@ void skimTuples::reattachLostParticles() {
 void skimTuples::fillZ(int z, int j) {
 	TLorentzVector p4z( z0_px->at(z), z0_py->at(z), z0_pz->at(z), z0_e->at(z));
 	TLorentzVector p4j(jet_px->at(j),jet_py->at(j),jet_pz->at(j),jet_e->at(j));
+	TLorentzVector p4mu0( trk_px->at(z0_idx_trk0->at(z)), trk_py->at(z0_idx_trk0->at(z)), trk_pz->at(z0_idx_trk0->at(z)), trk_e->at(z0_idx_trk0->at(z)));
+	TLorentzVector p4mu1( trk_px->at(z0_idx_trk1->at(z)), trk_py->at(z0_idx_trk1->at(z)), trk_pz->at(z0_idx_trk1->at(z)), trk_e->at(z0_idx_trk1->at(z)));
 
 	ZM  = p4z.M();
 	ZP  = p4z.P();
@@ -495,6 +497,16 @@ void skimTuples::fillZ(int z, int j) {
 	ZE  = p4z.E();
 	ZETA= p4z.Eta();
 	ZDR = p4z.DeltaR(p4j);
+
+	MU0PX = p4mu0.Px();
+	MU0PY = p4mu0.Py();
+	MU0PZ = p4mu0.Pz();
+	MU0PT = p4mu0.Pt();
+
+	MU1PX = p4mu1.Px();
+	MU1PY = p4mu1.Py();
+	MU1PZ = p4mu1.Pz();
+	MU1PT = p4mu1.Pt();
 }
 
 void skimTuples::fillOutput(int j, int t)
@@ -2159,7 +2171,8 @@ bool skimTuples::tagTruthJet(int& j1, int& j2) {
 	return false;
 }
 
-bool skimTuples::tagTruthNoMuJet(int& j1) {
+//selection slightly different from Z+jet data (we keep leading jet even if Z not found)
+bool skimTuples::tagTruthNoMuJet(int& j1, int& z) {
 	int ng = gen_pid->size();
 	int nj = jet_pz->size();
 
@@ -2170,6 +2183,48 @@ bool skimTuples::tagTruthNoMuJet(int& j1) {
 
 	int countMatched(false);
 
+	double ptZ(0.);
+
+	//first get Z if we have it (in the unlikely even we find two candidates, keep high-pT)
+	for(unsigned int iz=0; iz<z0_pt->size(); ++iz) {
+		int mu0 = z0_idx_trk0->at(iz);
+		int mu1 = z0_idx_trk1->at(iz);
+
+		TLorentzVector p4Z(z0_px->at(iz),
+				   z0_py->at(iz),
+				   z0_pz->at(iz),
+				   z0_e->at( iz));
+		TLorentzVector p4mu0( trk_px->at(mu0),
+				      trk_py->at(mu0),
+				      trk_pz->at(mu0),
+				      trk_e->at( mu0));
+		TLorentzVector p4mu1( trk_px->at(mu1),
+				      trk_py->at(mu1),
+				      trk_pz->at(mu1),
+				      trk_e->at( mu1));
+
+		if(!(p4Z.Pt()>0.)) continue;//protect against odd entries
+
+		//Z selection start
+		if(TMath::Abs(z0_m->at(iz) - 90000.) > 30000.) continue;
+		if(p4mu0.Pt()<20000. || p4mu1.Pt()<20000.) continue;
+		if(p4mu0.Eta()<2. || p4mu0.Eta()>4.5) continue;
+		if(p4mu1.Eta()<2. || p4mu1.Eta()>4.5) continue;
+		if(TMath::Prob(trk_chi2->at(mu0),trk_ndof->at(mu0))<0.01) continue;
+		if(TMath::Prob(trk_chi2->at(mu1),trk_ndof->at(mu1))<0.01) continue;
+		//if(trk_dp->at(mu0)/trk_p->at(mu0)<0.1) continue;//TODO off until rerun of DV
+		//if(trk_dp->at(mu1)/trk_p->at(mu1)<0.1) continue;//TODO off until rerun of DV
+		//if(!(z0_l0_ewmuon_tos->at(iz))) continue; //TODO off until rerun of DV
+		//if(!(z0_hlt1_hiptmu_tos->at(iz) && z0_hlt2_hiptmu_tos->at(iz))) continue;
+		//Z selection end
+		if(p4Z.Pt()>ptZ) {
+			z=iz;
+			ptZ = p4Z.Pt();
+		}
+	}
+
+
+	//select the jet independently
 	for(int j=0; j<nj; ++j) {
 		TLorentzVector p4j(jet_px->at(j),jet_py->at(j),jet_pz->at(j),jet_e->at(j));
 		bool matched(false);
@@ -2199,6 +2254,9 @@ bool skimTuples::tagTruthNoMuJet(int& j1) {
 			}
 		}
 		if(!matched) continue;
+		//as an extra sanity check - if we have a Z candidate, check for it's muon jets
+		if(z>-1 && (j == z0_idx_jet_trk0->at(z) ||
+		            j == z0_idx_jet_trk1->at(z))) continue;
 		++countMatched;
 
 		//for light sample - pick jet with highest pT
@@ -2391,27 +2449,45 @@ bool skimTuples::tagSVJet(int& j, int& t) {
 	return true;
 }
 
-//function to identify the probe (j) and tag (t) jets in a Z + jet data event
+//function to identify the probe (j) jet and Z in a Z + jet data event
 //don't return a tag jet (instead return Z index)
-bool skimTuples::tagZJet(int& j, int& t) {
+bool skimTuples::tagZJet(int& j, int& z) {
 	std::vector<int> zs;
 	std::vector<int> probes;
 
 	for(unsigned int iz=0; iz<z0_pt->size(); ++iz) {
-		//loose mass requirement and trigger on Z
-		if(TMath::Abs(z0_m->at(iz) - 90000.) > 30000.) continue;
-		if(!(z0_l0_muon_tos->at(iz) || z0_l0_dimuon_tos->at(iz))) continue;
-		if(!(z0_hlt1_hiptmu_tos->at(iz) && z0_hlt2_hiptmu_tos->at(iz))) continue;
-
 		int iJet(-1);
 		double probePt(0.);
+		int mu0 = z0_idx_trk0->at(iz);
+		int mu1 = z0_idx_trk1->at(iz);
 
 		TLorentzVector p4Z(z0_px->at(iz),
 				   z0_py->at(iz),
 				   z0_pz->at(iz),
 				   z0_e->at( iz));
+		TLorentzVector p4mu0( trk_px->at(mu0),
+				      trk_py->at(mu0),
+				      trk_pz->at(mu0),
+				      trk_e->at( mu0));
+		TLorentzVector p4mu1( trk_px->at(mu1),
+				      trk_py->at(mu1),
+				      trk_pz->at(mu1),
+				      trk_e->at( mu1));
 
 		if(!(p4Z.Pt()>0.)) continue;//protect against odd entries
+
+		//Z selection start
+		if(TMath::Abs(z0_m->at(iz) - 90000.) > 30000.) continue;
+		if(p4mu0.Pt()<20000. || p4mu1.Pt()<20000.) continue;
+		if(p4mu0.Eta()<2. || p4mu0.Eta()>4.5) continue;
+		if(p4mu1.Eta()<2. || p4mu1.Eta()>4.5) continue;
+		if(TMath::Prob(trk_chi2->at(mu0),trk_ndof->at(mu0))<0.01) continue;
+		if(TMath::Prob(trk_chi2->at(mu1),trk_ndof->at(mu1))<0.01) continue;
+		//if(trk_dp->at(mu0)/trk_p->at(mu0)<0.1) continue;//TODO off until rerun of DV
+		//if(trk_dp->at(mu1)/trk_p->at(mu1)<0.1) continue;//TODO off until rerun of DV
+		//if(!(z0_l0_ewmuon_tos->at(iz))) continue; //TODO off until rerun of DV
+		if(!(z0_hlt1_hiptmu_tos->at(iz) && z0_hlt2_hiptmu_tos->at(iz))) continue;
+		//Z selection end
 
 		for(unsigned int j=0; j<jet_pt->size(); ++j) {
 			//skip Z muon "jet"s
@@ -2425,6 +2501,9 @@ bool skimTuples::tagZJet(int& j, int& t) {
 
 			if(!(p4Jet.Pt()>0.)) continue;//protect against odd entries
 
+			//require same PV and separation between jet and Z muons
+			if(jet_idx_pvr->at(j) != trk_idx_pvr->at(mu0) || jet_idx_pvr->at(j) != trk_idx_pvr->at(mu1)) continue;
+			if(p4Jet.DeltaR(p4mu0)<0.5 || p4Jet.DeltaR(p4mu1)<0.5) continue;
 			if(p4Jet.Pt() > probePt) {
 				iJet = j;
 				probePt = p4Jet.Pt();
@@ -2441,7 +2520,7 @@ bool skimTuples::tagZJet(int& j, int& t) {
 
 	int whichTrig = gRandom->Integer(zs.size());
 	j = probes[whichTrig];
-	t = zs[whichTrig];
+	z = zs[whichTrig];
 
 	return true;
 }
@@ -2529,7 +2608,7 @@ void skimTuples::Loop(int nmax)
 		reattachLostParticles();
 
 		++tagCounts[0];
-		if(evt_pvr_n!=1) continue;//keep to deal with topo bug
+		if(tagType_==JetTag && evt_pvr_n!=1) continue;//keep only sinlge PV for dijet
 		NPV = evt_pvr_n;
 		++tagCounts[1];
 
@@ -2553,8 +2632,9 @@ void skimTuples::Loop(int nmax)
 				fillTruthOutput();
 				break;
 			case TruthNoMuTag: //if W,Z + jet MC then identify jet and keep those without a muon from the boson decay
-				if(tagTruthNoMuJet(jet1)) {
-					if(jet1>-1) fillOutput(jet1,-1);
+				if(tagTruthNoMuJet(jet1,jet2)) {
+					if(jet2>-1) fillZ(jet2,jet1);//fill Z branches in output
+					fillOutput(jet1,-1);
 				}
 //				fillTruthOutput();
 				break;
@@ -2581,7 +2661,7 @@ void skimTuples::Loop(int nmax)
 	std::cout << std::endl;
 
 	tout->AutoSave();
-	lumiout->AutoSave();
+	if(lumiout) lumiout->AutoSave();
 	fout->Close();
 }
 

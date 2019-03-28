@@ -5,6 +5,9 @@
 workdir="/tmp/dcraik"
 savedir="/eos/user/d/dcraik/jets"
 
+cleanup=0
+rerun=1
+
 for jobid in $@
 do
 	subdir=0
@@ -20,9 +23,9 @@ do
 		if [ "$f" != "NOFILE" ]
 		then
 			mkdir -p $workdir/$jobid/$subdir/
-			if [ ! -f $workdir/$jobid/$subdir/skimmed.root ] #&& [ ! -f $savedir/$jobid/$subdir/skimmed.root ]
+			if (( rerun )) || [ ! -f $workdir/$jobid/$subdir/skimmed.root ] #&& [ ! -f $savedir/$jobid/$subdir/skimmed.root ]
 			then
-				./doSkim.sh $f $workdir $jobid $subdir &
+				./doSkim.sh $f $workdir $jobid $subdir $cleanup&
 			fi
 		else
 			echo Skipping subjob $subdir, not finished

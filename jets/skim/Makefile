@@ -5,7 +5,7 @@ ROOTFLAGS = `root-config --cflags` # --libs` `gsl-config --cflags` -lThread -lMi
 ROOTLIBS  = `root-config --glibs` -lRooFit -lThread -lMinuit -lMathCore -lRooStats -lRooFit -lRooFitCore -lFoam -lTreePlayer
 INCPATH   = -I.
 
-all : 	skimTuples
+all : 	skimTuples lumi
 
 velo.o : velo.cc velo.h
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
@@ -20,4 +20,10 @@ makeCombShape.o : makeCombShape.C
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
 
 makeCombShape : makeCombShape.o velo.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
+
+lumi.o : lumi.C
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
+
+lumi : lumi.o
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)

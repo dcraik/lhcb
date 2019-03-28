@@ -702,6 +702,8 @@ class skimTuples {
 		double TPX,TPY,TPZ,TE,TPT,TETA;
 		double DR, DPHI;
 		double ZM,ZP,ZPX,ZPY,ZPZ,ZPT,ZE,ZETA,ZDR;
+		double MU0PX,MU0PY,MU0PZ,MU0PT;
+		double MU1PX,MU1PY,MU1PZ,MU1PT;
 		std::vector<double> *SVM;
 		std::vector<double> *SVMCOR;
 		std::vector<double> *SVMCORERR;
@@ -1162,9 +1164,9 @@ class skimTuples {
 
 		//tagging functions
 		bool tagTruthJet(int& j1, int& j2);
-		bool tagTruthNoMuJet(int& j1);
+		bool tagTruthNoMuJet(int& j1, int& z);
 		bool tagSVJet(int& j, int& t);
-		bool tagZJet(int& j, int& t);
+		bool tagZJet(int& j, int& z);
 		bool tagJpsi(int& j, int& t);
 
 		//filling functions
@@ -1273,6 +1275,7 @@ skimTuples::skimTuples(int year, int part, TString dir) : fChain(0), year_(year)
 		case 102:
 			tagType_ = JpsiTag;
 			break;
+		case 105:
 		case 106:
 		case 107:
 		case 108:
@@ -1364,21 +1367,28 @@ skimTuples::skimTuples(int year, int part, TString dir) : fChain(0), year_(year)
 			maxTruePt_=200000.;
 			break;
 	}
-	boost::progress_display show_addfile_progress( 1500 );
 	if(part==-2) {
 		t->Add("/tmp/dcraik/output.root");
 		lumi->Add("/tmp/dcraik/LumiTuple.root");
+	} else if(part>=0) {
+		sprintf(str,"%s/%d/%d/output.root",dir.Data(),year,part);
+		if(!gSystem->AccessPathName(str)) {
+			t->Add(str);
+		}
+		sprintf(str,"%s/%d/%d/LumiTuple.root",dir.Data(),year,part);
+		if(!gSystem->AccessPathName(str)) {
+			lumi->Add(str);
+		}
 	} else {
-		for(int i=0; i<1500; ++i) {
+		boost::progress_display show_addfile_progress( 3000 );
+		for(int i=0; i<3000; ++i) {
 			++show_addfile_progress;
-			if(part<0 || part==i) {
-				sprintf(str,"%s/%d/%d/output.root",dir.Data(),year,i);
-				if(gSystem->AccessPathName(str)) continue;
-				t->Add(str);
-				sprintf(str,"%s/%d/%d/LumiTuple.root",dir.Data(),year,i);
-				if(gSystem->AccessPathName(str)) continue;
-				lumi->Add(str);
-			}
+			sprintf(str,"%s/%d/%d/output.root",dir.Data(),year,i);
+			if(gSystem->AccessPathName(str)) continue;
+			t->Add(str);
+			sprintf(str,"%s/%d/%d/LumiTuple.root",dir.Data(),year,i);
+			if(gSystem->AccessPathName(str)) continue;
+			lumi->Add(str);
 		}
 	}
 	//if(year==100) {
@@ -2644,7 +2654,8 @@ void skimTuples::Init(TTree *tree)
 
 	fout = TFile::Open(outName,"recreate");
 	tout = new TTree("T","");
-	lumiout = lumi->CloneTree();
+	if(lumi->GetNtrees()>0) lumiout = lumi->CloneTree();
+	else lumiout = 0;
 
 	tout->Branch("Evt",&EVT);
 	tout->Branch("Dec",&DEC);
@@ -2703,6 +2714,14 @@ void skimTuples::Init(TTree *tree)
 	tout->Branch("ZE"  ,&ZE  );
 	tout->Branch("ZETA",&ZETA);
 	tout->Branch("ZDR" ,&ZDR );
+	tout->Branch("MU0PX" ,&MU0PX );
+	tout->Branch("MU0PY" ,&MU0PY );
+	tout->Branch("MU0PZ" ,&MU0PZ );
+	tout->Branch("MU0PT" ,&MU0PT );
+	tout->Branch("MU1PX" ,&MU1PX );
+	tout->Branch("MU1PY" ,&MU1PY );
+	tout->Branch("MU1PZ" ,&MU1PZ );
+	tout->Branch("MU1PT" ,&MU1PT );
 
 	 SVM           = new std::vector<double>();
 	 SVMCOR        = new std::vector<double>();
@@ -3627,6 +3646,14 @@ void skimTuples::clearOutputs() {
 	ZE  =0.;
 	ZETA=0.;
 	ZDR =0.;
+	MU0PX =0.;
+	MU0PY =0.;
+	MU0PZ =0.;
+	MU0PT =0.;
+	MU1PX =0.;
+	MU1PY =0.;
+	MU1PZ =0.;
+	MU1PT =0.;
 	clearOutputVectors();
 }
 void skimTuples::clearOutputVectors() {

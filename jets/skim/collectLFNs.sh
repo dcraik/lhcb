@@ -4,8 +4,13 @@
 cat ../davinci/lfns/lfns577.log > lfns/lfns100.log
 cat ../davinci/lfns/lfns583.log > lfns/lfns101.log
 cat ../davinci/lfns/lfns633.log > lfns/lfns102.log
+##NEW
+cat ../davinci/lfns/lfns{25,26}.log > lfns/lfns116.log
+cat ../davinci/lfns/lfns{27,28}.log > lfns/lfns117.log
+cat ../davinci/lfns/lfns{29,30}.log > lfns/lfns118.log
 
 #Z+jet data
+cat ../davinci/lfns/lfns{31,32}.log > lfns/lfns105.log
 cat ../davinci/lfns/lfns{19,20}.log > lfns/lfns106.log
 cat ../davinci/lfns/lfns{21,22}.log > lfns/lfns107.log
 cat ../davinci/lfns/lfns{23,24}.log > lfns/lfns108.log
@@ -24,8 +29,10 @@ cat ../davinci/lfns/lfns{560,563}.log > lfns/lfns153.log
 cat ../davinci/lfns/lfns{599,603}.log > lfns/lfns154.log
 
 #Z+jet MC
-cat ../davinci/lfns/lfns{5,7}.log > lfns/lfns164.log
-cat ../davinci/lfns/lfns{6,8}.log > lfns/lfns165.log
+#cat ../davinci/lfns/lfns{5,7}.log > lfns/lfns164.log
+#cat ../davinci/lfns/lfns{6,8}.log > lfns/lfns165.log
+cat ../davinci/lfns/lfns{33,34}.log > lfns/lfns164.log
+cat ../davinci/lfns/lfns{35,36}.log > lfns/lfns165.log
 
 #J/psi MC
 cat ../davinci/lfns/lfns{608,609}.log > lfns/lfns200.log
