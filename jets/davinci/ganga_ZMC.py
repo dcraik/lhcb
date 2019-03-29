@@ -1,7 +1,7 @@
 import sys
 
 if len(sys.argv)<4:
-    print "Usage: ", sys.argv[0], "<MagUp|MagDown> <4211205X> <note>"
+    print "Usage: ", sys.argv[0], "<MagUp|MagDown> <42112022|42112052|42112053> <note>"
     sys.exit()
 polarity = str(sys.argv[1]) #MagDown, MagUp
 mode = str(sys.argv[2]) #4211205{2,3}

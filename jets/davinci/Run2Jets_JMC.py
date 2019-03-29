@@ -39,7 +39,7 @@ genJB.Output = 'Phys/JB/MCParticles'
 # Create the reconstructed jets.
 from Configurables import HltParticleFlow, HltJetBuilder
 from StandardParticles import (StdLooseKsDD, StdLooseKsLL, StdLooseKsLD,
-                               StdLooseLambdaDD, StdLooseLambdaLL, 
+                               StdLooseLambdaDD, StdLooseLambdaLL,
                                StdLooseLambdaLD)
 recPF = HltParticleFlow('recPF')
 recPF.Inputs = [
@@ -115,7 +115,7 @@ evtmax = -1
 #try: evtmax = int(sys.argv[1])
 #except: evtmax = float('inf')
 evtnum = 0
-ntuple = Ntuple('output.root', tes, gaudi.toolsvc(), gaudi.detSvc(), recJB.Output, recSVs.outputLocation(), recMus.algorithm().Output, False)
+ntuple = Ntuple('output.root', tes, gaudi.toolsvc(), gaudi.detSvc(), recJB.Output, recSVs.outputLocation(), recMus.algorithm().Output)
 while evtmax < 0 or evtnum < evtmax:
     gaudi.run(1)
     if not bool(tes['/Event']): break

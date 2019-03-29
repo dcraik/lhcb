@@ -27,7 +27,7 @@ DV.useGaudiRun = False
 BK_locations = []
 
 if year=='2015':
-    bk_locations = ['/LHCb/Collision15/Beam6500GeV-VeloClosed-'+polarity+'/Real Data/Reco15a/Stripping24r1/90000000/EW.DST']
+    BK_locations = ['/LHCb/Collision15/Beam6500GeV-VeloClosed-'+polarity+'/Real Data/Reco15a/Stripping24r1/90000000/EW.DST']
 elif year=='2016':
     BK_locations = ['/LHCb/Collision16/Beam6500GeV-VeloClosed-'+polarity+'/Real Data/Reco16/Stripping28r1/90000000/EW.DST']
 elif year=='2017':
