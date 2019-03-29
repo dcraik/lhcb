@@ -19,7 +19,8 @@ DV.options = [script]
 DV.useGaudiRun = False
 
 #BK_locations = ['/MC/Dev/Beam6500GeV-RunII-'+polarity+'-Nu1.6-25ns-Pythia8/Sim08f/Reco15DEV/'+mode+'/LDST']
-BK_locations = ['/MC/2016/Beam6500GeV-2016-'+polarity+'-Nu1.6-25ns-Pythia8/Sim09c/Trig0x6138160F/Reco16/Turbo03/Stripping28r1NoPrescalingFlagged/'+mode+'/ALLSTREAMS.DST']
+BK_locations = ['/MC/2015/Beam6500GeV-2015-'+polarity+'-Nu1.6-25ns-Pythia8/Sim09c/Trig0x411400a2/Reco15a/Turbo02/Stripping24r1NoPrescalingFlagged/'+mode+'/ALLSTREAMS.DST']
+#BK_locations = ['/MC/2016/Beam6500GeV-2016-'+polarity+'-Nu1.6-25ns-Pythia8/Sim09c/Trig0x6138160F/Reco16/Turbo03/Stripping28r1NoPrescalingFlagged/'+mode+'/ALLSTREAMS.DST']
 if(mode=="30000000"):
     BK_locations = ['/MC/2016/Beam6500GeV-2016-'+polarity+'-Nu1.6-25ns-Pythia8/Sim09c/30000000/XDIGI']
 if(mode=="42112052"):
