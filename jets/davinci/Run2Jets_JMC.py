@@ -11,9 +11,11 @@ JetPtMin = 10 * Units.GeV
 #from GaudiConf import IOHelper
 #IOHelper('ROOT').inputFiles([
 ##'/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00042952/0000/00042952_00000001_1.ldst' #/tmp/dcraik/00042952_00000002_1.ldst' #/data/dst/MC15.MD.49000004.1.00.dst'
-##    '/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00042982/0000/00042982_00000002_1.ldst'#light
-#    '/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00042950/0000/00042950_00000001_1.ldst'#charm
-##    '/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00042972/0000/00042972_00000003_1.ldst'#beauty
+##OLD###    '/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00042982/0000/00042982_00000002_1.ldst'#light
+##OLD##    '/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00042950/0000/00042950_00000001_1.ldst'#charm
+##OLD###    '/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00042972/0000/00042972_00000003_1.ldst'#beauty
+#'/eos/lhcb/grid/prod/lhcb/MC/2016/ALLSTREAMS.DST/00082635/0000/00082635_00000010_7.AllStreams.dst'#charm
+##'/eos/lhcb/grid/prod/lhcb/MC/2016/ALLSTREAMS.DST/00082653/0000/00082653_00000008_7.AllStreams.dst'#beauty
 #    ],
 #    clear = True)
 ##Type = 'MC'
@@ -86,7 +88,7 @@ DaVinci().Simulation = True
 DaVinci().appendToMainSequence([genPF, genJB, recPF, recJB])
 #DaVinci().appendToMainSequence([recSVs_seq.sequence(), recMus_seq.sequence()])
 DaVinci().appendToMainSequence([Jpsi_seq.sequence(), D0_seq.sequence(), Dp_seq.sequence(), Ds_seq.sequence(),  Lc_seq.sequence(), D02K3pi_seq.sequence()])
-DaVinci().DataType = '2015'
+DaVinci().DataType = '2016'
 #DaVinci().EventPreFilters = fltrs.filters ('Filters')
 
 # Configure the BDT tagger.
@@ -94,6 +96,13 @@ from Configurables import LoKi__BDTTag
 tagger = LoKi__BDTTag()
 tagger.NbvSelect = False
 tagger.Backwards = False
+
+from Configurables import ToolSvc, TriggerTisTos
+for stage in ('Hlt1', 'Hlt2', 'Strip/Phys'):
+    ToolSvc().addTool(TriggerTisTos, stage + "TriggerTisTos")
+    tool = getattr(ToolSvc(), stage + "TriggerTisTos")
+    tool.HltDecReportsLocation = '/Event/' + stage + '/DecReports'
+    tool.HltSelReportsLocation = '/Event/' + stage + '/SelReports'
 
 # Access to classes.
 from collections import OrderedDict
@@ -153,6 +162,7 @@ while evtmax < 0 or evtnum < evtmax:
     # Fill reconstructed.
     try:
         jets = tes[recJB.Output]
+        ntuple.addTrigger()
         for jet in jets:
             ntuple.addJet(jet); fill = True;
     except: pass
