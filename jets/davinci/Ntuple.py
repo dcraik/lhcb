@@ -95,7 +95,7 @@ class Ntuple:
         self.init('ds', ['idx_pvr','idx_jet','idx_jet_trk0', 'idx_jet_trk1', 'idx_jet_trk2', 'idx_jet_dr','dr_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 3)] + l0trig + hlt1trig)
         self.init('lc', ['idx_pvr','idx_jet','idx_jet_trk0', 'idx_jet_trk1', 'idx_jet_trk2', 'idx_jet_dr','dr_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 3)] + l0trig + hlt1trig)
         self.init('k3pi', ['idx_pvr','idx_jet','idx_jet_trk0', 'idx_jet_trk1', 'idx_jet_trk2', 'idx_jet_trk3', 'idx_jet_dr','dr_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 4)] + l0trig + hlt1trig)
-        self.init('evt', ['dec'] + ['%s_%s' % (k,l) for k in ['j1', 'j2'] for l in ['idx','dR','nsv','nmu','ntrk','nneu'] + mom ] )
+        self.init('evt', ['dec'] + ['%s_%s' % (k,l) for k in ['j1', 'j2'] for l in ['idx','dR','nsv','nmu','ntrk','nneu'] + mom ] + ['nbktrk','ndwntrk','nftclust','nghst','nitclust','nlngtrk','nmus0','nmus1','nmus2','nmus3','nmus4','nmutrk','notclust','npv','nrich1hit','nrich2hit','nspdhit','nttclust','nttrk','ntrk','nutclust','nuptrk','nveloclust','nvelotrk'])
         self.ntuple['evt_pvr_n'] = array.array('d', [-1])
         self.ntuple['evt_trk_n'] = array.array('d', [-1])
         for key, val in self.ntuple.iteritems():
@@ -508,6 +508,8 @@ class Ntuple:
                 vrs['j1_px'] = j1px
                 vrs['j1_py'] = j1py
                 vrs['j1_pz'] = j1pz
+                vrs['j1_pt'] = j1pt
+                vrs['j1_p']  = j1p
                 vrs['j1_e']  = j1e
 
                 vrs['j2_ntrk'] = nChrg2
@@ -515,6 +517,8 @@ class Ntuple:
                 vrs['j2_px'] = j2px
                 vrs['j2_py'] = j2py
                 vrs['j2_pz'] = j2pz
+                vrs['j2_pt'] = j2pt
+                vrs['j2_p']  = j2p
                 vrs['j2_e']  = j2e
 
                 j1_idx=-1
@@ -735,4 +739,32 @@ class Ntuple:
         self.saved[pre][key] = idx
         self.fill(pre, vrs = vrs)
         return idx
+    def addEventInfo(self, pre = 'evt'):
+        vrs = {}
+        s = self.tes['Rec/Summary']
+        vrs['nbktrk'] = s.info(s.nBackTracks,-1)
+        vrs['ndwntrk'] = s.info(s.nDownstreamTracks,-1)
+        vrs['nftclust'] = s.info(s.nFTClusters,-1)
+        vrs['nghst'] = s.info(s.nGhosts,-1)
+        vrs['nitclust'] = s.info(s.nITClusters,-1)
+        vrs['nlngtrk'] = s.info(s.nLongTracks,-1)
+        vrs['nmus0'] = s.info(s.nMuonCoordsS0,-1)
+        vrs['nmus1'] = s.info(s.nMuonCoordsS1,-1)
+        vrs['nmus2'] = s.info(s.nMuonCoordsS2,-1)
+        vrs['nmus3'] = s.info(s.nMuonCoordsS3,-1)
+        vrs['nmus4'] = s.info(s.nMuonCoordsS4,-1)
+        vrs['nmutrk'] = s.info(s.nMuonTracks,-1)
+        vrs['notclust'] = s.info(s.nOTClusters,-1)
+        vrs['npv'] = s.info(s.nPVs,-1)
+        vrs['nrich1hit'] = s.info(s.nRich1Hits,-1)
+        vrs['nrich2hit'] = s.info(s.nRich2Hits,-1)
+        vrs['nspdhit'] = s.info(s.nSPDhits,-1)
+        vrs['nttclust'] = s.info(s.nTTClusters,-1)
+        vrs['nttrk'] = s.info(s.nTTracks,-1)
+        vrs['ntrk'] = s.info(s.nTracks,-1)
+        vrs['nutclust'] = s.info(s.nUTClusters,-1)
+        vrs['nuptrk'] = s.info(s.nUpstreamTracks,-1)
+        vrs['nveloclust'] = s.info(s.nVeloClusters,-1)
+        vrs['nvelotrk'] = s.info(s.nVeloTracks,-1)
+        self.fill(pre, vrs = vrs)
 

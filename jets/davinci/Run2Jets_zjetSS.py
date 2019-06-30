@@ -3,30 +3,12 @@ import sys
 sys.path.append('.')
 
 from PhysConf.Filters import LoKi_Filters
-fltrs = LoKi_Filters (
-####DiJet*
-#    STRIP_Code = """
-#   HLT_PASS_RE ( 'StrippingHltQEEJetsDiJet.*LineDecision'    )
-#   """
-#    )
-####DiJetSV{,HighPt,LowPt}
-    STRIP_Code = """
-   HLT_PASS_RE ( 'StrippingHltQEEJetsDiJetSVLineDecision' )
-   | HLT_PASS_RE ( 'StrippingHltQEEJetsDiJetSVHighPtLineDecision' )
-   | HLT_PASS_RE ( 'StrippingHltQEEJetsDiJetSVLowPtLineDecision' )
-   """
-    )
-####DiJetSV*
-#    STRIP_Code = """
-#   HLT_PASS_RE ( 'StrippingHltQEEJetsDiJetSV.*LineDecision' )
-#   """
-#    )
-####DiJet
-#    STRIP_Code = """
-#   HLT_PASS_RE ( 'StrippingHltQEEJetsDiJetLineDecision'    )
-#   """
-#    )
 
+fltrs = LoKi_Filters (
+    STRIP_Code = """
+    HLT_PASS_RE ( 'StrippingMuMuSSLine4.*' )
+    """
+    )
 
 # Data type configuration.
 from GaudiKernel import SystemOfUnits as Units
@@ -36,9 +18,19 @@ JetPtMin = 10 * Units.GeV
 
 ## Data.
 #from GaudiConf import IOHelper
-#IOHelper('ROOT').inputFiles(['/eos/lhcb/grid/prod/lhcb/LHCb/Collision16/BHADRONCOMPLETEEVENT.DST/00069603/0000/00069603_00001488_1.bhadroncompleteevent.dst'],#/eos/lhcb/grid/prod/lhcb/LHCb/Collision16/BHADRONCOMPLETEEVENT.DST/00059907/0001/00059907_00010184_1.bhadroncompleteevent.dst'],#/tmp/dcraik/00042952_00000002_1.ldst'], #/data/dst/MC15.MD.49000004.1.00.dst'],
+#IOHelper('ROOT').inputFiles(['/eos/lhcb/grid/prod/lhcb/LHCb/Collision16/EW.DST/00069603/0000/00069603_00005740_1.ew.dst'],#'/eos/lhcb/grid/prod/lhcb/LHCb/Collision16/EW.DST/00061346/0000/00061346_00007712_1.ew.dst'],#/tmp/dcraik/00042952_00000002_1.ldst'], #/data/dst/MC15.MD.49000004.1.00.dst'],
 #                            clear = True)
 ##Type = 'MC'
+
+from StandardParticles import StdAllNoPIDsMuons as loosemuons
+from PhysSelPython.Wrappers import SimpleSelection, MergedSelection, DataOnDemand, Selection
+from GaudiConfUtils.ConfigurableGenerators import FilterDesktop, CombineParticles
+
+
+from commonSelections import *
+
+from PhysSelPython.Wrappers import SelectionSequence
+Z_seq = SelectionSequence('Z_Seq', TopSelection=SSZs)
 
 # Create the generated jets.
 from Configurables import McParticleFlow, McJetBuilder
@@ -65,12 +57,8 @@ from StandardParticles import (StdLooseKsDD, StdLooseKsLL, StdLooseKsLD,
                                StdLooseLambdaLD)
 recPF = HltParticleFlow('recPF')
 recPF.Inputs = [
-    ['Particle',       'particle', StdLooseKsDD.outputLocation()],
-    ['Particle',       'particle', StdLooseKsLL.outputLocation()],
-    ['Particle',       'particle', StdLooseKsLD.outputLocation()],
-    ['Particle',       'particle', StdLooseLambdaDD.outputLocation()],
-    ['Particle',       'particle', StdLooseLambdaLL.outputLocation()],
-    ['Particle',       'particle', StdLooseLambdaLD.outputLocation()],
+    #['Particle',       'daughters', 'Phys/Z02MuMuLine/Particles'],
+    ['Particle',       'daughters', SSZs.outputLocation()],
     ['ProtoParticle',  'best',     'Rec/ProtoP/Charged'],
     ['ProtoParticle',  'gamma',    'Rec/ProtoP/Neutrals']
     ]
@@ -89,19 +77,8 @@ recJB.Inputs = [recPF.Output]
 recJB.Output = 'Phys/JB/Particles'
 recJB.JetPtMin = JetPtMin
 
-#from JetAccessories import HltJetConf
-#hltPF = HltJetConf.HltParticleFlowConf('hltPF',['Photons', 'ResolvedPi0s', 'MergedPi0s',
-#                                                'Ks', 'Lambda', 'ChargedProtos', 'NeutralProtos',
-#                                                'EcalClusters', #'HcalClusters',
-#                                                'EcalMatch', #'HcalMatch',
-#                                                'PrimaryVtxs' ])
-#hltJB = HltJetConf.HltJetBuilderConf('hltJB',hltPF.getOutputLocation(),JetInfo=False,JetEcPath="",Output='Phys/JB2/Particles')
-
-from commonSelections import *
-
-from PhysSelPython.Wrappers import SelectionSequence
-recSVs_seq = SelectionSequence('recSVs_Seq', TopSelection=recSVs)
-recMus_seq = SelectionSequence('recMus_Seq', TopSelection=recMus)
+#recSVs_seq = SelectionSequence('recSVs_Seq', TopSelection=recSVs)
+#recMus_seq = SelectionSequence('recMus_Seq', TopSelection=recMus)
 
 Jpsi_seq = SelectionSequence('Jpsi_Seq', TopSelection=recJpsi)
 D0_seq = SelectionSequence('D0_Seq', TopSelection=recD0)
@@ -117,11 +94,10 @@ from Configurables import DstConf, TurboConf, DaVinci
 DaVinci().Simulation = False
 DaVinci().Lumi = True
 DaVinci().TupleFile = "LumiTuple.root"
-#DaVinci().appendToMainSequence([genPF, genJB, recPF, recJB])
+DaVinci().appendToMainSequence([Z_seq.sequence()])
 DaVinci().appendToMainSequence([recPF, recJB])
-#DaVinci().appendToMainSequence([hltPF.getSeq(), hltJB.getSeq()])
-DaVinci().appendToMainSequence([recSVs_seq.sequence(), recMus_seq.sequence()])
-DaVinci().appendToMainSequence([Jpsi_seq.sequence(),D0_seq.sequence(), Dp_seq.sequence(), Ds_seq.sequence(), Lc_seq.sequence(), D02K3pi_seq.sequence()])
+#DaVinci().appendToMainSequence([recSVs_seq.sequence(), recMus_seq.sequence()])
+DaVinci().appendToMainSequence([Jpsi_seq.sequence(), D0_seq.sequence(), Dp_seq.sequence(), Ds_seq.sequence(),  Lc_seq.sequence(), D02K3pi_seq.sequence()])
 ##TODO adding recSVs and recMus changes the daughters of jet objects from smart poniters to Particles
 DaVinci().DataType = '2016'
 DaVinci().EventPreFilters = fltrs.filters ('Filters')
@@ -162,6 +138,7 @@ evtmax = -1
 #except: evtmax = float('inf')
 evtnum = 0
 ntuple = Ntuple('output.root', tes, gaudi.toolsvc(), gaudi.detSvc(), recJB.Output, recSVs.outputLocation(), recMus.algorithm().Output)
+#gaudi.run(5000)
 while evtmax < 0 or evtnum < evtmax:
     gaudi.run(1)
     if not bool(tes['/Event']): break
@@ -171,45 +148,30 @@ while evtmax < 0 or evtnum < evtmax:
     # Fill event info.
     try: ntuple.ntuple['evt_pvr_n'][0] = len(tes['Rec/Vertex/Primary'])
     except: continue
+    try: ntuple.addEventInfo();
+    except: continue
 
-    # Fill generator level info.
     fill = False;
-    #gens = tes['MC/Particles']
-    #try:
-    #    ntuple.addGen(gens[0])
-    #    ntuple.addGen(gens[1])
-    #except: pass
-    #try:
-    #    for gen in gens:
-    #        pid = gen.particleID()
-    #        if pid.isHadron() and (pid.hasCharm() or pid.hasBottom()):
-    #            ntuple.addGen(gen)
-    #except: pass
-    #try:
-    #    jets = tes[genJB.Output]
-    #    for jet in jets: ntuple.addGen(jet); fill = True
-    #except: pass
 
     # Fill reconstructed.
     try:
         jets = tes[recJB.Output]
-        ntuple.addTrigger()
+        #ntuple.addTrigger()
         for jet in jets:
-            ntuple.addJet(jet); fill = True;
+            ntuple.addJet(jet); #fill = True;
     except: pass
-
-#    # Fill reconstructed.
-#    try:
-#        jets = tes[hltJB.jb.Output]
-#        print jets.size()
-#        for jet in jets:
-#            ntuple.addJet(jet,'hlt_jet'); fill = True;
-#    except: pass
 
     # fill other tracks
     try:
         for trk in tes['Phys/StdAllNoPIDsPions/Particles']:
             ntuple.addTrk(trk);
+    except: pass
+
+    ## fill Z
+    try:
+        for z in tes[SSZs.outputLocation()]:
+            if ntuple.addZ(z):
+                fill = True;
     except: pass
 
     # fill D's

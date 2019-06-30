@@ -226,7 +226,7 @@ const vector<LoKi::BDTTag::Svr> *LoKi::BDTTag::tbvs(bool force) {
   // Retrieve the primary vertices.
   m_pvrs = getIfExists<RecVertices>(m_pvrLocation);
   if (!m_pvrs) {
-    error() << "PVR location " + m_prtLocation + " not found." << endmsg;
+    error() << "PVR location " + m_pvrLocation + " not found." << endmsg;
     return 0;
   }
 

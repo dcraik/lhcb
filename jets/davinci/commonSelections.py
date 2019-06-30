@@ -153,6 +153,27 @@ Zs = SimpleSelection (
     Code = "(MINTREE('mu+'==ABSID,PT) > 10.*GeV)"
     )
 
+looseSSZs = SimpleSelection (
+    'looseSSZ',
+    CombineParticles,
+    [ZMuons],
+    DecayDescriptor = "[Z0 -> mu+ mu+]cc",
+    DaughtersCuts   = dcZ,
+    CombinationCut = (combcutsZ),
+    MotherCut      =  (parentcutsZ),
+)
+
+
+SSZs = SimpleSelection (
+    'SSZs'           ,
+    FilterDesktop   ,
+    [ looseSSZs ]    ,
+    DecayDescriptor = '[Z0 -> mu+ mu+]cc',
+    Code = "ALL"
+    #DecayDescriptor = '[Z0 -> mu+ mu+]cc',
+    #Code = "(MINTREE('mu+'==ABSID,PT) > 10.*GeV)"
+    )
+
 
 ###########################
 ##### J/psi candidates ####
