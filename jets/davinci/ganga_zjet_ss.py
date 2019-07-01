@@ -9,11 +9,11 @@ note = str(sys.argv[3])
 
 script=str('~/git/lhcb/jets/davinci/Run2Jets_zjetSS.py')
 if year=='2015':
-    script=str('~/git/lhcb/jets/davinci/Run2Jets_zjetSS15.py')
+    script=str('~/git/lhcb/jets/davinci/Run2Jets_zjet15SS.py')
 if year=='2017':
-    script=str('~/git/lhcb/jets/davinci/Run2Jets_zjetSS17.py')
+    script=str('~/git/lhcb/jets/davinci/Run2Jets_zjet17SS.py')
 if year=='2018':
-    script=str('~/git/lhcb/jets/davinci/Run2Jets_zjetSS18.py')
+    script=str('~/git/lhcb/jets/davinci/Run2Jets_zjet18SS.py')
 
 job_name = "RIIJ_Zjet_SS" +str(note) + str(polarity) + str(year)
 print job_name
