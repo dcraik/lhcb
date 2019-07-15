@@ -7,18 +7,18 @@ polarity = str(sys.argv[1]) #MagDown, MagUp
 year = str(sys.argv[2]) #2015, 2016
 note = str(sys.argv[3])
 
-script=str('~/git/lhcb/jets/davinci/Run2Jets_jpsijet.py')
+script=str('Run2Jets_jpsijet.py')
 if year=='2017':
-    script=str('~/git/lhcb/jets/davinci/Run2Jets_jpsijet17.py')
+    script=str('Run2Jets_jpsijet17.py')
 if year=='2018':
-    script=str('~/git/lhcb/jets/davinci/Run2Jets_jpsijet18.py')
+    script=str('Run2Jets_jpsijet18.py')
 
 job_name = "RIIJ_jpsijet" +str(note) + str(polarity) + str(year)
 print job_name
 print script
 
 #DV = GaudiExec(directory="~/DaVinciDev_v42r6p1")
-DV = GaudiExec(directory="~/DaVinciDev_v44r9")
+DV = GaudiExec(directory="/workspace/DaVinciDev_v44r9", platform="x86_64-slc6-gcc62-opt")
 DV.options = [script]
 DV.useGaudiRun = False
 BK_locations = []

@@ -171,6 +171,8 @@ while evtmax < 0 or evtnum < evtmax:
     # Fill event info.
     try: ntuple.ntuple['evt_pvr_n'][0] = len(tes['Rec/Vertex/Primary'])
     except: continue
+    try: ntuple.addEventInfo();
+    except: continue
 
     # Fill generator level info.
     fill = False;

@@ -15,12 +15,13 @@ skip=[]#39,40,41,61]#181,195,202,203,204,205,217,226,242,243,245,247,249,286,287
 #for jobid in range(633,634):
 #for jobid in [4,5,6,7,8,9,10,11,12]:
 #for jobid in range(19,79):
-for jobid in range(71,79):
+#for jobid in range(71,79):
 #for jobid in range(0,12):
+for jobid in range(5,13):
     if jobid in skip: continue
 
-    f=open("lfns/lfns%d.log"%jobid, "w")
-    f2=open("lumi/lumi%d.log"%jobid, "w")
+    f=open("lfns/lfnsX%d.log"%jobid, "w")
+    f2=open("lumi/lumiX%d.log"%jobid, "w")
 
     nfound=0
     nsubjobs = len(jobs(jobid).subjobs)
