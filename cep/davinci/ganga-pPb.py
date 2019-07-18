@@ -13,7 +13,7 @@ job_name = "CEP phi new " +str(note) + str(polarity) + str(year)
 print job_name
 print script
 
-DV = GaudiExec(directory="~/DaVinciDev_v44r5")
+DV = GaudiExec(directory="/workspace/DaVinciDev_v44r10p2")
 DV.options = [script]
 
 if year not in ['2016-pPb','2016-Pbp']:##TODO only set up for 2016 data so far
