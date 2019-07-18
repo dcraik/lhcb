@@ -1,7 +1,10 @@
 #define skimTuples_cxx
 #include "skimTuples.h"
 
+#include <algorithm>
 #include <iostream>
+#include <fstream>
+#include <utility>
 
 #include <TCanvas.h>
 #include <TH2.h>
@@ -52,6 +55,107 @@ double skimTuples::calcDoca(TVector3 &v, const TVector3 &pa, const TVector3 &da,
 
 	//return separation at closest point
 	return (Pc-Qc).Mag();
+}
+
+void skimTuples::pairPVs() {
+	if(pvsPaired) return;
+
+	lookupTruePV.clear();
+	lookupRecoPV.clear();
+
+	std::set<int> genPVset;
+	std::set<int> recPVset;
+
+	//first identify true and reco PVs based on which ones are associated with gen and trk objects
+	//could also do this by checking if pvr_dz==-1 (gen) or !=-1 (rec)
+	for(unsigned int g=0; g<gen_idx_pvr->size(); ++g) {
+		genPVset.insert(gen_idx_pvr->at(g));
+	}
+	for(unsigned int t=0; t<trk_idx_pvr->size(); ++t) {
+		recPVset.insert(trk_idx_pvr->at(t));
+	}
+
+	//if we have different numbers of true and reco PVs then we need to pad the containers with -1's
+	int nPairs = TMath::Max(genPVset.size(),recPVset.size());
+	int padGen = nPairs - genPVset.size();
+	int padRec = nPairs - recPVset.size();
+
+	//make C-arrays so that we can permute with next_permutation
+	int* genPVs = new int[nPairs]();
+	int* recPVs = new int[nPairs]();
+
+	std::set<int>::iterator itG = genPVset.begin();
+	std::set<int>::iterator itR = recPVset.begin();
+
+	//sets are already ordered and all indices are >-1 so get "lexographically first" permutation by left-padding the sets
+	for(int i=0; i<nPairs; ++i) {
+		if(i<padGen) {
+			genPVs[i] = -1;
+		} else {
+			genPVs[i] = (*itG);
+			++itG;
+		}
+		if(i<padRec) {
+			recPVs[i] = -1;
+		} else {
+			recPVs[i] = (*itR);
+			++itR;
+		}
+	}
+
+	//now permute the reco array and keep track of the permutation that minimises 
+	int* bestMatch = new int[nPairs]();
+	double minDist(999999.);
+
+	do {
+		//minimise the total significance of the separation of true and reco PVs
+		//dist = SUM_i^nPairs [ (truX-recX)**2/deltaX**2 + (truY-recY)**2/deltaY**2 + (truZ-recZ)**2/deltaZ**2 ]**0.5
+		double dist(0.);
+		for(int i=0; i<nPairs; ++i) {
+			//exclude the "fake" or "missed" PVs
+			int g = genPVs[i];
+			int r = recPVs[i];
+			if(g>-1 && r>-1) {
+				dist += TMath::Sqrt( TMath::Power((pvr_x->at(g)-pvr_x->at(r))/pvr_dx->at(r),2.)
+						   + TMath::Power((pvr_y->at(g)-pvr_y->at(r))/pvr_dy->at(r),2.)
+						   + TMath::Power((pvr_z->at(g)-pvr_z->at(r))/pvr_dz->at(r),2.));
+			}
+		}
+		if(dist<minDist) {
+			//found a new "best" permutation
+			//save the "distance" and the order of recPVs
+			minDist = dist;
+			std::copy(recPVs,recPVs+nPairs,bestMatch);
+		}
+	} while(std::next_permutation(recPVs,recPVs+nPairs));
+
+	//once we have a best permutation, fill the lookup maps
+	//also map true->true and reco->reco so functions work on all PVs
+	for(int i=0; i<nPairs; ++i) {
+		int g = genPVs[i];
+		int r = bestMatch[i];
+
+		lookupTruePV[g] = g;
+		lookupTruePV[r] = g;
+		lookupRecoPV[g] = r;
+		lookupRecoPV[r] = r;
+	}
+
+	pvsPaired=true;
+}
+
+int skimTuples::getTruePV(int pv) {
+	if(!pvsPaired) pairPVs();
+
+	if(lookupTruePV.find(pv)==lookupTruePV.end()) return -1;
+	return lookupTruePV[pv];
+}
+
+int skimTuples::getRecoPV(int pv) {
+	if(!pvsPaired) pairPVs();
+
+	if(lookupRecoPV.find(pv)==lookupRecoPV.end()) return -1;
+	return lookupRecoPV[pv];
 }
 
 bool skimTuples::checkTruth(int idxD, std::vector<int>& idcs, int needPID, int needPi, int needK, int needP, int needMu, int needOppPi, int needOppK, int needOppP, bool allowPart) {
@@ -197,10 +301,11 @@ bool skimTuples::checkJpsiTruth(int idxMu1, int idxMu2, int& idxJpsi) {
 }
 
 //check for any long-lived hadron with at least two charged track children
-bool skimTuples::checkSVTruth(int idxD) {
+bool skimTuples::checkSVTruth(int idxD, double minPT) {
 	int ng = gen_pid->size();
 	int pid = gen_pid->at(idxD);
 	if(!longLived(pid)) return false;
+	if(gen_pt->at(idxD)<minPT) return false;
 
 	int foundTrk(0);
 	if(idxD<0 || idxD>=ng) return false;
@@ -228,10 +333,11 @@ bool skimTuples::checkSVTruth(int idxD) {
 }
 
 //check for any long-lived c-hadron with at least two charged track children
-bool skimTuples::checkDSVTruth(int idxD) {
+bool skimTuples::checkDSVTruth(int idxD, double minPT) {
 	int ng = gen_pid->size();
 	int pid = gen_pid->at(idxD);
 	if(!longLivedC(pid)) return false;
+	if(gen_pt->at(idxD)<minPT) return false;
 
 	int foundTrk(0);
 	if(idxD<0 || idxD>=ng) return false;
@@ -259,10 +365,11 @@ bool skimTuples::checkDSVTruth(int idxD) {
 }
 
 //check for any long-lived b-hadron with at least two charged track children
-bool skimTuples::checkBSVTruth(int idxD) {
+bool skimTuples::checkBSVTruth(int idxD, double minPT) {
 	int ng = gen_pid->size();
 	int pid = gen_pid->at(idxD);
 	if(!longLivedB(pid)) return false;
+	if(gen_pt->at(idxD)<minPT) return false;
 
 	int foundTrk(0);
 	if(idxD<0 || idxD>=ng) return false;
@@ -334,7 +441,7 @@ bool skimTuples::longLived(int pid) {
 	return (longLivedB(pid) || longLivedC(pid) || longLivedS(pid));
 }
 
-int skimTuples::checkRealSV(std::vector<int> indices) {
+int skimTuples::checkRealSV(std::vector<int> indices, int* common) {
 	//first count the number of our particles descended from each ancestor particle
 	std::map<int,int> ancestorCounts;
 	for(unsigned int i=0; i<indices.size(); ++i) {
@@ -383,6 +490,10 @@ int skimTuples::checkRealSV(std::vector<int> indices) {
 					nInBestAn = nInAn;
 				}
 		}
+	}
+
+	if(common) {
+		*common = bestAn;
 	}
 
 	//if we didn't find anything then return 0
@@ -482,6 +593,191 @@ void skimTuples::reattachLostParticles() {
 	}
 }
 
+//fill counters for PV-matching efficiencies
+// 0 - N total true PVs
+// 1 - N no truth information
+// 2 - N matched PVs of jet
+// 3 - N matched PVs of SV
+// 4 - N matched PVs of majority of jet tracks
+// 5 - N matched PVs of majority of SV tracks
+// 6 - N matched PVs of pT-weighted majority of jet tracks
+// the true PV is identified by the c-quark
+void skimTuples::fillPVEffs(int s, int j) {
+	if(j<0 || j>=static_cast<int>(jet_idx_pvr->size()) || s<0 || s>=static_cast<int>(svr_idx_pvr->size())) return;
+
+	//first get truth-level quark for jet
+	int gc = matchJetTruth(j, 4, false);
+
+	pvEffsFilled=true;
+
+	if(gc<0) {
+		++nPVCount[1];
+		return;
+	}
+	++nPVCount[0];
+
+	int truePV = gen_idx_pvr->at(gc);
+
+	if(getTruePV(jet_idx_pvr->at(j)) == truePV) ++nPVCount[2];
+	if(getTruePV(svr_idx_pvr->at(s)) == truePV) ++nPVCount[3];
+
+	std::map<int,int> jetTrkPVs;
+	std::map<int,int> svrTrkPVs;
+	std::map<int,double> jetTrkPVsWeight;
+
+	for(unsigned int t=0; t<trk_p->size(); t++){
+		if(trk_idx_jet->at(t) != j) continue;
+		jetTrkPVs[trk_idx_pvr->at(t)]+=1;
+		jetTrkPVsWeight[trk_idx_pvr->at(t)]+=trk_pt->at(t);
+	}
+	for(int i=0; i<10; ++i) {
+		int t=svtrk[i]->at(s);
+		if(t<0) break;
+		svrTrkPVs[trk_idx_pvr->at(t)]+=1;
+	}
+
+	int bestPVJ(-1), bestPVS(-1), bestPVJW(-1);
+	int mostTrksJ(0), mostTrksS(0), mostTrksJW(0);
+
+	for(std::map<int,int>::iterator it = jetTrkPVs.begin(); it!=jetTrkPVs.end(); ++it) {
+		if((*it).second > mostTrksJ) {
+			mostTrksJ = (*it).second;
+			bestPVJ = (*it).first;
+		}
+	}
+	if(bestPVJ>-1 && getTruePV(bestPVJ) == truePV) ++nPVCount[4];
+
+	for(std::map<int,int>::iterator it = svrTrkPVs.begin(); it!=svrTrkPVs.end(); ++it) {
+		if((*it).second > mostTrksS) {
+			mostTrksS = (*it).second;
+			bestPVS = (*it).first;
+		}
+	}
+	if(bestPVS>-1 && getTruePV(bestPVS) == truePV) ++nPVCount[5];
+
+	for(std::map<int,double>::iterator it = jetTrkPVsWeight.begin(); it!=jetTrkPVsWeight.end(); ++it) {
+		if((*it).second > mostTrksJW) {
+			mostTrksJW = (*it).second;
+			bestPVJW = (*it).first;
+		}
+	}
+	if(bestPVJW>-1 && getTruePV(bestPVJW) == truePV) ++nPVCount[6];
+
+	return;
+}
+
+int skimTuples::getSVCategory(int s, int j, std::vector<int> indices) {
+	// 1 - no two tracks from same PV
+	// 2 - two tracks from same PV but different PV to jet
+	// 3 - two tracks from same long-lived decay but different PV to jet
+	// 4 - two tracks from same PV as jet but no two from same long-lived decay
+	// 5 - two tracks from same long-lived decay but unrelated to jet
+	// 6 - two tracks related to jet but not from same long-lived decay
+	// 7 - two tracks from same long-lived decay in jet
+
+	//protect against cases where we have no true particles
+	if(indices.size()<1) return 0;
+	int idxCommon(-1);
+	//get true c-quark for jet
+	int gc = matchJetTruth(j, 4, false);
+	int nPVMatched(0), nJetMatched(0);
+
+	if(gc>-1) {
+		for(unsigned int i=0; i<indices.size(); ++i) {
+			if(gen_idx_pvr->at(indices[i]) == gen_idx_pvr->at(gc)) ++nPVMatched;
+			int prnt = indices[i];
+			while(prnt!=-1) {
+				if(prnt==gc) {
+					++nJetMatched;
+					break;
+				}
+				prnt = gen_idx_prnt->at(prnt);
+			}
+		}
+	}
+
+	//match to same PV either if the reconstructed PV of the SV matches that of the jet or if the true PV of more than one track matches that of the quark
+	if(svr_idx_pvr->at(s)!=jet_idx_pvr->at(j) && nPVMatched<2) {
+		//possible options: 1,2,3
+		if(checkRealSV(indices)<2) {
+			//possible options: 1,2
+			std::set<int> foundPVs;
+			for(int i=0; i<10; ++i) {
+				if(svtrk[i]->at(s)<0) break;
+				if(!foundPVs.insert(trk_idx_pvr->at(svtrk[i]->at(s))).second) {
+					//two tracks with same PV
+					return 2;
+				}
+			}
+			//no two tracks with same PV
+			return 1;
+		} else {
+			//possible options: 3
+			return 3;
+		}
+
+	} else {
+		//possible options 4,5,6,7
+		if(checkRealSV(indices,&idxCommon)<2) {
+			//possible options 4,6
+			if(nJetMatched<2) return 4;
+			else return 6;
+		} else {
+			//possible options 5,7
+			int prnt = idxCommon;
+			while(prnt!=-1) {
+				if(prnt==gc) {
+					//if we have a real SV and it's the first one in this event then fill counters to determine which method of identifying the PV is best
+					if(!pvEffsFilled) fillPVEffs(s,j);
+					return 7;
+				}
+				prnt = gen_idx_prnt->at(prnt);
+			}
+			return 5;
+		}
+	}
+
+	//should be unreachable
+	return 0;
+}
+
+//match a jet to a truth candidate based on dR
+//pid defaults to 98 (truth jet) but can be set to +/-4,5 to match to heavy quarks
+////matchCharge (default true) require same sign
+//useHiPt (default true) prioritises matches with higher pt
+//if false, then prioritise lower deltaR
+int skimTuples::matchJetTruth(int j, int pid, bool matchCharge, bool useHiPt) {
+	TLorentzVector p4j(jet_px->at(j),jet_py->at(j),jet_pz->at(j),jet_e->at(j));
+	int match(-1);
+	double ptMatch(0.), drMatch(10.);
+	double jpt(0.), gpt(0.), jgdr(0.);
+	jpt = p4j.Pt();
+	if(jpt<=0.) return -1;
+	if(!matchCharge) pid = TMath::Abs(pid);
+
+	int ng = gen_pid->size();
+	int gpid(0);
+	for(int g=0; g<ng; ++g) {
+		gpid = gen_pid->at(g);
+		if(!matchCharge) gpid = TMath::Abs(gpid);
+		if(gpid!=pid) continue;
+		TLorentzVector p4g(gen_px->at(g),gen_py->at(g),gen_pz->at(g),gen_e->at(g));
+		gpt = p4g.Pt();
+		jgdr = p4j.DeltaR(p4g);
+
+		if(gpt>0. && jgdr<0.5) {
+			if(( useHiPt && gpt>ptMatch) ||
+			   (!useHiPt && jgdr<drMatch)) {
+				match=g;
+				ptMatch = gpt;
+				drMatch = jgdr;
+			}
+		}
+	}
+
+	return match;
+}
+
 void skimTuples::fillZ(int z, int j) {
 	TLorentzVector p4z( z0_px->at(z), z0_py->at(z), z0_pz->at(z), z0_e->at(z));
 	TLorentzVector p4j(jet_px->at(j),jet_py->at(j),jet_pz->at(j),jet_e->at(j));
@@ -496,42 +792,122 @@ void skimTuples::fillZ(int z, int j) {
 	ZPT = p4z.Pt();
 	ZE  = p4z.E();
 	ZETA= p4z.Eta();
+	ZY  = p4z.Rapidity();
 	ZDR = p4z.DeltaR(p4j);
 
 	MU0PX = p4mu0.Px();
 	MU0PY = p4mu0.Py();
 	MU0PZ = p4mu0.Pz();
 	MU0PT = p4mu0.Pt();
+	MU0IP = trk_ip->at(z0_idx_trk0->at(z));
+	MU0IPCHI2 = trk_ip_chi2->at(z0_idx_trk0->at(z));
+	double mu0jet = z0_idx_jet_trk0->at(z);
+	if(mu0jet>-1) {
+		MU0FPT = p4mu0.Pt()/jet_pt->at(z0_idx_jet_trk0->at(z));
+	} else {
+		MU0FPT = -1.;
+	}
+	MU0DR = p4mu0.DeltaR(p4j);
 
 	MU1PX = p4mu1.Px();
 	MU1PY = p4mu1.Py();
 	MU1PZ = p4mu1.Pz();
 	MU1PT = p4mu1.Pt();
+	MU1IP = trk_ip->at(z0_idx_trk1->at(z));
+	MU1IPCHI2 = trk_ip_chi2->at(z0_idx_trk1->at(z));
+	double mu1jet = z0_idx_jet_trk1->at(z);
+	if(mu1jet>-1) {
+		MU1FPT = p4mu1.Pt()/jet_pt->at(z0_idx_jet_trk1->at(z));
+	} else {
+		MU1FPT = -1.;
+	}
+	MU1DR = p4mu1.DeltaR(p4j);
+}
+
+
+void skimTuples::fillTrueZ(int j) {
+	int gz(-1), gmu0(-1), gmu1(-1);
+	double zpt(0.);
+
+	for(uint g=0; g<gen_pid->size(); ++g) {
+		if(gen_pid->at(g)!=23) continue;
+		if(gen_pt->at(g)<zpt) continue; //if we find more than one true Z then keep hardest
+
+		gz=g;
+		zpt = gen_pt->at(g);
+
+		for(uint gg=0; gg<gen_pid->size(); ++gg) {
+			if(gen_pid->at(gg)== 13 && gen_idx_prnt->at(gg)==g) gmu0=gg;
+			if(gen_pid->at(gg)==-13 && gen_idx_prnt->at(gg)==g) gmu1=gg;
+		}
+	}
+
+	if(gz<0) return;
+
+	TLorentzVector p4z(gen_px->at(gz),gen_py->at(gz),gen_pz->at(gz),gen_e->at(gz));
+	TLorentzVector p4j(jet_px->at(j),jet_py->at(j),jet_pz->at(j),jet_e->at(j));
+	TLorentzVector p4mu0, p4mu1;
+
+	if(gmu0>-1) p4mu0.SetXYZT( gen_px->at(gmu0), gen_py->at(gmu0), gen_pz->at(gmu0), gen_e->at(gmu0));
+	if(gmu1>-1) p4mu1.SetXYZT( gen_px->at(gmu1), gen_py->at(gmu1), gen_pz->at(gmu1), gen_e->at(gmu1));
+
+	ZTRUEM  = p4z.M();
+	ZTRUEP  = p4z.P();
+	ZTRUEPX = p4z.Px();
+	ZTRUEPY = p4z.Py();
+	ZTRUEPZ = p4z.Pz();
+	ZTRUEPT = p4z.Pt();
+	ZTRUEE  = p4z.E();
+	ZTRUEETA= p4z.Eta();
+	ZTRUEDR = p4z.DeltaR(p4j);
+
+	MU0TRUEPX = p4mu0.Px();
+	MU0TRUEPY = p4mu0.Py();
+	MU0TRUEPZ = p4mu0.Pz();
+	MU0TRUEPT = p4mu0.Pt();
+
+	MU1TRUEPX = p4mu1.Px();
+	MU1TRUEPY = p4mu1.Py();
+	MU1TRUEPZ = p4mu1.Pz();
+	MU1TRUEPT = p4mu1.Pt();
 }
 
 void skimTuples::fillOutput(int j, int t)
 {
 	//fill the output tuples
 	TLorentzVector p4j(jet_px->at(j),jet_py->at(j),jet_pz->at(j),jet_e->at(j));
+	TLorentzVector p4sum, p4sumAll;
 
-	int ipv = jet_idx_pvr->at(j);
-	TVector3 pv(pvr_x->at(ipv),pvr_y->at(ipv),pvr_z->at(ipv)); 
+	std::map<int,int> trkPVs;
+	for(unsigned int i=0; i<trk_p->size(); i++){
+		if(trk_idx_jet->at(i) != j) continue;
+		trkPVs[trk_idx_pvr->at(i)]+=1;
+	}
+	int mostTrks(0);
+	for(std::map<int,int>::iterator it = trkPVs.begin(); it!=trkPVs.end(); ++it) {
+		if((*it).second > mostTrks) {
+			mostTrks = (*it).second;
+			JPV = (*it).first;
+		}
+	}
+	TVector3 pv(pvr_x->at(JPV),pvr_y->at(JPV),pvr_z->at(JPV)); 
 
 	int ihard = -1, imu = -1, nmu = 0, jnchr = 0, jnneu = 0, ndispl6 = 0, ndispl9 = 0, ndispl16 = 0;
-	double jptd = 0, jetq = 0, ry = 0, rp = 0, m11 = 0, m12 = 0, m22 = 0, sumpt2 = 0;//, pnnmu_best = 0;
+	double jptd = 0, jetq = 0, ry = 0, rp = 0, m11 = 0, m12 = 0, m22 = 0, sumpt2 = 0;
 	TLorentzVector p4mu,p4hard;
 	for(unsigned int i=0; i<trk_p->size(); i++){
 		if(trk_idx_jet->at(i) != j) continue;
 		jnchr++;
 		TLorentzVector p4trk(trk_px->at(i),trk_py->at(i),trk_pz->at(i),trk_e->at(i));
+		if(trk_idx_pvr->at(i) == JPV) p4sum+=p4trk;
+		p4sumAll+=p4trk;
 		int q = trk_q->at(i);
 		jetq += q*p4trk.Pt();
 		jptd += pow(p4trk.Pt(),2);
 		if(p4trk.Pt() > p4hard.Pt()) {p4hard = p4trk; ihard = i;}
 		if(trk_is_mu->at(i) > 0 && trk_pnn_mu->at(i) > 0.5 && p4trk.Pt() > 500){
 			nmu++;
-			//if(trk_pnnmu->at(i) > pnnmu_best) 
-			if(p4trk.Pt() > p4mu.Pt()) {p4mu = p4trk; imu=i;}// pnnmu_best = trk_pnn_mu->at(i);
+			if(p4trk.Pt() > p4mu.Pt()) {p4mu = p4trk; imu=i;}
 		}
 		double dy = p4trk.Rapidity()-p4j.Rapidity();
 		double dp = p4trk.DeltaPhi(p4j);
@@ -549,12 +925,18 @@ void skimTuples::fillOutput(int j, int t)
 		}
 	}
 
+	for(unsigned int i=0; i<neu_p->size(); i++){
+		if(neu_idx_jet->at(i) != j) continue;
+	}
+
 	jetq /= p4j.Pt();
 	jptd = sqrt(jptd) / p4j.Pt();      
 	for(unsigned int i=0; i<neu_p->size(); i++){
 		if(neu_idx_jet->at(i) != j) continue; 
 		jnneu++;
 		TLorentzVector p4neu(neu_px->at(i),neu_py->at(i),neu_pz->at(i),neu_e->at(i));
+		p4sum+=p4neu;
+		p4sumAll+=p4neu;
 		double dy = p4neu.Rapidity()-p4j.Rapidity();
 		double dp = p4neu.DeltaPhi(p4j);
 		double r = sqrt(dy*dy+dp*dp);
@@ -587,6 +969,25 @@ void skimTuples::fillOutput(int j, int t)
 		if(p4g.DeltaR(p4j) < 0.5 && p4g.Pt() > p4mcj.Pt()) {
 			p4mcj = p4g;
 			bestTrueJet=g;
+		}
+	}
+
+	TLorentzVector p4mcsum, p4mcsumAll;
+	for(unsigned int g=0; g<gen_pid->size(); ++g) {
+		int gpid = fabs(gen_pid->at(g));
+		if(gpid==12 || gpid==14 || gpid==16) continue;
+		bool decayFound(false);
+		for(unsigned int gg=0; gg<gen_pid->size(); ++gg) {
+			if(gg==g) continue;
+			if(gen_idx_prnt->at(gg) == g) decayFound=true;
+		}
+		if(decayFound) continue;
+		TLorentzVector p4g(gen_px->at(g),gen_py->at(g),gen_pz->at(g),gen_e->at(g));
+		if(p4g.DeltaR(p4mcj) < 0.5) {
+			p4mcsumAll+=p4g;
+			if(gen_idx_pvr->at(g) == gen_idx_pvr->at(bestTrueJet)) {
+				p4mcsum+=p4g;
+			}
 		}
 	}
 
@@ -634,6 +1035,7 @@ void skimTuples::fillOutput(int j, int t)
 	JTRUEDPY = 0.;
 	JTRUEDPZ = 0.;
 	JTRUEDE  = 0.;
+	JTRUEDPT = 0.;
 	JTRUEDDR = 10.;
 	int bestGen(-1);
 	double bestGenDr(10.);
@@ -661,6 +1063,7 @@ void skimTuples::fillOutput(int j, int t)
 		JTRUEDPY = gen_py->at(bestGen);
 		JTRUEDPZ = gen_pz->at(bestGen);
 		JTRUEDE  = gen_e->at(bestGen);
+		JTRUEDPT = gen_pt->at(bestGen);
 		JTRUEDDR = bestGenDr;
 	}
 
@@ -675,6 +1078,28 @@ void skimTuples::fillOutput(int j, int t)
 		TE = p4t.E();
 		TPT = p4t.Pt();
 		TETA = p4t.Eta();
+
+		TLorentzVector p4mct;
+		unsigned int bestTrueTag(-1);
+		// match to true jet
+		for(unsigned int g=0; g<gen_pid->size(); ++g) {
+			if(fabs(gen_pid->at(g)) != 98) continue;
+			TLorentzVector p4g(gen_px->at(g),gen_py->at(g),gen_pz->at(g),gen_e->at(g));
+			if(p4g.DeltaR(p4t) < 0.5 && p4g.Pt() > p4mct.Pt()) {
+				p4mct = p4g;
+				bestTrueTag=g;
+			}
+		}
+		if(p4mct.Pt()>0.) {
+			TTRUEPX = p4mct.Px();
+			TTRUEPY = p4mct.Py();
+			TTRUEPZ = p4mct.Pz();
+			TTRUEE = p4mct.E();
+			TTRUEPT = p4mct.Pt();
+			TTRUEETA = p4mct.Eta();
+			TTRUEDR = p4t.DeltaR(p4mct);
+			usedTruthJets_.insert(bestTrueTag);
+		}
 	}
 
 	PVX = pv.X();
@@ -743,6 +1168,7 @@ void skimTuples::fillTruthOutput() {
 		JTRUEDPY = 0.;
 		JTRUEDPZ = 0.;
 		JTRUEDE  = 0.;
+		JTRUEDPT = 0.;
 		JTRUEDDR = 10.;
 		int bestGen(-1);
 		double bestGenDr(10.);
@@ -776,6 +1202,7 @@ void skimTuples::fillTruthOutput() {
 			JTRUEDPY = gen_py->at(bestGen);
 			JTRUEDPZ = gen_pz->at(bestGen);
 			JTRUEDE  = gen_e->at(bestGen);
+			JTRUEDPT = gen_pt->at(bestGen);
 			JTRUEDDR = bestGenDr;
 		}
 
@@ -786,17 +1213,35 @@ void skimTuples::fillTruthOutput() {
 
 void skimTuples::fillSVCands(int j, int t)
 {
+	//boolean flags to track SV tagging progress
+	bool foundTrueC(false), foundTrueHc(false), foundTrueHc5(false), foundTrueSV(false), 
+	     foundRecoSV(false), foundSVPassDR(false), foundSVPassSel(false), foundSVPass4(false), foundSVPassNJ(false);
+
+	if(JTRUEc>0.) foundTrueC=true;
+	if(JTRUEDDR<10.) foundTrueHc=true;
+	if(JTRUEDPT>5000.) foundTrueHc5=true;
+	if(JTRUEDSV>0.) foundTrueSV=true;
+
 	NSV = 0; 
 	NTSV = 0; 
+	NSVTRK = 0;
+	NSVTRUETRK = 0;
 	clearOutputVectors();
 
 	TLorentzVector p4j, p4t;
 	if(j>-1) p4j.SetPxPyPzE(jet_px->at(j),jet_py->at(j),jet_pz->at(j),jet_e->at(j));
 	if(t>-1) p4t.SetPxPyPzE(jet_px->at(t),jet_py->at(t),jet_pz->at(t),jet_e->at(t));
 
-	int ipv(0);// currently veto any events with more than one PV - if we unveto then at least this won't break for jet data/MC
-	if(j>-1) ipv = jet_idx_pvr->at(j);
-	TVector3 pv(pvr_x->at(ipv),pvr_y->at(ipv),pvr_z->at(ipv)); 
+	//map track indices in input tuple to indices in output
+	std::map<int,int> jetTrks;
+
+	for(uint t=0; t<trk_pt->size(); ++t) {
+		if(j==-1 || trk_idx_jet->at(t) != j) continue;
+		jetTrks.insert(std::pair<int,int>(t, TRKPT->size()));
+		TRKPT->push_back(trk_pt->at(t));
+		TRKIPCHI2->push_back(trk_ip_chi2->at(t));
+		TRKINJET->push_back(1.);
+	}
 
 	//keep generated B's
 	std::map<int,int> foundBs;
@@ -1075,18 +1520,21 @@ void skimTuples::fillSVCands(int j, int t)
 	}
 
 	std::set<long> foundSVs;
+	std::set<long> foundSVTrks;
+	std::set<long> foundSVTrueTrks;
+
+	int bestSVCat(0);
 
 	for(unsigned int s = 0; s < svr_p->size(); s++){
 		if(svr_z->at(s) != svr_z->at(s)) continue;//remove NaN entries
+
+		//From MC studies, the PV assignment of the jet is often wrong O(30%)
+		//Calculate flight direction using PV assigned to the SV (correct for O(99%) of simulated SVs)
+		TVector3 pv(pvr_x->at(svr_idx_pvr->at(s)),pvr_y->at(svr_idx_pvr->at(s)),pvr_z->at(svr_idx_pvr->at(s))); 
+
 		TVector3 sv(svr_x->at(s),svr_y->at(s),svr_z->at(s));
 		TVector3 fly = sv-pv;
 		if(backwards_) fly = -fly;
-
-		//Now we want to keep tag SVs too (for further tagging)
-		//First check if we pass the deltaR requirement for either jet
-		//Then check which is closer once we know if we have a good SV
-		//If j/t==-1 then we're not using jets so we keep everything
-		if(j>-1 && p4j.Vect().DeltaR(fly) > 0.5 && t>-1 && p4t.Vect().DeltaR(fly) > 0.5) continue;//reject if too far from jet
 
 		double svn       = 0; 
 		double svnj      = 0;
@@ -1138,6 +1586,22 @@ void skimTuples::fillSVCands(int j, int t)
 			double ghost = trk_prb_ghost->at(ii);
 			if(ghost > svmaxghost) svmaxghost = ghost;
 		}
+
+		int svCat = getSVCategory(s,j,svtrueindices);
+		if(svCat>bestSVCat) bestSVCat = svCat;
+
+		//Now we want to keep tag SVs too (for further tagging)
+		//First check if we pass the deltaR requirement for either jet
+		//Then check which is closer once we know if we have a good SV
+		//If j==-1 && t==-1 then we're not using jets so we keep everything
+		foundRecoSV=true;
+		if(!((j>-1 && p4j.Vect().DeltaR(fly) < 0.5) || 
+		     (t>-1 && p4t.Vect().DeltaR(fly) < 0.5) ||
+		     (j==-1 && t==-1))) {
+			continue;//reject if too far from jet
+		}
+		foundSVPassDR=true;
+
 		if(svmaxghost>0.2) continue;
 		if(fly.Z()*p4sv.M()/p4sv.Pz()/(3e11)*(1e12) > 10) continue;	  
 		if(svr_ip_chi2_min_trk->at(s)<minipchi2cut_ || svr_m_cor_err_full->at(s)>maxmcorerrcut_) continue;
@@ -1149,8 +1613,14 @@ void skimTuples::fillSVCands(int j, int t)
 		if (!(svr_fd_chi2->at(s) > 32)) continue;
 		if(detector->distance(svr_x->at(s)+detOffsetX,svr_y->at(s)+detOffsetY,svr_z->at(s),svr_dx->at(s),svr_dy->at(s),svr_dz->at(s))<0.5) continue;
 		if(/*svnj < 1 || */veto) continue;
+		foundSVPassSel=true;
 
 		if(svn>4) continue;//throw away if more than 4 tracks
+		foundSVPass4=true;
+		//apply 2,3-body additional requirements here too
+		//TODO//if(p4sv.M()>5279.4) continue;
+		//TODO//double ndof=2*svn-3;
+		//TODO//if(svr_chi2->at(s)/ndof>10.) continue;
 		//create a unique fingerprint for each set of reco tracks (ignore permutations)
 		std::sort(svrecoindices.begin(), svrecoindices.end());
 		int fingerprint = 0;
@@ -1158,6 +1628,16 @@ void skimTuples::fillSVCands(int j, int t)
 			fingerprint += svrecoindices[itrk]*TMath::Power(trk_pt->size(),static_cast<int>(itrk));
 		}
 		if(!foundSVs.insert(fingerprint).second) continue;//if insert into set fails then we already have this SV
+
+		//only count tracks in SVs that pass selection
+		for(int i=0; i<10; i++){
+			if(svtrk[i]->at(s) < 0) break;
+			int ii = svtrk[i]->at(s);
+			if(trk_idx_gen->at(ii) >= 0) {
+				foundSVTrueTrks.insert(trk_idx_gen->at(ii));
+			}
+			foundSVTrks.insert(ii);
+		}
 
 		//try to make D0 candidates from the SVs
 		if(svn==2) {
@@ -1255,6 +1735,49 @@ void skimTuples::fillSVCands(int j, int t)
 			}
 		}
 
+		int idx0(-1), idx1(-1), idx2(-1), idx3(-1);
+		//lookup new indices for tracks
+		if(svn>0) {
+			if(jetTrks.find(svtrk[0]->at(s))==jetTrks.end()) {
+				uint t = svtrk[0]->at(s);
+				jetTrks.insert(std::pair<int,int>(t, TRKPT->size()));
+				TRKPT->push_back(trk_pt->at(t));
+				TRKIPCHI2->push_back(trk_ip_chi2->at(t));
+				TRKINJET->push_back(0.);
+			}
+			idx0 = jetTrks.at(svtrk[0]->at(s));
+		}
+		if(svn>1) {
+			if(jetTrks.find(svtrk[1]->at(s))==jetTrks.end()) {
+				uint t = svtrk[1]->at(s);
+				jetTrks.insert(std::pair<int,int>(t, TRKPT->size()));
+				TRKPT->push_back(trk_pt->at(t));
+				TRKIPCHI2->push_back(trk_ip_chi2->at(t));
+				TRKINJET->push_back(0.);
+			}
+			idx1 = jetTrks.at(svtrk[1]->at(s));
+		}
+		if(svn>2) {
+			if(jetTrks.find(svtrk[2]->at(s))==jetTrks.end()) {
+				uint t = svtrk[2]->at(s);
+				jetTrks.insert(std::pair<int,int>(t, TRKPT->size()));
+				TRKPT->push_back(trk_pt->at(t));
+				TRKIPCHI2->push_back(trk_ip_chi2->at(t));
+				TRKINJET->push_back(0.);
+			}
+			idx2 = jetTrks.at(svtrk[2]->at(s));
+		}
+		if(svn>3) {
+			if(jetTrks.find(svtrk[3]->at(s))==jetTrks.end()) {
+				uint t = svtrk[3]->at(s);
+				jetTrks.insert(std::pair<int,int>(t, TRKPT->size()));
+				TRKPT->push_back(trk_pt->at(t));
+				TRKIPCHI2->push_back(trk_ip_chi2->at(t));
+				TRKINJET->push_back(0.);
+			}
+			idx3 = jetTrks.at(svtrk[3]->at(s));
+		}
+
 		//now check where to store this SV
 		bool inTag(false);
 		//if j not set then we're not using jets, if t not set then there is no tag - either way, put it in SV...
@@ -1265,6 +1788,7 @@ void skimTuples::fillSVCands(int j, int t)
 		else if(p4t.Vect().DeltaR(fly) < 0.5) inTag=true;
 
 		if(inTag) {
+			if(svnt<1) continue;
 			NTSV++;
 
 			TSVX          ->push_back(sv.X());
@@ -1299,6 +1823,8 @@ void skimTuples::fillSVCands(int j, int t)
 			TSVDPM        ->push_back(svdpm);
 			TSVTRUEIDX    ->push_back(svtrued);
 		} else {
+			if(svnj<1) continue;
+			foundSVPassNJ=true;
 			NSV++;
 
 			SVX          ->push_back(sv.X());
@@ -1316,6 +1842,7 @@ void skimTuples::fillSVCands(int j, int t)
 			SVNT         ->push_back(svnt);
 			SVQ          ->push_back(svq);
 			SVSUMIPCHI2  ->push_back(svsumipchi2);
+			SVVXCHI2     ->push_back(svr_chi2->at(s));
 			SVIPCHI2     ->push_back(svr_ip_chi2->at(s));
 			SVMINIPCHI2  ->push_back(svminipchi2);
 			SVMAXGHOST   ->push_back(svmaxghost);
@@ -1331,6 +1858,10 @@ void skimTuples::fillSVCands(int j, int t)
 			SVISDP       ->push_back(svisdp);
 			SVD0M        ->push_back(svd0m);
 			SVDPM        ->push_back(svdpm);
+			SVTRK0IDX    ->push_back(idx0);
+			SVTRK1IDX    ->push_back(idx1);
+			SVTRK2IDX    ->push_back(idx2);
+			SVTRK3IDX    ->push_back(idx3);
 			SVTRUEIDX    ->push_back(svtrued);
 			SVTRUETRK0IDX    ->push_back((svtrueindices.size()>0?svtrueindices[0]:-1));
 			SVTRUETRK1IDX    ->push_back((svtrueindices.size()>1?svtrueindices[1]:-1));
@@ -1366,6 +1897,82 @@ void skimTuples::fillSVCands(int j, int t)
 			SVTRK3PNNK       ->push_back((svrecopnnk.size()>3?svrecopnnk[3]:-1));
 		}
 	}
+	NSVTRK = foundSVTrks.size();
+	NSVTRUETRK = foundSVTrueTrks.size();
+	//now find number of linked tracks for each SV
+	//for each saved SV, loop over the other SVs adding tracks from any with a shared track
+	//repeat until the number of tracks remains the same over an iteration
+	//this gives a measure of how high the SV track multiplicity would be if "vertex" requirements are ignored
+	for(uint s=0; s<NSV; ++s) {
+		std::set<int> linkedTrks;
+		std::set<int> usedSVs;
+		uint nLinked = 0;
+
+		usedSVs.insert(s);
+		if(SVN->at(s)>0) linkedTrks.insert(SVTRUETRK0IDX->at(s));
+		if(SVN->at(s)>1) linkedTrks.insert(SVTRUETRK1IDX->at(s));
+		if(SVN->at(s)>2) linkedTrks.insert(SVTRUETRK2IDX->at(s));
+		if(SVN->at(s)>3) linkedTrks.insert(SVTRUETRK3IDX->at(s));
+
+		while(nLinked<linkedTrks.size()) {
+			nLinked = linkedTrks.size();
+
+			for(uint ss=0; ss<NSV; ++ss) {
+				if(usedSVs.count(ss)>0) continue;
+				if((SVN->at(ss)>0 && linkedTrks.count(SVTRUETRK0IDX->at(ss))>0) ||
+				   (SVN->at(ss)>1 && linkedTrks.count(SVTRUETRK1IDX->at(ss))>0) ||
+				   (SVN->at(ss)>2 && linkedTrks.count(SVTRUETRK2IDX->at(ss))>0) ||
+				   (SVN->at(ss)>3 && linkedTrks.count(SVTRUETRK3IDX->at(ss))>0)) {
+					if(SVN->at(ss)>0) linkedTrks.insert(SVTRUETRK0IDX->at(ss));
+					if(SVN->at(ss)>1) linkedTrks.insert(SVTRUETRK1IDX->at(ss));
+					if(SVN->at(ss)>2) linkedTrks.insert(SVTRUETRK2IDX->at(ss));
+					if(SVN->at(ss)>3) linkedTrks.insert(SVTRUETRK3IDX->at(ss));
+					usedSVs.insert(ss);
+				}
+			}
+		}
+
+		SVNLINKED->push_back(nLinked);
+	}
+	int bestSVPassLevel(0);
+	if(foundTrueC) {
+		++svTagCounts[0];
+		++bestSVPassLevel;
+		if(foundTrueHc) {
+			++svTagCounts[1];
+			++bestSVPassLevel;
+			if(foundTrueHc5) {
+				++svTagCounts[2];
+				++bestSVPassLevel;
+				if(foundTrueSV) {
+					++svTagCounts[3];
+					++bestSVPassLevel;
+					if(foundRecoSV) {
+						++svTagCounts[4];
+						++bestSVPassLevel;
+						if(foundSVPassDR) {
+							++svTagCounts[5];
+							++bestSVPassLevel;
+							if(foundSVPassSel) {
+								++svTagCounts[6];
+								++bestSVPassLevel;
+								if(foundSVPass4) {
+									++svTagCounts[7];
+									++bestSVPassLevel;
+									if(foundSVPassNJ) {
+										++svTagCounts[8];
+										++bestSVPassLevel;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	svCatHist_->Fill(bestSVCat,bestSVPassLevel);
+	
 
 	for(uint iD=0; iD<d0_m->size(); ++iD) {
 		TLorentzVector p4D(d0_px->at(iD),
@@ -2071,105 +2678,308 @@ void skimTuples::fillSVCands(int j, int t)
 
 //function to identify the two jets (j1 & j2) in a dijet MC event
 bool skimTuples::tagTruthJet(int& j1, int& j2) {
-	int ng = gen_pid->size();
 	int nj = jet_pz->size();
 
-	int c1(-1), c2(-1), b1(-1), b2(-1), q1(-1), q2(-1);
-	TLorentzVector p4c1, p4c2;
-	TLorentzVector p4b1, p4b2;
-	TLorentzVector p4q1, p4q2;
+	//vectors to store pairings of light, charm and beauty dijets
+	//dijets must share flavour and PV
+	//if a jet has no matches save in a pair with -1
+	//first in pair is the quark jet, second is anti-quark
+	std::vector<std::pair<int,int> > qqDijets;
+	std::vector<std::pair<int,int> > ccDijets;
+	std::vector<std::pair<int,int> > bbDijets;
 
-	int countMatched(false);
+	//a jet may appear in multiple pairs but protect against adding single jet if it's already in a pair
+	std::set<int> usedJets;
+
+	//number of truth-matched jets
+	int countMatched(0);
 
 	for(int j=0; j<nj; ++j) {
+		if(jet_idx_pvr->at(j)<0) continue;//protect against weird events where jets aren't matched to PVs
 		TLorentzVector p4j(jet_px->at(j),jet_py->at(j),jet_pz->at(j),jet_e->at(j));
-		bool matched(false);
+		if(p4j.Pt()<=0. || p4j.Eta()<2.2 || p4j.Eta()>4.2) continue;
 
-		TLorentzVector p4jmc;
 		//truth match jet
-		for(int g=0; g<ng; ++g) {
-			if(gen_pid->at(g)!=98) continue;
-			TLorentzVector p4g(gen_px->at(g),gen_py->at(g),gen_pz->at(g),gen_e->at(g));
-
-			if(p4g.Pt()>0.&&p4j.Pt()>0.&&p4j.DeltaR(p4g)<0.5) {
-				if(p4g.Pt()>minTruePt_ && p4g.Pt()<maxTruePt_) matched=true;
-				p4jmc = p4g;
-			}
-		}
-		if(!matched) continue;
+		int g = matchJetTruth(j);
+//		printf("jet%d %d %f\n",j,g,p4j.Pt());//TODO
+		if(g<0) continue;
+		TLorentzVector p4g(gen_px->at(g),gen_py->at(g),gen_pz->at(g),gen_e->at(g));
+		if(p4g.Pt()<minTruePt_ || p4g.Pt()>maxTruePt_) continue;
 		++countMatched;
 
-		//for light sample - pick jet with highest pT
-		if(p4j.Pt()>p4q1.Pt()) {
-			p4q1 = p4j;
-			q1 = j;
+		//try to- match jet to heavy quark
+		int b  = matchJetTruth(j, 5);
+		int bb = matchJetTruth(j,-5);
+		int c  = matchJetTruth(j, 4);
+		int cb = matchJetTruth(j,-4);
+//		printf("jet%d %d %d %d %d\n",j,b,bb,c,cb);//TODO
+
+		int jetFlav(0);
+		if(b>-1) {
+			if(bb>-1) {
+//				std::cout << "ambiguous flavour b and bbar found" << std::endl;//TODO
+				continue;
+			}
+			jetFlav=5;
+		} else if(bb>-1) {
+			jetFlav=-5;
+		} else if(c>-1) {
+			if(cb>-1) {
+//				std::cout << "ambiguous flavour c and cbar found" << std::endl;//TODO
+				continue;
+			}
+			jetFlav=4;
+		} else if(cb>-1) {
+			jetFlav=-4;
 		}
 
-		//for heavy samples - match jets to ccbar or bbbar
-		for(int g=0; g<ng; ++g) {
-			TLorentzVector p4g(gen_px->at(g),gen_py->at(g),gen_pz->at(g),gen_e->at(g));
+		//try to create di-jets
+		for(int jj=j+1; jj<nj; ++jj) {
+			TLorentzVector p4jj(jet_px->at(jj),jet_py->at(jj),jet_pz->at(jj),jet_e->at(jj));
 
-			//require quark to be within DeltaR<0.5 of either true or reco jet
-			if((p4g.Pt()>0.&&p4j.Pt()>0.&&p4j.DeltaR(p4g)<0.5) ||
-			   (p4g.Pt()>0.&&p4jmc.Pt()>0.&&p4jmc.DeltaR(p4g)<0.5)) {
-				if(gen_pid->at(g) == 4 && p4j.Pt() > p4c1.Pt()) {
-					p4c1 = p4j;
-					c1 = j;
-				}
-				if(gen_pid->at(g) ==-4 && p4j.Pt() > p4c2.Pt()) {
-					p4c2 = p4j;
-					c2 = j;
-				}
-				if(gen_pid->at(g) == 5 && p4j.Pt() > p4b1.Pt()) {
-					p4b1 = p4j;
-					b1 = j;
-				}
-				if(gen_pid->at(g) ==-5 && p4j.Pt() > p4b2.Pt()) {
-					p4b2 = p4j;
-					b2 = j;
-				}
+			int gg = matchJetTruth(jj);
+			if(gg<0) continue;
+			TLorentzVector p4gg(gen_px->at(gg),gen_py->at(gg),gen_pz->at(gg),gen_e->at(gg));
+			if(p4gg.Pt()<minTruePt_ || p4gg.Pt()>maxTruePt_) continue;
+
+			//check PVs match
+			if(gen_idx_pvr->at(g) != gen_idx_pvr->at(gg)) continue;
+			if(jet_idx_pvr->at(j) != jet_idx_pvr->at(jj)) {
+//				std::cout << "true PVs match but not reco PVs" << std::endl;//TODO
+				continue;
 			}
+
+			//now ensure jet flavours correct
+			//if we have a flavour-matched jet pair
+			//add to the correct vector and add both to list of used jets
+			switch(jetFlav) {
+				case -5:
+					//require a b-jet
+					//veto bbar
+					if(matchJetTruth(jj,5)==-1 || matchJetTruth(jj,-5)>-1) continue;
+					bbDijets.push_back(std::make_pair(jj,j));
+					break;
+				case -4:
+					//require a c-jet
+					//veto cbar, b and bbar
+					if(matchJetTruth(jj,4)==-1 || matchJetTruth(jj,-4)>-1 || matchJetTruth(jj,5)>-1 || matchJetTruth(jj,-5)>-1) continue;
+					ccDijets.push_back(std::make_pair(jj,j));
+					break;
+				case 0:
+					//require another light jet
+					if(matchJetTruth(jj,4)>-1 || matchJetTruth(jj,-4)>-1 || matchJetTruth(jj,5)>-1 || matchJetTruth(jj,-5)>-1) continue;
+					qqDijets.push_back(std::make_pair(j,jj));
+					break;
+				case 4:
+					//require a cbar-jet
+					//veto c, b and bbar
+					if(matchJetTruth(jj,-4)==-1 || matchJetTruth(jj,4)>-1 || matchJetTruth(jj,5)>-1 || matchJetTruth(jj,-5)>-1) continue;
+					ccDijets.push_back(std::make_pair(j,jj));
+					break;
+				case 5:
+					//require a bbar-jet
+					//veto b
+					if(matchJetTruth(jj,-5)==-1 || matchJetTruth(jj,5)>-1) continue;
+					bbDijets.push_back(std::make_pair(j,jj));
+					break;
+				default:
+					std::cout << "SHOULD NOT REACH HERE! " << jetFlav << std::endl;
+			}
+
+			usedJets.insert(j);
+			usedJets.insert(jj);
+		}
+
+		//if we didn't find a pair then add single jet
+		if(usedJets.count(j)==0) {
+			switch(jetFlav) {
+				case -5:
+					bbDijets.push_back(std::make_pair(-1,j));
+					break;
+				case -4:
+					ccDijets.push_back(std::make_pair(-1,j));
+					break;
+				case 0:
+					qqDijets.push_back(std::make_pair(j,-1));
+					break;
+				case 4:
+					ccDijets.push_back(std::make_pair(j,-1));
+					break;
+				case 5:
+					bbDijets.push_back(std::make_pair(j,-1));
+					break;
+				default:
+					std::cout << "SHOULD NOT REACH HERE! " << jetFlav << std::endl;
+			}
+			usedJets.insert(j);
 		}
 	}
+
+	//point dijets at the list we're using
+	std::vector<std::pair<int,int> >* dijets(0);
+	switch(flavour_) {
+		case 0:
+			dijets = &qqDijets;
+			break;
+		case 4:
+			dijets = &ccDijets;
+			break;
+		case 5:
+			dijets = &bbDijets;
+			break;
+		default:
+			std::cout << "SHOULD NOT REACH HERE! " << flavour_ << std::endl;
+	}
+	if(!dijets || dijets->empty()) return false;
+
+	int best(-1);
+	double bestPtSum(0.);
+
+	for(unsigned int i=0; i<dijets->size(); ++i) {
+		int jet1 = dijets->at(i).first;
+		int jet2 = dijets->at(i).second;
+		double ptSum(0.);
+		if(jet1>-1) ptSum += jet_pt->at(jet1);
+		if(jet2>-1) ptSum += jet_pt->at(jet2);
+		if(ptSum>bestPtSum) {
+			best = i;
+			bestPtSum = ptSum;
+		}
+	}
+
+	j1 = dijets->at(best).first;
+	j2 = dijets->at(best).second;
+//	printf("debug %d %d %d %d %d %d\n", flavour_, j1, j2, static_cast<int>(qqDijets.size()), static_cast<int>(ccDijets.size()), static_cast<int>(bbDijets.size()));//TODO
 
 	if(countMatched==1) ++tagCounts[2];
 	if(countMatched==2) ++tagCounts[3];
 	if(countMatched>2)  ++tagCounts[4];
+	if(dijets->size()==1) ++tagCounts[5];
+	if(dijets->size()>1) ++tagCounts[6];
+	if(j1<0 || j2<0) ++tagCounts[7];
+	if(j1>-1 && j2>-1) ++tagCounts[8];
 
-	//veto heavier flavours
-	if(flavour_<5 && (b1>-1 || b2>-1)) return false;
-	if(flavour_<4 && (c1>-1 || c2>-1)) return false;
-
-	if(flavour_==5) {
-		if(b1==-1 && b2==-1) return false;
-			j1 = b1;
-			j2 = b2;
-			return true;
-		//}
-	} else if(flavour_==4) {
-		if(c1==-1 && c2==-1) return false;
-			j1 = c1;
-			j2 = c2;
-			return true;
-		//}
-	} else {
-		if(q1==-1) return false;
-		for(int j=0; j<nj; ++j) {
-			TLorentzVector p4j(jet_px->at(j),jet_py->at(j),jet_pz->at(j),jet_e->at(j));
-			if(TMath::Abs(p4j.DeltaPhi(p4q1))>2.0 && p4j.Pt() > p4q2.Pt()) {
-				p4q2 = p4j;
-				q2 = j;
-			}
+	//add trigger information
+	for(unsigned int trig=0; trig<evt_dec->size(); ++trig) {
+		if(j1>-1 && (evt_j1_idx->at(trig)==j1 || evt_j2_idx->at(trig)==j1)) {
+			if(evt_j1_idx->at(trig)==j1) JTRIGPT = TMath::Sqrt(evt_j1_px->at(trig)*evt_j1_px->at(trig)+evt_j1_py->at(trig)*evt_j1_py->at(trig));
+			if(evt_j2_idx->at(trig)==j1) JTRIGPT = TMath::Sqrt(evt_j2_px->at(trig)*evt_j2_px->at(trig)+evt_j2_py->at(trig)*evt_j2_py->at(trig));
+			if(evt_dec->at(trig)==5) JTRIG10=1.;
+			if(evt_dec->at(trig)==0) JTRIG17=1.;
+			if(evt_dec->at(trig)==10) JTRIG60=1.;
 		}
-		if(q2==-1) return false;
-		j1=q1;
-		j2=q2;
-		return true;
+		if(j2>-1 && (evt_j1_idx->at(trig)==j2 || evt_j2_idx->at(trig)==j2)) {
+			if(evt_j1_idx->at(trig)==j2) TTRIGPT = TMath::Sqrt(evt_j1_px->at(trig)*evt_j1_px->at(trig)+evt_j1_py->at(trig)*evt_j1_py->at(trig));
+			if(evt_j2_idx->at(trig)==j2) TTRIGPT = TMath::Sqrt(evt_j2_px->at(trig)*evt_j2_px->at(trig)+evt_j2_py->at(trig)*evt_j2_py->at(trig));
+			if(evt_dec->at(trig)==5) TTRIG10=1.;
+			if(evt_dec->at(trig)==0) TTRIG17=1.;
+			if(evt_dec->at(trig)==10) TTRIG60=1.;
+		}
 	}
 
-
-	return false;
+	return true;
 }
+//bool skimTuples::tagTruthJet(int& j1, int& j2) {
+//	int ng = gen_pid->size();
+//	int nj = jet_pz->size();
+//
+//	int c1(-1), c2(-1), b1(-1), b2(-1), q1(-1), q2(-1);
+//	TLorentzVector p4c1, p4c2;
+//	TLorentzVector p4b1, p4b2;
+//	TLorentzVector p4q1, p4q2;
+//
+//	int countMatched(false);
+//
+//	for(int j=0; j<nj; ++j) {
+//		if(jet_idx_pvr->at(j)<0) continue;//protect against weird events where jets aren't matched to PVs
+//		TLorentzVector p4j(jet_px->at(j),jet_py->at(j),jet_pz->at(j),jet_e->at(j));
+//		bool matched(false);
+//
+//		TLorentzVector p4jmc;
+//		//truth match jet
+//		for(int g=0; g<ng; ++g) {
+//			if(gen_pid->at(g)!=98) continue;
+//			TLorentzVector p4g(gen_px->at(g),gen_py->at(g),gen_pz->at(g),gen_e->at(g));
+//
+//			if(p4g.Pt()>0.&&p4j.Pt()>0.&&p4j.DeltaR(p4g)<0.5) {
+//				if(p4g.Pt()>minTruePt_ && p4g.Pt()<maxTruePt_) matched=true;
+//				p4jmc = p4g;
+//			}
+//		}
+//		if(!matched) continue;
+//		++countMatched;
+//
+//		//for light sample - pick jet with highest pT
+//		if(p4j.Pt()>p4q1.Pt()) {
+//			p4q1 = p4j;
+//			q1 = j;
+//		}
+//
+//		//for heavy samples - match jets to ccbar or bbbar
+//		for(int g=0; g<ng; ++g) {
+//			TLorentzVector p4g(gen_px->at(g),gen_py->at(g),gen_pz->at(g),gen_e->at(g));
+//
+//			//require quark to be within DeltaR<0.5 of either true or reco jet
+//			if((p4g.Pt()>0.&&p4j.Pt()>0.&&p4j.DeltaR(p4g)<0.5) ||
+//			   (p4g.Pt()>0.&&p4jmc.Pt()>0.&&p4jmc.DeltaR(p4g)<0.5)) {
+//				if(gen_pid->at(g) == 4 && p4j.Pt() > p4c1.Pt()) {
+//					p4c1 = p4j;
+//					c1 = j;
+//				}
+//				if(gen_pid->at(g) ==-4 && p4j.Pt() > p4c2.Pt()) {
+//					p4c2 = p4j;
+//					c2 = j;
+//				}
+//				if(gen_pid->at(g) == 5 && p4j.Pt() > p4b1.Pt()) {
+//					p4b1 = p4j;
+//					b1 = j;
+//				}
+//				if(gen_pid->at(g) ==-5 && p4j.Pt() > p4b2.Pt()) {
+//					p4b2 = p4j;
+//					b2 = j;
+//				}
+//			}
+//		}
+//	}
+//
+//	if(countMatched==1) ++tagCounts[2];
+//	if(countMatched==2) ++tagCounts[3];
+//	if(countMatched>2)  ++tagCounts[4];
+//
+//	//veto heavier flavours
+//	if(flavour_<5 && (b1>-1 || b2>-1)) return false;
+//	if(flavour_<4 && (c1>-1 || c2>-1)) return false;
+//
+//	if(flavour_==5) {
+//		if(b1==-1 && b2==-1) return false;
+//			j1 = b1;
+//			j2 = b2;
+//			return true;
+//		//}
+//	} else if(flavour_==4) {
+//		if(c1==-1 && c2==-1) return false;
+//			j1 = c1;
+//			j2 = c2;
+//			return true;
+//		//}
+//	} else {
+//		if(q1==-1) return false;
+//		for(int j=0; j<nj; ++j) {
+//			TLorentzVector p4j(jet_px->at(j),jet_py->at(j),jet_pz->at(j),jet_e->at(j));
+//			if(TMath::Abs(p4j.DeltaPhi(p4q1))>2.0 && p4j.Pt() > p4q2.Pt()) {
+//				p4q2 = p4j;
+//				q2 = j;
+//			}
+//		}
+//		if(q2==-1) return false;
+//		j1=q1;
+//		j2=q2;
+//		return true;
+//	}
+//
+//
+//	return false;
+//}
 
 //selection slightly different from Z+jet data (we keep leading jet even if Z not found)
 bool skimTuples::tagTruthNoMuJet(int& j1, int& z) {
@@ -2212,6 +3022,7 @@ bool skimTuples::tagTruthNoMuJet(int& j1, int& z) {
 		if(p4mu1.Eta()<2. || p4mu1.Eta()>4.5) continue;
 		if(TMath::Prob(trk_chi2->at(mu0),trk_ndof->at(mu0))<0.01) continue;
 		if(TMath::Prob(trk_chi2->at(mu1),trk_ndof->at(mu1))<0.01) continue;
+		if(trk_ip->at(mu0)>0.04 || trk_ip->at(mu1)>0.04) continue;
 		//if(trk_dp->at(mu0)/trk_p->at(mu0)<0.1) continue;//TODO off until rerun of DV
 		//if(trk_dp->at(mu1)/trk_p->at(mu1)<0.1) continue;//TODO off until rerun of DV
 		//if(!(z0_l0_ewmuon_tos->at(iz))) continue; //TODO off until rerun of DV
@@ -2226,8 +3037,12 @@ bool skimTuples::tagTruthNoMuJet(int& j1, int& z) {
 
 	//select the jet independently
 	for(int j=0; j<nj; ++j) {
+		if(jet_idx_pvr->at(j)<0) continue;//protect against weird events where jets aren't matched to PVs
 		TLorentzVector p4j(jet_px->at(j),jet_py->at(j),jet_pz->at(j),jet_e->at(j));
 		bool matched(false);
+
+		//require eta within accepted range
+		if(p4j.Pt()<=0. || p4j.Eta()<2.2 || p4j.Eta()>4.2) continue;
 
 		TLorentzVector p4jmc;
 		//truth match jet
@@ -2328,6 +3143,7 @@ bool skimTuples::tagSVJet(int& j, int& t) {
 		   evt_dec->at(trig)!=11) continue;
 		
 		if(evt_j1_idx->at(trig)<0 || evt_j2_idx->at(trig)<0) continue;
+		if(evt_j1_idx->at(trig)>=jet_pt->size() || evt_j2_idx->at(trig)>=jet_pt->size()) continue;//TODO seems to be required for a few pathological events
 		if(evt_j1_idx->at(trig)==evt_j2_idx->at(trig)) {
 			++tagCounts[4];
 			continue;
@@ -2387,6 +3203,7 @@ bool skimTuples::tagSVJet(int& j, int& t) {
 				     jet_py->at(jtag),
 				     jet_pz->at(jtag),
 				     jet_e->at( jtag));
+		if(p4tag.Pt()<10000. || p4tag.Eta()<2.2 || p4tag.Eta()>4.2) continue;
 
 		bool probeFound(false);
 
@@ -2399,7 +3216,7 @@ bool skimTuples::tagSVJet(int& j, int& t) {
 					       jet_py->at(jprobe),
 					       jet_pz->at(jprobe),
 					       jet_e->at( jprobe));
-			if(p4probe.Pt()<10000. || p4probe.Eta()<2.5 || p4probe.Eta()>4.0) continue;
+			if(p4probe.Pt()<10000. || p4probe.Eta()<2.2 || p4probe.Eta()>4.2) continue;
 
 			double dR = p4probe.DeltaPhi(p4tag);
 			double ptAsym = (jet_pt->at(jprobe)-jet_pt->at(jtag)) /
@@ -2483,6 +3300,7 @@ bool skimTuples::tagZJet(int& j, int& z) {
 		if(p4mu1.Eta()<2. || p4mu1.Eta()>4.5) continue;
 		if(TMath::Prob(trk_chi2->at(mu0),trk_ndof->at(mu0))<0.01) continue;
 		if(TMath::Prob(trk_chi2->at(mu1),trk_ndof->at(mu1))<0.01) continue;
+		if(trk_ip->at(mu0)>0.04 || trk_ip->at(mu1)>0.04) continue;
 		//if(trk_dp->at(mu0)/trk_p->at(mu0)<0.1) continue;//TODO off until rerun of DV
 		//if(trk_dp->at(mu1)/trk_p->at(mu1)<0.1) continue;//TODO off until rerun of DV
 		//if(!(z0_l0_ewmuon_tos->at(iz))) continue; //TODO off until rerun of DV
@@ -2499,7 +3317,8 @@ bool skimTuples::tagZJet(int& j, int& z) {
 					     jet_pz->at(j),
 					     jet_e->at( j));
 
-			if(!(p4Jet.Pt()>0.)) continue;//protect against odd entries
+			//if(!(p4Jet.Pt()>0.)) continue;//protect against odd entries
+			if(p4Jet.Pt()<=0. || p4Jet.Eta()<2.2 || p4Jet.Eta()>4.2) continue;
 
 			//require same PV and separation between jet and Z muons
 			if(jet_idx_pvr->at(j) != trk_idx_pvr->at(mu0) || jet_idx_pvr->at(j) != trk_idx_pvr->at(mu1)) continue;
@@ -2597,18 +3416,20 @@ void skimTuples::Loop(int nmax)
 		lastEntry = firstEntry+nmax;
 	}
 
-	boost::progress_display progress( lastEntry-firstEntry );
+//TODO	boost::progress_display progress( lastEntry-firstEntry );
 	for (Long64_t jentry=firstEntry; jentry<lastEntry;jentry++) {
-		++progress;
+//TODO		++progress;
 		fChain->GetEntry(jentry);
 		clearEventOutputs();
 		EVT=jentry;
+		pvEffsFilled=false;
+		pvsPaired=false;
 
 		//first fix generated particles tree
 		reattachLostParticles();
 
 		++tagCounts[0];
-		if(tagType_==JetTag && evt_pvr_n!=1) continue;//keep only sinlge PV for dijet
+		if((tagType_==JetTag || tagType_==TruthTag) && evt_pvr_n!=1) continue;//keep only sinlge PV for dijet
 		NPV = evt_pvr_n;
 		++tagCounts[1];
 
@@ -2634,6 +3455,7 @@ void skimTuples::Loop(int nmax)
 			case TruthNoMuTag: //if W,Z + jet MC then identify jet and keep those without a muon from the boson decay
 				if(tagTruthNoMuJet(jet1,jet2)) {
 					if(jet2>-1) fillZ(jet2,jet1);//fill Z branches in output
+					fillTrueZ(jet1);//add truth-level information for any Z candidates
 					fillOutput(jet1,-1);
 				}
 //				fillTruthOutput();
@@ -2659,6 +3481,28 @@ void skimTuples::Loop(int nmax)
 		std::cout << tagCounts[i] << "\t";
 	}
 	std::cout << std::endl;
+	for(int i=0; i<9; ++i) {
+		std::cout << svTagCounts[i] << "\t";
+	}
+	std::cout << std::endl;
+
+	std::ofstream fs(svTagLog,std::ofstream::out);
+	for(int i=0; i<9; ++i) {
+		fs << svTagCounts[i] << "\t";
+	}
+	fs << std::endl;
+	fs.close();
+
+	fs.open(pvEffLog,std::ofstream::out);
+	for(int i=0; i<7; ++i) {
+		fs << nPVCount[i] << "\t";
+	}
+	fs << std::endl;
+	fs.close();
+
+	TFile* fhist = TFile::Open(histName,"RECREATE");
+	svCatHist_->Write();
+	fhist->Close();
 
 	tout->AutoSave();
 	if(lumiout) lumiout->AutoSave();
