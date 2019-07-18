@@ -58,6 +58,9 @@ class Ntuple:
         self.hlt2Tool = toolSvc.create(
                  'TriggerTisTos/Hlt2TriggerTisTos',
                  interface = 'ITriggerTisTos')
+        self.hrcTool = toolSvc.create(
+                 'TupleToolHerschel',
+                 interface = 'IExtraInfoTool')#'IEventTupleTool')
 
         self.stable = [11,-11,13,-13,211,-211,321,-321,2212,-2212,2112,-2112,22,111,310,130,311,-311]
         self.Ds = [411,-411,421,-421,431,-431,4122,-4122]
@@ -84,7 +87,17 @@ class Ntuple:
         self.init('neu', ['idx_gen'] + mom + ['pid'] + l0trig + hlt1trig + hlt2trig)
         self.init('phi', ['idx_pvr'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2'] + ['idx_trk%i' % i for i in range(0, 2)] + l0trig + hlt1trig + hlt2trig)
         self.ntuple['evt_pvr_n'] = array.array('d', [-1])
+        self.ntuple['evt_neu_n'] = array.array('d', [-1])
+        self.ntuple['evt_chg_n'] = array.array('d', [-1])
         self.ntuple['evt_trk_n'] = array.array('d', [-1])
+        self.ntuple['evt_trk_n_velor'] = array.array('d', [-1])
+        self.ntuple['evt_trk_n_velo'] = array.array('d', [-1])
+        self.ntuple['evt_trk_n_long'] = array.array('d', [-1])
+        self.ntuple['evt_trk_n_up'] = array.array('d', [-1])
+        self.ntuple['evt_trk_n_down'] = array.array('d', [-1])
+        self.ntuple['evt_trk_n_t'] = array.array('d', [-1])
+        self.ntuple['evt_trk_n_mu'] = array.array('d', [-1])
+        self.ntuple['evt_hrc_fom'] = array.array('d', [-1])
         for key, val in self.ntuple.iteritems():
             if type(val) is array.array: self.ttree.Branch(key, val, key + '/D')
             else: self.ttree.Branch(key, val)

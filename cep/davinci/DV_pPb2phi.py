@@ -43,15 +43,14 @@ kaons = SimpleSelection (
     FilterDesktop   ,
     [ loosekaons ]    ,
     DecayDescriptor = "[K+]cc",
-    Code = (#"(PIDK - PIDpi > 5) & "
-            "(PT>50*MeV)"
+    Code = ("(PIDK - PIDpi > 5)"
             "& (TRGHOSTPROB<0.3)")
     )
 
 dcDiK = { }
-dcDiK['K+'] = "(PT > 50.0) & (P > 500.0) & (TRGHOSTPROB < 0.3)"
-combcutsDiK = "(AMAXDOCA('') < 0.5) & (in_range( 0, AM, 1200 ))"
-parentcutsDiK = "(VFASPF(VCHI2PDOF) < 10)"
+dcDiK['K+'] = "(TRGHOSTPROB < 0.3)"
+combcutsDiK = "(in_range( 0, AM, 1200 ))"
+parentcutsDiK = "ALL"
 
 phis = SimpleSelection (
     'phis',
