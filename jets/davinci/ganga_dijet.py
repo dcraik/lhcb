@@ -9,16 +9,16 @@ note = str(sys.argv[3])
 
 script=str('Run2Jets_dijet.py')
 if year=='2017':
-    script=str('~/git/lhcb/jets/davinci/Run2Jets_dijet17.py')
+    script=str('Run2Jets_dijet17.py')
 if year=='2018':
-    script=str('~/git/lhcb/jets/davinci/Run2Jets_dijet18.py')
+    script=str('Run2Jets_dijet18.py')
 
 job_name = "RIIJ_dijet" +str(note) + str(polarity) + str(year)
 print job_name
 print script
 
 #DV = GaudiExec(directory="~/DaVinciDev_v42r6p1")
-DV = GaudiExec(directory="~/DaVinciDev_v44r9")
+DV = GaudiExec(directory="/workspace/DaVinciDev_v44r9", platform="x86_64-slc6-gcc62-opt")
 DV.options = [script]
 DV.useGaudiRun = False
 BK_locations = []

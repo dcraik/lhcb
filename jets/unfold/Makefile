@@ -7,6 +7,24 @@ INCPATH   = -I. -I./RooUnfold/src
 
 all : 	unfoldJetPt RooUnfoldD0Mass
 
+cloneHists.o : cloneHists.C cloneHists.h
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
+
+outputFunctions.o : outputFunctions.C outputFunctions.h
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
+
+SVFitter.o : SVFitter.C SVFitter.h
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
+
+DFitter.o : DFitter.C DFitter.h
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
+
+ZFitter.o : ZFitter.C ZFitter.h
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
+
+MCJets.o : MCJets.C MCJets.h
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCPATH) -c $< -o $@
+
 RooPromptShape.o : RooPromptShape.cxx
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
 
@@ -49,7 +67,7 @@ fitSVAndUnfold : fitSVAndUnfold.o RooUnfold/libRooUnfold.so RooPromptShape.o
 getTaggingEffs.o : getTaggingEffs.C
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCPATH) -c $< -o $@
 
-getTaggingEffs : getTaggingEffs.o RooUnfold/libRooUnfold.so RooPromptShape.o
+getTaggingEffs : getTaggingEffs.o RooUnfold/libRooUnfold.so RooPromptShape.o outputFunctions.o cloneHists.o SVFitter.o DFitter.o MCJets.o
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS) RooUnfold/libRooUnfold.so
 
 massFitExample.o : massFitExample.C
@@ -61,5 +79,29 @@ massFitExample : massFitExample.o
 fitZJetSVs.o : fitZJetSVs.C
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCPATH) -c $< -o $@
 
-fitZJetSVs : fitZJetSVs.o
+fitZJetSVs : fitZJetSVs.o outputFunctions.o cloneHists.o SVFitter.o ZFitter.o MCJets.o
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS) RooUnfold/libRooUnfold.so
+
+getCharmBkgFracs.o : getCharmBkgFracs.C
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCPATH) -c $< -o $@
+
+getCharmBkgFracs : getCharmBkgFracs.o outputFunctions.o cloneHists.o SVFitter.o MCJets.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS) RooUnfold/libRooUnfold.so
+
+fitSVToys.o : fitSVToys.C
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCPATH) -c $< -o $@
+
+fitSVToys : fitSVToys.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
+
+quickSVToys.o : quickSVToys.C
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCPATH) -c $< -o $@
+
+quickSVToys : quickSVToys.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
+
+testSimPtWeighting.o : testSimPtWeighting.C
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCPATH) -c $< -o $@
+
+testSimPtWeighting : testSimPtWeighting.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)

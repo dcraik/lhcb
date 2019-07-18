@@ -18,9 +18,10 @@
 #include <TVector3.h>
 
 // Header file for the classes stored in the TTree if any.
+#include <map>
 #include <vector>
 
-#include <boost/progress.hpp>
+//TODO//#include <boost/progress.hpp>
 
 // Fixed size dimensions of array or collections stored in the TTree if any.
 
@@ -695,15 +696,19 @@ class skimTuples {
 		TTree* lumiout;
 
 		int EVT, DEC, NPV;
-		double JPX,JPY,JPZ,JE,JPT,JETA,JS1,JS2,JQ,JN,JNQ,JNN,JPTD;
+		double JPX,JPY,JPZ,JE,JPT,JETA,JS1,JS2,JQ,JN,JNQ,JNN,JPTD,JTRIG10,JTRIG17,JTRIG60, JTRIGPT, JPV;
 		double JTRUEPX,JTRUEPY,JTRUEPZ,JTRUEE,JTRUEPT,JTRUEETA, JTRUEDR;
 		double JTRUEb, JTRUEc, JTRUED0, JTRUEDP, JTRUEDS, JTRUEJPSI, JTRUEDSV, JTRUEBSV, JTRUESV;
-		double JTRUEDPX, JTRUEDPY, JTRUEDPZ, JTRUEDE, JTRUEDDR;
-		double TPX,TPY,TPZ,TE,TPT,TETA;
+		double JTRUEDPX, JTRUEDPY, JTRUEDPZ, JTRUEDE, JTRUEDPT, JTRUEDDR;
+		double TPX,TPY,TPZ,TE,TPT,TETA,TTRIG10,TTRIG17,TTRIG60, TTRIGPT;
+		double TTRUEPX,TTRUEPY,TTRUEPZ,TTRUEE,TTRUEPT,TTRUEETA, TTRUEDR;
 		double DR, DPHI;
-		double ZM,ZP,ZPX,ZPY,ZPZ,ZPT,ZE,ZETA,ZDR;
-		double MU0PX,MU0PY,MU0PZ,MU0PT;
-		double MU1PX,MU1PY,MU1PZ,MU1PT;
+		double ZM,ZP,ZPX,ZPY,ZPZ,ZPT,ZE,ZETA,ZY,ZDR;
+		double MU0PX,MU0PY,MU0PZ,MU0PT,MU0IP,MU0IPCHI2,MU0FPT, MU0DR;
+		double MU1PX,MU1PY,MU1PZ,MU1PT,MU1IP,MU1IPCHI2,MU1FPT, MU1DR;
+		double ZTRUEM,ZTRUEP,ZTRUEPX,ZTRUEPY,ZTRUEPZ,ZTRUEPT,ZTRUEE,ZTRUEETA,ZTRUEDR;
+		double MU0TRUEPX,MU0TRUEPY,MU0TRUEPZ,MU0TRUEPT;
+		double MU1TRUEPX,MU1TRUEPY,MU1TRUEPZ,MU1TRUEPT;
 		std::vector<double> *SVM;
 		std::vector<double> *SVMCOR;
 		std::vector<double> *SVMCORERR;
@@ -713,12 +718,14 @@ class skimTuples {
 		std::vector<double> *SVDRT;
 		std::vector<double> *SVN;
 		std::vector<double> *SVNTRUE;
+		std::vector<double> *SVNLINKED;
 		std::vector<double> *SVNJ;
 		std::vector<double> *SVNT;
 		std::vector<double> *SVQ;
 		std::vector<double> *SVPERP;
 		std::vector<double> *SVETA;
 		std::vector<double> *SVTZ;
+		std::vector<double> *SVVXCHI2;
 		std::vector<double> *SVIPCHI2;
 		std::vector<double> *SVMINIPCHI2;
 		std::vector<double> *SVPX;
@@ -734,6 +741,10 @@ class skimTuples {
 		std::vector<double> *SVISDP;
 		std::vector<double> *SVD0M;
 		std::vector<double> *SVDPM;
+		std::vector<double> *SVTRK0IDX;
+		std::vector<double> *SVTRK1IDX;
+		std::vector<double> *SVTRK2IDX;
+		std::vector<double> *SVTRK3IDX;
 		std::vector<double> *SVTRUEIDX;
 		std::vector<double> *SVTRUETRK0IDX;
 		std::vector<double> *SVTRUETRK1IDX;
@@ -800,7 +811,11 @@ class skimTuples {
 		std::vector<double> *TSVDPM;
 		std::vector<double> *TSVTRUEIDX;
 
-		double NSV,NTSV,PVX,PVY,PVZ,NDISPL6,NDISPL9,NDISPL16;
+		std::vector<double> *TRKPT;
+		std::vector<double> *TRKIPCHI2;
+		std::vector<double> *TRKINJET;
+
+		double NSV,NSVTRK,NSVTRUETRK,NTSV,PVX,PVY,PVZ,NDISPL6,NDISPL9,NDISPL16;
 		double MUPT,MUIPCHI2,MUDR,MUPNN,NMU;
 		double HPT,HIPCHI2,HDR;
 		double NTRK, NNEU;
@@ -1134,6 +1149,10 @@ class skimTuples {
 		double calcDoca(TVector3 &v, const TVector3 &pa, const TVector3 &da, 
 				 	     const TVector3 &pb, const TVector3 &db);
 
+		void pairPVs();
+		int getTruePV(int pv);
+		int getRecoPV(int pv);
+
 		//check gen particle at idxD matches requirements and return indices of
 		//tracks to idcs. Default values override requirements. Decays with 
 		//final-state particles other than pi,K,p,mu always return false unless 
@@ -1147,9 +1166,9 @@ class skimTuples {
 		bool checkDsTruth(int idxK1,int idxK2,int idxPi, int& idxD, bool ordered=true);
 		bool checkJpsiTruth(int idxJpsi);
 		bool checkJpsiTruth(int idxMu1,int idxMu2, int& idxJpsi);
-		bool checkDSVTruth(int idxD);
-		bool checkBSVTruth(int idxD);
-		bool checkSVTruth(int idxD);
+		bool checkDSVTruth(int idxD, double minPT=5000.);
+		bool checkBSVTruth(int idxD, double minPT=5000.);
+		bool checkSVTruth(int idxD, double minPT=5000.);
 		bool checkFromB(int idxD);
 
 		int getFlavour(int pid);
@@ -1158,9 +1177,14 @@ class skimTuples {
 		bool longLivedC(int pid);
 		bool longLivedS(int pid);
 		bool longLived(int pid);
-		int checkRealSV(std::vector<int> indices);
+		int checkRealSV(std::vector<int> indices, int* common=0);
 
 		int checkBestD0Cand(int dA, int dB);
+
+		void fillPVEffs(int s, int j);
+		int getSVCategory(int s, int j, std::vector<int> indices);
+
+		int matchJetTruth(int j, int pid=98, bool matchCharge=true, bool useHiPt=true);
 
 		//tagging functions
 		bool tagTruthJet(int& j1, int& j2);
@@ -1171,6 +1195,7 @@ class skimTuples {
 
 		//filling functions
 		void fillZ(int z, int j);
+		void fillTrueZ(int j);
 		void fillOutput(int j, int t);
 		void fillTruthOutput();
 		void fillSVCands(int j, int t);//fill the output for SV, D and Jpsi containers
@@ -1207,6 +1232,10 @@ class skimTuples {
 
 		std::set<unsigned int> usedTruthJets_;
 
+		std::map<int,int> lookupTruePV;
+		std::map<int,int> lookupRecoPV;
+		bool pvsPaired; //track whether PV matching has been performed for current event
+
 		TString outName;
 		TChain* lumi;
 
@@ -1216,22 +1245,47 @@ class skimTuples {
 		//  2 - single trigger / single good MC jet
 		//  3 - multiple triggers / two good MC jets
 		//  4 - same jet triggers / multiple good MC jets
-		//  5 - SV tagged
-		//  6 - double SV tag
-		//  7 - probe in trigger
-		//  8 - good probe found
+		//  5 - SV tagged / single good MC dijet
+		//  6 - double SV tag / multiple good MC dijets
+		//  7 - probe in trigger / best dijet has jet missing
+		//  8 - good probe found / best dijet has both jets
 		//  9 - multiple probe found
 		// 10 - dijet match
 		// 11 - multiple dijets - switched
 		// 12 - multiple dijets - different
 		// 13 - multiple dijets - both switched and different
 		// 14 - multiple dijets - actually the same
+		int* svTagCounts;
+		//  0 - N have true c
+		//  1 - N have true Hc
+		//  2 - N have true Hc (pT>5GeV)
+		//  3 - N have true SV
+		//  4 - N have reco SV
+		//  5 - N pass dR cut
+		//  6 - N pass SV selection
+		//  7 - N pass SVN<=4
+		//  8 - N pass SVNJ>0
+		TString svTagLog;
+		TString histName;
+		TH2D* svCatHist_;
+
+		int* nPVCount;
+		// 0 - N total true PVs
+		// 1 - N no truth information
+		// 2 - N matched PVs of jet
+		// 3 - N matched PVs of SV
+		// 4 - N matched PVs of majority of jet tracks
+		// 5 - N matched PVs of majority of SV tracks
+		// 6 - N matched PVs of pT-weighted majority of jet tracks
+		TString pvEffLog;//log file
+		bool pvEffsFilled;//flag so only one SV/jet pair is used per event
+		//(guard against clones or subsets of SVs)
 };
 
 #endif
 
 #ifdef skimTuples_cxx
-skimTuples::skimTuples(int year, int part, TString dir) : fChain(0), year_(year), part_(part), backwards_(false), isMC_(false), flavour_(0)
+skimTuples::skimTuples(int year, int part, TString dir) : fChain(0), year_(year), part_(part), backwards_(false), isMC_(false), flavour_(0), pvsPaired(false), pvEffsFilled(false)
 {
 	outName=dir;
 	outName+="/";
@@ -1239,6 +1293,28 @@ skimTuples::skimTuples(int year, int part, TString dir) : fChain(0), year_(year)
 	outName+="/";
 	outName+=part;
 	outName+="/skimmed.root";
+
+	svTagLog=dir;
+	svTagLog+="/";
+	svTagLog+=year;
+	svTagLog+="/";
+	svTagLog+=part;
+	svTagLog+="/svTagCounts.log";
+
+	pvEffLog=dir;
+	pvEffLog+="/";
+	pvEffLog+=year;
+	pvEffLog+="/";
+	pvEffLog+=part;
+	pvEffLog+="/pvEffCounts.log";
+
+	histName=dir;
+	histName+="/";
+	histName+=year;
+	histName+="/";
+	histName+=part;
+	histName+="/svCats.root";
+	svCatHist_= new TH2D("svCats","",8,-0.5,7.5,10,-0.5,9.5);
 
 	if(part==-2) outName="testSkim.root";
 
@@ -1262,6 +1338,10 @@ skimTuples::skimTuples(int year, int part, TString dir) : fChain(0), year_(year)
 
 	tagCounts = new int[15];
 	for(int i=0; i<15; ++i) tagCounts[i]=0;
+	svTagCounts = new int[15];
+	for(int i=0; i<15; ++i) svTagCounts[i]=0;
+	nPVCount = new int[7];
+	for(int i=0; i<7; ++i) nPVCount[i]=0;
 
 	char str[256];
 	TChain *t = new TChain("data");
@@ -1275,10 +1355,27 @@ skimTuples::skimTuples(int year, int part, TString dir) : fChain(0), year_(year)
 		case 102:
 			tagType_ = JpsiTag;
 			break;
+		case 15://TODO test run
 		case 105:
 		case 106:
 		case 107:
 		case 108:
+			tagType_ = ZTag;
+			break;
+		case 116:
+		case 117:
+		case 118:
+			tagType_ = JetTag;
+			break;
+		case 126:
+		case 127:
+		case 128:
+			tagType_ = JpsiTag;
+			break;
+		case 135:
+		case 136:
+		case 137:
+		case 138:
 			tagType_ = ZTag;
 			break;
 		case 140:
@@ -1298,6 +1395,11 @@ skimTuples::skimTuples(int year, int part, TString dir) : fChain(0), year_(year)
 			isMC_=true;
 			tagType_ = TruthTag;
 			flavour_=5;
+			break;
+		case 160:
+			isMC_=true;
+			tagType_ = TruthNoMuTag;
+			flavour_=0;
 			break;
 		case 164:
 			isMC_=true;
@@ -1326,6 +1428,55 @@ skimTuples::skimTuples(int year, int part, TString dir) : fChain(0), year_(year)
 		case 254:
 			isMC_=true;
 			tagType_ = NoTag;
+			break;
+		case 305:
+		case 306:
+		case 307:
+		case 308:
+			tagType_ = ZTag;
+			break;
+		case 316:
+		case 317:
+		case 318:
+			tagType_ = JetTag;
+			break;
+		case 840:
+		case 841:
+		case 842:
+		case 843:
+		case 844:
+		case 940:
+		case 941:
+		case 942:
+		case 943:
+		case 944:
+		case 1040:
+		case 1041:
+		case 1042:
+		case 1043:
+		case 1044:
+			isMC_=true;
+			tagType_ = TruthTag;
+			flavour_=4;
+			break;
+		case 850:
+		case 851:
+		case 852:
+		case 853:
+		case 854:
+		case 950:
+		case 951:
+		case 952:
+		case 953:
+		case 954:
+		case 1050:
+		case 1051:
+		case 1052:
+		case 1053:
+		case 1054:
+			isMC_=true;
+			tagType_ = TruthTag;
+			flavour_=5;
 			break;
 		default:
 			std::cout << "Unknown dataset: tagging not configured" << std::endl;
@@ -1366,6 +1517,60 @@ skimTuples::skimTuples(int year, int part, TString dir) : fChain(0), year_(year)
 			minTruePt_=0.;
 			maxTruePt_=200000.;
 			break;
+		case 305:
+		case 306:
+		case 307:
+		case 308:
+		case 316:
+		case 317:
+		case 318:
+			backwards_=true;
+			break;
+		case 840:
+		case 850:
+		case 940:
+		case 950:
+		case 1040:
+		case 1050:
+		     	minTruePt_=5000.;
+		     	maxTruePt_=10000.;
+		     	break;
+		case 841:
+		case 851:
+		case 941:
+		case 951:
+		case 1041:
+		case 1051:
+		     	minTruePt_=10000.;
+		     	maxTruePt_=15000.;
+		     	break;
+		case 842:
+		case 852:
+		case 942:
+		case 952:
+		case 1042:
+		case 1052:
+		     	minTruePt_=15000.;
+		     	maxTruePt_=20000.;
+		     	break;
+		case 843:
+		case 853:
+		case 943:
+		case 953:
+		case 1043:
+		case 1053:
+		     	minTruePt_=20000.;
+		     	maxTruePt_=50000.;
+		     	break;
+		case 844:
+		case 854:
+		case 944:
+		case 954:
+		case 1044:
+		case 1054:
+			minTruePt_=50000.;
+			maxTruePt_=100000.;
+			break;
 	}
 	if(part==-2) {
 		t->Add("/tmp/dcraik/output.root");
@@ -1380,9 +1585,9 @@ skimTuples::skimTuples(int year, int part, TString dir) : fChain(0), year_(year)
 			lumi->Add(str);
 		}
 	} else {
-		boost::progress_display show_addfile_progress( 3000 );
+//TODO		boost::progress_display show_addfile_progress( 3000 );
 		for(int i=0; i<3000; ++i) {
-			++show_addfile_progress;
+//TODO			++show_addfile_progress;
 			sprintf(str,"%s/%d/%d/output.root",dir.Data(),year,i);
 			if(gSystem->AccessPathName(str)) continue;
 			t->Add(str);
@@ -2682,6 +2887,10 @@ void skimTuples::Init(TTree *tree)
 	tout->Branch("JetNChr",&JNQ);
 	tout->Branch("JetNNeu",&JNN);
 	tout->Branch("JetPTD",&JPTD);
+	tout->Branch("JetTrigPT",&JTRIGPT);
+	tout->Branch("JetTrig10",&JTRIG10);
+	tout->Branch("JetTrig17",&JTRIG17);
+	tout->Branch("JetTrig60",&JTRIG60);
 	tout->Branch("JetTRUEb",&JTRUEb);
 	tout->Branch("JetTRUEc",&JTRUEc);
 	tout->Branch("JetTRUED0",&JTRUED0);
@@ -2695,12 +2904,26 @@ void skimTuples::Init(TTree *tree)
 	tout->Branch("JetTRUEDPY",&JTRUEDPY);
 	tout->Branch("JetTRUEDPZ",&JTRUEDPZ);
 	tout->Branch("JetTRUEDE", &JTRUEDE);
+	tout->Branch("JetTRUEDPT",&JTRUEDPT);
 	tout->Branch("JetTRUEDDR",&JTRUEDDR);
 	tout->Branch("TagPx",&TPX);
 	tout->Branch("TagPy",&TPY);
 	tout->Branch("TagPz",&TPZ);
 	tout->Branch("TagE",&TE);
 	tout->Branch("TagPT",&TPT);
+	if(isMC_) {
+		tout->Branch("TagTruePx",&TTRUEPX);
+		tout->Branch("TagTruePy",&TTRUEPY);
+		tout->Branch("TagTruePz",&TTRUEPZ);
+		tout->Branch("TagTrueE",&TTRUEE);
+		tout->Branch("TagTruePT",&TTRUEPT);
+		tout->Branch("TagTrueEta",&TTRUEETA);
+		tout->Branch("TagTrueDR",&TTRUEDR);
+	}
+	tout->Branch("TagTrigPT",&TTRIGPT);
+	tout->Branch("TagTrig10",&TTRIG10);
+	tout->Branch("TagTrig17",&TTRIG17);
+	tout->Branch("TagTrig60",&TTRIG60);
 	tout->Branch("TagEta",&TETA);
 	tout->Branch("DeltaR",&DR);
 	tout->Branch("DeltaPhi",&DPHI);
@@ -2713,15 +2936,42 @@ void skimTuples::Init(TTree *tree)
 	tout->Branch("ZPT" ,&ZPT );
 	tout->Branch("ZE"  ,&ZE  );
 	tout->Branch("ZETA",&ZETA);
+	tout->Branch("ZY",&ZY);
 	tout->Branch("ZDR" ,&ZDR );
 	tout->Branch("MU0PX" ,&MU0PX );
 	tout->Branch("MU0PY" ,&MU0PY );
 	tout->Branch("MU0PZ" ,&MU0PZ );
 	tout->Branch("MU0PT" ,&MU0PT );
+	tout->Branch("MU0IP" ,&MU0IP );
+	tout->Branch("MU0IPCHI2" ,&MU0IPCHI2 );
+	tout->Branch("MU0FPT" ,&MU0FPT );
+	tout->Branch("MU0DR" ,&MU0DR );
 	tout->Branch("MU1PX" ,&MU1PX );
 	tout->Branch("MU1PY" ,&MU1PY );
 	tout->Branch("MU1PZ" ,&MU1PZ );
 	tout->Branch("MU1PT" ,&MU1PT );
+	tout->Branch("MU1IP" ,&MU1IP );
+	tout->Branch("MU1IPCHI2" ,&MU1IPCHI2 );
+	tout->Branch("MU1FPT" ,&MU1FPT );
+	tout->Branch("MU1DR" ,&MU1DR );
+
+	tout->Branch("ZTRUEM"  ,&ZTRUEM  );
+	tout->Branch("ZTRUEP"  ,&ZTRUEP  );
+	tout->Branch("ZTRUEPX" ,&ZTRUEPX );
+	tout->Branch("ZTRUEPY" ,&ZTRUEPY );
+	tout->Branch("ZTRUEPZ" ,&ZTRUEPZ );
+	tout->Branch("ZTRUEPT" ,&ZTRUEPT );
+	tout->Branch("ZTRUEE"  ,&ZTRUEE  );
+	tout->Branch("ZTRUEETA",&ZTRUEETA);
+	tout->Branch("ZTRUEDR" ,&ZTRUEDR );
+	tout->Branch("MU0TRUEPX" ,&MU0TRUEPX );
+	tout->Branch("MU0TRUEPY" ,&MU0TRUEPY );
+	tout->Branch("MU0TRUEPZ" ,&MU0TRUEPZ );
+	tout->Branch("MU0TRUEPT" ,&MU0TRUEPT );
+	tout->Branch("MU1TRUEPX" ,&MU1TRUEPX );
+	tout->Branch("MU1TRUEPY" ,&MU1TRUEPY );
+	tout->Branch("MU1TRUEPZ" ,&MU1TRUEPZ );
+	tout->Branch("MU1TRUEPT" ,&MU1TRUEPT );
 
 	 SVM           = new std::vector<double>();
 	 SVMCOR        = new std::vector<double>();
@@ -2732,12 +2982,14 @@ void skimTuples::Init(TTree *tree)
 	 SVDRT         = new std::vector<double>();
 	 SVN           = new std::vector<double>();
 	 SVNTRUE       = new std::vector<double>();
+	 SVNLINKED     = new std::vector<double>();
 	 SVNJ          = new std::vector<double>();
 	 SVNT          = new std::vector<double>();
 	 SVQ           = new std::vector<double>();
 	 SVPERP        = new std::vector<double>();
 	 SVETA         = new std::vector<double>();
 	 SVTZ          = new std::vector<double>();
+	 SVVXCHI2      = new std::vector<double>();
 	 SVIPCHI2      = new std::vector<double>();
 	 SVMINIPCHI2   = new std::vector<double>();
 	 SVPX          = new std::vector<double>();
@@ -2753,6 +3005,10 @@ void skimTuples::Init(TTree *tree)
 	 SVISDP        = new std::vector<double>();
 	 SVD0M         = new std::vector<double>();
 	 SVDPM         = new std::vector<double>();
+	 SVTRK0IDX     = new std::vector<double>();
+	 SVTRK1IDX     = new std::vector<double>();
+	 SVTRK2IDX     = new std::vector<double>();
+	 SVTRK3IDX     = new std::vector<double>();
 	 SVTRUEIDX     = new std::vector<double>();
 	 SVTRUETRK0IDX = new std::vector<double>();
 	 SVTRUETRK1IDX = new std::vector<double>();
@@ -2819,6 +3075,10 @@ void skimTuples::Init(TTree *tree)
 	 TSVDPM         = new std::vector<double>();
 	 TSVTRUEIDX     = new std::vector<double>();
 
+	 TRKPT          = new std::vector<double>();
+	 TRKIPCHI2      = new std::vector<double>();
+	 TRKINJET       = new std::vector<double>();
+
 	tout->Branch("SVX",&SVX);
 	tout->Branch("SVY",&SVY);
 	tout->Branch("SVZ",&SVZ);
@@ -2837,11 +3097,13 @@ void skimTuples::Init(TTree *tree)
 	tout->Branch("SVDRT",&SVDRT);
 	tout->Branch("SVN",&SVN);
 	tout->Branch("SVNTRUE",&SVNTRUE);
+	tout->Branch("SVNLINKED",&SVNLINKED);
 	tout->Branch("SVNJ",&SVNJ);
 	tout->Branch("SVNT",&SVNT);
 	tout->Branch("SVQ",&SVQ);
 	tout->Branch("SVSumIPChi2",&SVSUMIPCHI2);
 	tout->Branch("SVTZ",&SVTZ);
+	tout->Branch("SVVXCHI2",&SVVXCHI2);
 	tout->Branch("SVIPCHI2",&SVIPCHI2);
 	tout->Branch("SVMINIPCHI2",&SVMINIPCHI2);
 	tout->Branch("SVGhostMax",&SVMAXGHOST);
@@ -2849,6 +3111,10 @@ void skimTuples::Init(TTree *tree)
 	tout->Branch("SVISDP",&SVISDP);
 	tout->Branch("SVD0M",&SVD0M);
 	tout->Branch("SVDPM",&SVDPM);
+	tout->Branch("SVTRK0IDX",&SVTRK0IDX);
+	tout->Branch("SVTRK1IDX",&SVTRK1IDX);
+	tout->Branch("SVTRK2IDX",&SVTRK2IDX);
+	tout->Branch("SVTRK3IDX",&SVTRK3IDX);
 	tout->Branch("SVTRUEIDX",&SVTRUEIDX);
 	tout->Branch("SVTRUETRK0IDX",&SVTRUETRK0IDX);
 	tout->Branch("SVTRUETRK1IDX",&SVTRUETRK1IDX);
@@ -2915,7 +3181,13 @@ void skimTuples::Init(TTree *tree)
 	tout->Branch("TSVDPM",&TSVDPM);
 	tout->Branch("TSVTRUEIDX",&TSVTRUEIDX);
 
+	tout->Branch("TRKPT",&TRKPT);
+	tout->Branch("TRKIPCHI2",&TRKIPCHI2);
+	tout->Branch("TRKINJET",&TRKINJET);
+
 	tout->Branch("NSV",&NSV);
+	tout->Branch("NSVTRK",&NSVTRK);
+	tout->Branch("NSVTRUETRK",&NSVTRUETRK);
 	tout->Branch("NTSV",&NTSV);
 	tout->Branch("NTRK",&NTRK);
 	tout->Branch("NNEU",&NNEU);
@@ -3615,6 +3887,11 @@ void skimTuples::clearOutputs() {
 	JNQ = 0.;
 	JNN = 0.;
 	JPTD = 0.;
+	JPV = 0.;
+	JTRIGPT = 0.;
+	JTRIG10 = 0.;
+	JTRIG17 = 0.;
+	JTRIG60 = 0.;
 	JTRUEb = 0.;
 	JTRUEc = 0.;
 	JTRUED0 = 0.;
@@ -3628,6 +3905,7 @@ void skimTuples::clearOutputs() {
 	JTRUEDPY = 0.;
 	JTRUEDPZ = 0.;
 	JTRUEDE  = 0.;
+	JTRUEDPT = 0.;
 	JTRUEDDR = 10.;
 	TPX = 0.;
 	TPY = 0.;
@@ -3635,6 +3913,17 @@ void skimTuples::clearOutputs() {
 	TE = 0.;
 	TPT = 0.;
 	TETA = 0.;
+	TTRUEPX = 0.;
+	TTRUEPY = 0.;
+	TTRUEPZ = 0.;
+	TTRUEE = 0.;
+	TTRUEPT = 0.;
+	TTRUEETA = 0.;
+	TTRUEDR = 0.;
+	TTRIGPT = 0.;
+	TTRIG10 = 0.;
+	TTRIG17 = 0.;
+	TTRIG60 = 0.;
 	DR = 0.;
 	DPHI = 0.;
 	ZM  =0.;
@@ -3645,15 +3934,41 @@ void skimTuples::clearOutputs() {
 	ZPT =0.;
 	ZE  =0.;
 	ZETA=0.;
+	ZY=0.;
 	ZDR =0.;
 	MU0PX =0.;
 	MU0PY =0.;
 	MU0PZ =0.;
 	MU0PT =0.;
+	MU0IP =0.;
+	MU0IPCHI2 =0.;
+	MU0FPT =0.;
+	MU0DR =0.;
 	MU1PX =0.;
 	MU1PY =0.;
 	MU1PZ =0.;
 	MU1PT =0.;
+	MU1IP =0.;
+	MU1IPCHI2 =0.;
+	MU1FPT =0.;
+	MU1DR =0.;
+	ZTRUEM  =0.;
+	ZTRUEP  =0.;
+	ZTRUEPX =0.;
+	ZTRUEPY =0.;
+	ZTRUEPZ =0.;
+	ZTRUEPT =0.;
+	ZTRUEE  =0.;
+	ZTRUEETA=0.;
+	ZTRUEDR =0.;
+	MU0TRUEPX =0.;
+	MU0TRUEPY =0.;
+	MU0TRUEPZ =0.;
+	MU0TRUEPT =0.;
+	MU1TRUEPX =0.;
+	MU1TRUEPY =0.;
+	MU1TRUEPZ =0.;
+	MU1TRUEPT =0.;
 	clearOutputVectors();
 }
 void skimTuples::clearOutputVectors() {
@@ -3666,12 +3981,14 @@ void skimTuples::clearOutputVectors() {
 	SVDRT      ->clear();
 	SVN        ->clear();
 	SVNTRUE    ->clear();
+	SVNLINKED  ->clear();
 	SVNJ       ->clear();
 	SVNT       ->clear();
 	SVQ        ->clear();
 	SVPERP     ->clear();
 	SVETA      ->clear();
 	SVTZ       ->clear();
+	SVVXCHI2   ->clear();
 	SVIPCHI2   ->clear();
 	SVMINIPCHI2->clear();
 	SVPX       ->clear();
@@ -3687,6 +4004,10 @@ void skimTuples::clearOutputVectors() {
 	SVISDP     ->clear();
 	SVD0M      ->clear();
 	SVDPM      ->clear();
+	SVTRK0IDX  ->clear();
+	SVTRK1IDX  ->clear();
+	SVTRK2IDX  ->clear();
+	SVTRK3IDX  ->clear();
 	SVTRUEIDX  ->clear();
 	SVTRUETRK0IDX  ->clear();
 	SVTRUETRK1IDX  ->clear();
@@ -3752,6 +4073,10 @@ void skimTuples::clearOutputVectors() {
 	TSVD0M      ->clear();
 	TSVDPM      ->clear();
 	TSVTRUEIDX  ->clear();
+
+	TRKPT      ->clear();
+	TRKIPCHI2  ->clear();
+	TRKINJET   ->clear();
 
 	TRUEBID   ->clear();
 	TRUEBPX   ->clear();

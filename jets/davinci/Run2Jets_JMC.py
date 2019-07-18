@@ -136,6 +136,8 @@ while evtmax < 0 or evtnum < evtmax:
     except: continue
     try: ntuple.ntuple['evt_trk_n'][0] = len(tes['Phys/StdAllNoPIDsPions/Particles'])
     except: continue
+    try: ntuple.addEventInfo();
+    except: continue
 
     # Fill generator level info.
     fill = False;

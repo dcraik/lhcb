@@ -7,20 +7,21 @@ polarity = str(sys.argv[1]) #MagDown, MagUp
 year = str(sys.argv[2]) #2016, 2017, 2018
 note = str(sys.argv[3])
 
-script=str('~/git/lhcb/jets/davinci/Run2Jets_zjetSS.py')
+script=str('Run2Jets_zjetSS.py')
 if year=='2015':
-    script=str('~/git/lhcb/jets/davinci/Run2Jets_zjet15SS.py')
+    script=str('Run2Jets_zjet15SS.py')
 if year=='2017':
-    script=str('~/git/lhcb/jets/davinci/Run2Jets_zjet17SS.py')
+    script=str('Run2Jets_zjet17SS.py')
 if year=='2018':
-    script=str('~/git/lhcb/jets/davinci/Run2Jets_zjet18SS.py')
+    script=str('Run2Jets_zjet18SS.py')
 
 job_name = "RIIJ_Zjet_SS" +str(note) + str(polarity) + str(year)
 print job_name
 print script
 
 #DV = GaudiExec(directory="~/DaVinciDev_v42r6p1")
-DV = GaudiExec(directory="~/DaVinciDev_v44r9", platform="x86_64-slc6-gcc62-opt")
+#DV = GaudiExec(directory="~/DaVinciDev_v44r9", platform="x86_64-slc6-gcc62-opt")
+DV = GaudiExec(directory="/workspace/DaVinciDev_v44r9", platform="x86_64-slc6-gcc62-opt")
 DV.options = [script]
 DV.useGaudiRun = False
 
@@ -74,8 +75,18 @@ else:
     j.backend        = Dirac()
     j.outputfiles    = [DiracFile("*.root")]
 
-if note in ["test","testgrid"]:
-    j.inputdata = LHCbDataset(['LFN:/lhcb/LHCb/Collision16/EW.DST/00061346/0000/00061346_00007712_1.ew.dst'])
+if note in ["testgrid"]:
+    j.inputdata = LHCbDataset(['LFN:/lhcb/LHCb/Collision16/EW.DST/00070440/0000/00070440_00000660_1.ew.dst',
+                               'LFN:/lhcb/LHCb/Collision16/EW.DST/00069527/0000/00069527_00000264_1.ew.dst',
+                               'LFN:/lhcb/LHCb/Collision16/EW.DST/00069527/0000/00069527_00000058_1.ew.dst',
+                               'LFN:/lhcb/LHCb/Collision16/EW.DST/00069527/0000/00069527_00000481_1.ew.dst',
+                               'LFN:/lhcb/LHCb/Collision16/EW.DST/00069527/0000/00069527_00000308_1.ew.dst',
+                               'LFN:/lhcb/LHCb/Collision16/EW.DST/00069527/0000/00069527_00000474_1.ew.dst',
+                               'LFN:/lhcb/LHCb/Collision16/EW.DST/00069527/0000/00069527_00000564_1.ew.dst',
+                               'LFN:/lhcb/LHCb/Collision16/EW.DST/00069527/0000/00069527_00000270_1.ew.dst'
+                               ])
+if note in ["test"]:
+    j.inputdata = LHCbDataset(['PFN:/eos/lhcb/grid/prod/lhcb/LHCb/Collision16/EW.DST/00069603/0000/00069603_00005740_1.ew.dst'])
 #else:
 #    j.application.readInputData(path)
 

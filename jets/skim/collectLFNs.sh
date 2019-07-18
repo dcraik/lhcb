@@ -15,6 +15,12 @@ cat ../davinci/lfns/lfns{19,20}.log > lfns/lfns106.log
 cat ../davinci/lfns/lfns{21,22}.log > lfns/lfns107.log
 cat ../davinci/lfns/lfns{23,24}.log > lfns/lfns108.log
 
+#(mumu)SS+jet data
+cat ../davinci/lfns/lfnsX{5,6}.log  > lfns/lfns135.log
+cat ../davinci/lfns/lfnsX{7,8}.log  > lfns/lfns136.log
+cat ../davinci/lfns/lfnsX{9,10}.log > lfns/lfns137.log
+cat ../davinci/lfns/lfnsX{11,12}.log> lfns/lfns138.log
+
 #di-charm MC
 cat ../davinci/lfns/lfns{564,568}.log > lfns/lfns140.log
 cat ../davinci/lfns/lfns{565,569}.log > lfns/lfns141.log

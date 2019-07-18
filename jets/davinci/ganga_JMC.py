@@ -14,13 +14,14 @@ print job_name
 print script
 
 #DV = GaudiExec(directory="~/DaVinciDev_v42r6p1")
-DV = GaudiExec(directory="~/DaVinciDev_v44r9")
+DV = GaudiExec(directory="/workspace/DaVinciDev_v44r9", platform="x86_64-slc6-gcc62-opt")
 DV.options = [script]
 DV.useGaudiRun = False
 
 #BK_locations = ['/MC/Dev/Beam6500GeV-RunII-'+polarity+'-Nu1.6-25ns-Pythia8/Sim08f/Reco15DEV/'+mode+'/LDST']
 #BK_locations = ['/MC/2015/Beam6500GeV-2015-'+polarity+'-Nu1.6-25ns-Pythia8/Sim09c/Trig0x411400a2/Reco15a/Turbo02/Stripping24r1NoPrescalingFlagged/'+mode+'/ALLSTREAMS.DST']
-BK_locations = ['/MC/2016/Beam6500GeV-2016-'+polarity+'-Nu1.6-25ns-Pythia8/Sim09d/Trig0x6139160F/Reco16/Turbo03/Stripping28r1NoPrescalingFlagged/'+mode+'/ALLSTREAMS.DST']
+BK_locations = ['/MC/2016/Beam6500GeV-2016-'+polarity+'-Nu1.6-25ns-Pythia8/Sim09g/Trig0x6139160F/Reco16/Turbo03/Stripping28r1NoPrescalingFlagged/'+mode+'/ALLSTREAMS.DST']
+
 if mode in ["49000041","49000051"]:
     BK_locations = ['/MC/2016/Beam6500GeV-2016-'+polarity+'-Nu1.6-25ns-Pythia8/Sim09c/Trig0x6138160F/Reco16/Turbo03/Stripping28r1NoPrescalingFlagged/'+mode+'/ALLSTREAMS.DST']
 if mode=="30000000":
