@@ -39,6 +39,69 @@ void MCJets::setD0PtRange(double minpt, double maxpt) {
 	_d0ptmax = maxpt;
 }
 
+double MCJets::getPtCorrFactor(jetType type, double ptMin, double ptMax) {
+	TFile* f(0);
+	TTree* t(0);
+	TString cut1;
+	TString cut2;
+	double corr(1.);
+
+	cut1 = "JetPT>"; cut1+=ptMin; cut1+=" && JetPT<"; cut1+=ptMax;
+	cut2 = "JetPT>"; cut2+=ptMin; cut2+=" && JetPT<"; cut2+=ptMax;
+
+	switch(type) {
+		case jetAll0:
+			std::cout << "getting pT correction factor for all jets in " << ptMin << " to " << ptMax << " bin..." << std::endl;
+			return 1.;//no correction needed
+		case jetAll4:
+			std::cout << "getting pT correction factor for all c-jets in " << ptMin << " to " << ptMax << " bin..." << std::endl;
+			f = TFile::Open(_charmInput);
+			cut1+=" && JetTRUEc && !JetTRUEb && TRUEDID[0] && TRUEDPT>5000.";
+			cut2+=" && JetTRUEc && !JetTRUEb && TRUEDID[0]";
+			break;
+		case jetAll5:
+			std::cout << "getting pT correction factor for all b-jets in " << ptMin << " to " << ptMax << " bin..." << std::endl;
+			f = TFile::Open(_beautyInput);
+			cut1+=" && JetTRUEb && !JetTRUEc && TRUEBID[0] && TRUEBPT>5000.";
+			cut2+=" && JetTRUEb && !JetTRUEc && TRUEBID[0]";
+			break;
+		case jetRecoD04:
+			std::cout << "getting pT correction factor for c->D0 in " << ptMin << " to " << ptMax << " bin..." << std::endl;
+			return 1.;//no correction needed
+		case jetRecoSV4:
+			std::cout << "getting pT correction factor for c->SV in " << ptMin << " to " << ptMax << " bin..." << std::endl;
+			f = TFile::Open(_charmInput);
+			cut1+=" && JetTRUEc && !JetTRUEb && TRUEDID[0] && TRUEDPT>5000. && SVM[0]";
+			cut2+=" && JetTRUEc && !JetTRUEb && TRUEDID[0] && SVM[0]";
+			break;
+		case jetRecoD05:
+			std::cout << "getting pT correction factor for b->D0 in " << ptMin << " to " << ptMax << " bin..." << std::endl;
+			f = TFile::Open(_beautyInput);
+			//cut1+=" && JetTRUEb && !JetTRUEc && TRUEDID[0] && TRUEBID[0] && TRUEDTRUEB>-1 && TRUEBPT>5000.";
+			//cut2+=" && JetTRUEb && !JetTRUEc && TRUEDID[0] && TRUEBID[0] && TRUEDTRUEB>-1 && TRUEDPT>5000.";
+			cut1+=" && JetTRUEb && !JetTRUEc && TMath::Abs(TRUEDID)==421 && TRUEDTRK0IDX!=-1 && TRUEDTRK2IDX==-1 && TRUEDTRUEB!=-1 && TRUEBPT[TRUEDTRUEB]>5.e3";
+			cut2+=" && JetTRUEb && !JetTRUEc && TMath::Abs(TRUEDID)==421 && TRUEDTRK0IDX!=-1 && TRUEDTRK2IDX==-1 && TRUEDTRUEB!=-1 && TRUEDPT>5.e3";
+			break;
+		case jetRecoSV5:
+			std::cout << "getting pT correction factor for b->SV in " << ptMin << " to " << ptMax << " bin..." << std::endl;
+			f = TFile::Open(_beautyInput);
+			cut1+=" && JetTRUEb && !JetTRUEc && TRUEBID[0] && TRUEBPT>5000. && SVM[0]";
+			cut2+=" && JetTRUEb && !JetTRUEc && TRUEBID[0] && SVM[0]";
+			break;
+		default:
+			return 1.;
+	}
+
+	if(!f) return 1.;
+	t = dynamic_cast<TTree*>(f->Get("T"));
+	if(!t) return 1.;
+
+	corr = t->GetEntries(cut1)/static_cast<double>(t->GetEntries(cut2));
+	std::cout << "Correction factor: " << corr << std::endl;
+	f->Close();
+	return corr;
+}
+
 bool MCJets::weightMC(jetType type, TH2D* effHist) {
 	if(!_inputsSet) {
 		std::cout << "ERROR in MCJets::weightMC: input files not set yet" << std::endl;

@@ -32,6 +32,8 @@ class MCJets {
 		void setD0PtRange(double minpt, double maxpt);
 		void setYBins(TH1D* ybins) { _ybins = ybins; }
 
+		double getPtCorrFactor(jetType type, double ptMin, double ptMax);
+
 		bool weightMC(jetType type, TH2D* effHist=0);
 
 		TH1D* unfold(TH1D* input, jetType type, uint ybin=0);
