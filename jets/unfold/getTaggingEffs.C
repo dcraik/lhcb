@@ -55,55 +55,6 @@ TString dataHistFile = "svFitHistsD.root";
 bool dataIsMC(false);
 bool dataIsResampledMC(false);
 
-double getPtCorrFactor(MCJets::jetType type, double ptMin, double ptMax) {
-	TFile* f(0);
-	TTree* t(0);
-	TString cut1;
-	TString cut2;
-	double corr(1.);
-
-	cut1 = "JetPT>"; cut1+=ptMin; cut1+=" && JetPT<"; cut1+=ptMax;
-	cut2 = "JetPT>"; cut2+=ptMin; cut2+=" && JetPT<"; cut2+=ptMax;
-
-	switch(type) {
-		case MCJets::jetRecoD04:
-			std::cout << "getting pT correction factor for c->D0 in " << ptMin << " to " << ptMax << " bin..." << std::endl;
-			return corr;//no correction needed
-		case MCJets::jetRecoSV4:
-			std::cout << "getting pT correction factor for c->SV in " << ptMin << " to " << ptMax << " bin..." << std::endl;
-			f = TFile::Open(charmSimFile);
-			cut1+=" && JetTRUEc && !JetTRUEb && TRUEDID[0] && TRUEDPT>5000. && SVM[0]";
-			cut2+=" && JetTRUEc && !JetTRUEb && TRUEDID[0] && SVM[0]";
-			break;
-		case MCJets::jetRecoD05:
-			std::cout << "getting pT correction factor for b->D0 in " << ptMin << " to " << ptMax << " bin..." << std::endl;
-			f = TFile::Open(beautySimFile);
-			//cut1+=" && JetTRUEb && !JetTRUEc && TRUEDID[0] && TRUEBID[0] && TRUEDTRUEB>-1 && TRUEBPT>5000.";
-			//cut2+=" && JetTRUEb && !JetTRUEc && TRUEDID[0] && TRUEBID[0] && TRUEDTRUEB>-1 && TRUEDPT>5000.";
-			cut1+=" && JetTRUEb && !JetTRUEc && TMath::Abs(TRUEDID)==421 && TRUEDTRK0IDX!=-1 && TRUEDTRK2IDX==-1 && TRUEDTRUEB!=-1 && TRUEBPT[TRUEDTRUEB]>5.e3";
-			cut2+=" && JetTRUEb && !JetTRUEc && TMath::Abs(TRUEDID)==421 && TRUEDTRK0IDX!=-1 && TRUEDTRK2IDX==-1 && TRUEDTRUEB!=-1 && TRUEDPT>5.e3";
-			break;
-		case MCJets::jetRecoSV5:
-			std::cout << "getting pT correction factor for b->SV in " << ptMin << " to " << ptMax << " bin..." << std::endl;
-			f = TFile::Open(beautySimFile);
-			cut1+=" && JetTRUEb && !JetTRUEc && TRUEBID[0] && TRUEBPT>5000. && SVM[0]";
-			cut2+=" && JetTRUEb && !JetTRUEc && TRUEBID[0] && SVM[0]";
-			break;
-		default:
-			//TODO not covered
-			return 1.;
-	}
-
-	if(!f) return 1.;
-	t = dynamic_cast<TTree*>(f->Get("T"));
-	if(!t) return 1.;
-
-	corr = t->GetEntries(cut1)/static_cast<double>(t->GetEntries(cut2));
-	std::cout << "Correction factor: " << corr << std::endl;
-	f->Close();
-	return corr;
-}
-
 void makeTrainTestSamples(int sample) {
 	std::cout << "INFO : making samples for MC study " << sample << std::endl;
 	TRandom3 rand(1000+sample);
@@ -349,12 +300,12 @@ int main(int argc, char** argv) {
 	double yield(0.), error(0.), corr(1.);
 	for(int i=1; i<=recoD04.GetNbinsX(); ++i) {
 		if(d0fit.fitD(4,yield,error,i)) {
-			corr = getPtCorrFactor(MCJets::jetRecoD04,recoD04.GetBinLowEdge(i),recoD04.GetBinLowEdge(i+1));
+			corr = wmc.getPtCorrFactor(MCJets::jetRecoD04,recoD04.GetBinLowEdge(i),recoD04.GetBinLowEdge(i+1));
 			recoD04.SetBinContent(i,yield*corr);
 			recoD04.SetBinError(  i,error*corr);
 		}
 		if(d0fit.fitD(5,yield,error,i)) {
-			corr = getPtCorrFactor(MCJets::jetRecoD05,recoD05.GetBinLowEdge(i),recoD05.GetBinLowEdge(i+1));
+			corr = wmc.getPtCorrFactor(MCJets::jetRecoD05,recoD05.GetBinLowEdge(i),recoD05.GetBinLowEdge(i+1));
 			recoD05.SetBinContent(i,yield*corr);
 			recoD05.SetBinError(  i,error*corr);
 		}
@@ -366,8 +317,8 @@ int main(int argc, char** argv) {
 	for(int i=1; i<=recoSV4.GetNbinsX(); ++i) {
 		double nB(0.), eB(0.), nC(0.), eC(0.), nQ(0.), eQ(0.);
 		if(!svfit.fitSV(nB,eB,nC,eC,nQ,eQ,i)) continue;
-		double corrC = getPtCorrFactor(MCJets::jetRecoSV4,recoSV4.GetBinLowEdge(i),recoSV4.GetBinLowEdge(i+1));
-		double corrB = getPtCorrFactor(MCJets::jetRecoSV5,recoSV5.GetBinLowEdge(i),recoSV5.GetBinLowEdge(i+1));
+		double corrC = wmc.getPtCorrFactor(MCJets::jetRecoSV4,recoSV4.GetBinLowEdge(i),recoSV4.GetBinLowEdge(i+1));
+		double corrB = wmc.getPtCorrFactor(MCJets::jetRecoSV5,recoSV5.GetBinLowEdge(i),recoSV5.GetBinLowEdge(i+1));
 		recoSV4.SetBinContent(i,nC*corrC);
 		recoSV4.SetBinError(  i,eC*corrC);
 		recoSV5.SetBinContent(i,nB*corrB);

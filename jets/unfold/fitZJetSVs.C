@@ -17,7 +17,7 @@
 #include "MCJets.h"
 
 //globals to save passing these around
-TString savedir("output-fitZj-statOnly-24bins-newFit-new-new-fixSVSel-fixJetPVMatch2");
+TString savedir("output-fitZj-statOnly-24bins-newFit-new-new-fixSVSel-fixJetPVMatch2-ptCorr");
 
 //the following globals give the locations of input tuples
 //these may be overridden in certain cases, e.g. if doing an MC closure test
@@ -161,8 +161,9 @@ int main() {
 			hE.SetBinContent(i,j,hE2.GetBinContent(i,1));
 			hE.SetBinError  (i,j,hE2.GetBinError  (i,1));
 			if(svfit.fitSV(nB,eB,nC,eC,nQ,eQ,i,j)) {
-				hC.SetBinContent(i,j,nC);
-				hC.SetBinError(  i,j,eC);
+				double corr = wmc.getPtCorrFactor(MCJets::jetRecoSV4,ptBounds[i-1],ptBounds[i]);
+				hC.SetBinContent(i,j,corr*nC);
+				hC.SetBinError(  i,j,corr*eC);
 			}
 			//if(sssvfit.fitSV(nB,eB,nC,eC,nQ,eQ,i,j)) {
 			//	hCSS.SetBinContent(i,j,nC);
