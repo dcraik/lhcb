@@ -1,25 +1,29 @@
 import sys
 
 if len(sys.argv)<4:
-    print "Usage: ", sys.argv[0], "<MagUp|MagDown> <2016> <note>"
+    print "Usage: ", sys.argv[0], "<MagUp|MagDown> <2015|2016> <note>"
     sys.exit()
 polarity = str(sys.argv[1]) #MagDown, MagUp
 year = str(sys.argv[2]) #2015, 2016
 note = str(sys.argv[3])
 
-script=str('DV_phi.py')
+script=str('DV_pp16.py')
+if year=='2015':
+    script = str('DV_pp15.py')
 
-job_name = "CEP phi new " +str(note) + str(polarity) + str(year)
+job_name = "CEP phi comb " +str(note) + str(polarity) + str(year)
 print job_name
 print script
 
 DV = GaudiExec(directory="/workspace/DaVinciDev_v44r10p2")
 DV.options = [script]
 
-if year!='2016':##TODO only set up for 2016 data so far
+if year not in ['2015','2016']:
     sys.exit()
 
 BK_locations = ['/LHCb/Collision16/Beam6500GeV-VeloClosed-'+polarity+'/Real Data/Reco16/Stripping28r1/90000000/EW.DST']
+if year=='2015':
+    BK_locations = ['/LHCb/Collision15/Beam2510GeV-VeloClosed-'+polarity+'/Real Data/Reco15a/Stripping22b/90000000/ALL.DST']
 data = LHCbDataset()
 bk = BKQuery()
 

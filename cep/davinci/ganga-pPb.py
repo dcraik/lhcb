@@ -7,16 +7,16 @@ polarity = str(sys.argv[1]) #MagDown, MagUp
 year = str(sys.argv[2]) #2015, 2016
 note = str(sys.argv[3])
 
-script=str('DV_pPb2phi.py')
+script=str('DV_pPb16.py')
 
-job_name = "CEP phi new " +str(note) + str(polarity) + str(year)
+job_name = "CEP phi comb " +str(note) + str(polarity) + str(year)
 print job_name
 print script
 
 DV = GaudiExec(directory="/workspace/DaVinciDev_v44r10p2")
 DV.options = [script]
 
-if year not in ['2016-pPb','2016-Pbp']:##TODO only set up for 2016 data so far
+if year not in ['2016-pPb','2016-Pbp']:
     sys.exit()
 
 BK_locations = []
