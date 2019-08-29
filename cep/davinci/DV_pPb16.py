@@ -1,6 +1,6 @@
-## Test data
-from GaudiConf import IOHelper
-IOHelper('ROOT').inputFiles(['/data/cep-phi/00076142_00000082_1.ift.dst'], clear = True)
+### Test data
+#from GaudiConf import IOHelper
+#IOHelper('ROOT').inputFiles(['/data/cep-phi/00076142_00000082_1.ift.dst'], clear = True)
 
 ## import DaVinci
 from Configurables import DaVinci
@@ -26,8 +26,8 @@ dv = DaVinci (
     #CondDBtag       = 'cond-20181204-1',
     #DDDBtag         = 'dddb-20190206-3',
     #DQFLAGStag      = 'dq-20170829',
-    #EvtMax          = -1 ##TODO
-    EvtMax          = 1000 ##TODO
+    EvtMax          = -1 ##TODO
+    #EvtMax          = 1000 ##TODO
     )
 db = CondDB( LatestGlobalTagByDataType = '2016' )
 db.LocalTags["DQFLAGS"] = [ "herschel-20161018" ]
