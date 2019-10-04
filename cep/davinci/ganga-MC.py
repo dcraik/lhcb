@@ -54,7 +54,7 @@ elif note=="testgrid":
     j.backend        = Dirac()
     j.outputfiles     = [LocalFile("*.root")]
 else:
-    j.splitter       = SplitByFiles(filesPerJob = 25, maxFiles = -1, ignoremissing=True)
+    j.splitter       = SplitByFiles(filesPerJob = 5, maxFiles = -1, ignoremissing=True)
     j.backend        = Dirac()
     j.outputfiles    = [DiracFile("*.root")]
 

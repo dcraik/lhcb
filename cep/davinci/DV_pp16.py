@@ -219,6 +219,7 @@ for tup in tuples:
     #            , "TupleToolMuonPid"
                 , "TupleToolProtoPData"
     #            , "TupleToolMCBackgroundInfo"
+                , "TupleToolL0Data"
                 ]
     #
     #tool=tupalg.addTupleTool('TupleToolMCTruth')
@@ -233,12 +234,25 @@ for tup in tuples:
     #
     #tool.addTupleTool(LoKi_MOTHER)
 
+    from Configurables import LoKi__Hybrid__TupleTool
+    tupalg.addTool( LoKi__Hybrid__TupleTool, name = "LoKi_All" )
+    tupalg.ToolList += [ "LoKi::Hybrid::TupleTool/LoKi_All" ]
+
+    tupalg.LoKi_All.Preambulo += ['from LoKiTracks.decorators import *']
+    tupalg.LoKi_All.Variables = {
+        "PHI" : "PHI",
+        "ETA" : "ETA",
+        "Y" : "Y",
+        "PERR2": "PERR2",
+        "TRACK_nTTHits" : "TRFUN(TrIDC('isTT'))"
+    }
+
     from Configurables import TupleToolTISTOS
     tool = tupalg.addTupleTool(TupleToolTISTOS)
     tool.Verbose=True
     tool.TriggerList = [ "L0DiHadron,lowMultDecision",
                          "L0HRCDiHadron,lowMultDecision",
-                         "Hlt1LowMultPassThroughDecision"
+                         "Hlt1LowMultPassThroughDecision",
                          "Hlt1LowMultDecision",
                          "Hlt1LowMultHerschelDecision",
                          "Hlt1LowMultVeloCut_HadronsDecision",

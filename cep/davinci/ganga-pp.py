@@ -24,6 +24,10 @@ if year not in ['2015','2016']:
 BK_locations = ['/LHCb/Collision16/Beam6500GeV-VeloClosed-'+polarity+'/Real Data/Reco16/Stripping28r1/90000000/EW.DST']
 if year=='2015':
     BK_locations = ['/LHCb/Collision15/Beam2510GeV-VeloClosed-'+polarity+'/Real Data/Reco15a/Stripping22b/90000000/ALL.DST']
+
+if note in ["validate"]:
+    BK_locations = ['/validation/Collision16/Beam6500GeV-VeloClosed-MagUp/Real Data/Reco16//Stripping28r2/90000000/EW.DST']
+
 data = LHCbDataset()
 bk = BKQuery()
 

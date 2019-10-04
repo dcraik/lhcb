@@ -28,15 +28,15 @@ kaons = SimpleSelection (
     [ loosekaons ]    ,
     DecayDescriptor = "[K+]cc",
     Code = (#"(PIDK - PIDpi > 5) & "
-            "(PT>50*MeV)"
-            "& (TRGHOSTPROB<0.3)")
+            #"(PT>50*MeV)"
+            "(TRGHOSTPROB<0.3)")
             #"& (MIPCHI2DV(PRIMARY) > 4)")
     )
 
 dcDiK = { }
-dcDiK['K+'] = "(PT > 50.0) & (P > 500.0) & (TRGHOSTPROB < 0.3)"
-combcutsDiK = "(AMAXDOCA('') < 0.5) & (in_range( 0, AM, 6000 ))"
-parentcutsDiK = "(VFASPF(VCHI2PDOF) < 10)"
+dcDiK['K+'] = "ALL" #(PT > 50.0) & (P > 500.0) & (TRGHOSTPROB < 0.3)"
+combcutsDiK = "(in_range( 0, AM, 6000 ))" #(AMAXDOCA('') < 0.5) & 
+parentcutsDiK = "ALL" #(VFASPF(VCHI2PDOF) < 10)"
 
 phis = SimpleSelection (
     'phis',
