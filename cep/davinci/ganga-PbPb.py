@@ -1,30 +1,21 @@
 import sys
 
-if len(sys.argv)<3:
-    print("Usage: ", sys.argv[0], "<pPb|Pbp> <note>")
+if len(sys.argv)<2:
+    print("Usage: ", sys.argv[0], "<note>")
     sys.exit()
-dset = str(sys.argv[1]) #pPb Pbp
-note = str(sys.argv[2])
+note = str(sys.argv[1])
 
-#script=str('DV_pPb16.py')
-script=str('DV_pPb_new.py')
+script=str('DV_PbPb_new.py')
 
-job_name = "CEP phi new " + str(dset) + " " + str(note)
+job_name = "CEP phi new PbPb " + str(note)
 print(job_name)
 print(script)
 
 DV = GaudiExec(directory="/workspace/DaVinciDev_v44r10p2")
 DV.options = [script]
 
-if dset not in ['pPb','Pbp']:
-    print("bad dataset", dset)
-    sys.exit()
-
 BK_locations = []
-if dset=='Pbp':
-    BK_locations += ['/LHCb/Ionproton16/Beam6500GeV-VeloClosed-MagDown/Real Data/Reco16pLead/Stripping30r2/90000000/IFT.DST']
-elif dset=='pPb':
-    BK_locations +=['/LHCb/Protonion16/Beam6500GeV-VeloClosed-MagDown/Real Data/Reco16pLead/Stripping30r3/90000000/IFT.DST']
+BK_locations += ["/LHCb/Lead18/Beam6370GeV-VeloClosed-MagDown/Real Data/Reco18Lead18/Stripping35a/90000000/IFT.DST"]
 data = LHCbDataset()
 bk = BKQuery(dqflag=['OK','UNCHECKED'])
 
@@ -37,7 +28,6 @@ if note not in ["test","testgrid"]:
             data.extend( tmp )
 
     if len(data.files) < 1:
-        print("no data")
         sys.exit()
 
 j = Job(
@@ -62,10 +52,9 @@ else:
 
 if note in ["testgrid"]:
         #j.inputdata = LHCbDataset(['LFN:/lhcb/LHCb/Collision16/EW.DST/00069603/0000/00069603_00001133_1.ew.dst'])
-        print("no grid test LFN set")
         sys.exit()
 if note in ["test"]:
-        j.inputdata = LHCbDataset(['PFN:/data/cep-phi/00076144_00000038_1.ift.dst'])
+        j.inputdata = LHCbDataset(['PFN:/data/cep-phi/00089031_00009979_1.ift.dst'])
 
 j.parallel_submit = True
 
