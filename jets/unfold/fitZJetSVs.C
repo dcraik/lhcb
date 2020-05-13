@@ -10,14 +10,19 @@
 #include "TTree.h"
 
 #include <boost/progress.hpp>
+#include <boost/program_options.hpp>
 
 #include "outputFunctions.h"
+#include "DatasetManager.h"
 #include "SVFitter.h"
 #include "ZFitter.h"
 #include "MCJets.h"
 
+namespace po = boost::program_options;
+
 //globals to save passing these around
-TString savedir("output-fitZj-statOnly-24bins-newFit-new-new-fixSVSel-fixJetPVMatch2-ptCorr");
+//TString savedir("output-fitZj-statOnly-24bins-newFit-new-new-fixSVSel-fixJetPVMatch2-ptCorr-rerun");
+TString savedir("output-fitZj-statOnly-24bins-newFit-new-new-fixSVSel-fixJetPVMatch2-ptCorr-rerun-new-rerun-overflowBin");
 
 //the following globals give the locations of input tuples
 //these may be overridden in certain cases, e.g. if doing an MC closure test
@@ -36,6 +41,10 @@ TString ssDataFile    = "/data/zjet/zjet_ss_201X.root";
 //TString charmHistFile = "svFitHists4_zj.root";
 //TString beautyHistFile = "svFitHists5_zj.root";
 //TString dataHistFile = "svFitHistsD_zj.root";
+
+//unfolding
+TString unfoldingMode("bayes");
+double unfoldingReg(4.);
 
 void fillJetsHist(TH2D* h) {
 	TFile* f = TFile::Open(dataFile);
@@ -63,19 +72,62 @@ void fillJetsHist(TH2D* h) {
 	//t->Draw(cutStr,"","goff");
 }
 
-int main() {
+int main(int argc, char** argv) {
+	gStyle->SetOptStat(0);
+	gErrorIgnoreLevel = kError;
+	RooMsgService::instance().setGlobalKillBelow(RooFit::FATAL);
+
+	// Declare the supported options.
+	po::options_description desc("Allowed options");
+	desc.add_options()
+	    ("help", "produce help message")
+	    ("data", po::value<std::string>(), "input dataset [201X]")
+	    ("dir", po::value<std::string>(), "save directory [output]")
+	    ("unfold-mode", po::value<std::string>(), "unfolding method (invert, [bayes], ids, svd, tunfold}")
+	    ("unfold-reg", po::value<double>(), "unfolding regularisation parameter (-1 for method default) [-1]")
+	;
+	
+	po::variables_map vm;
+	po::store(po::parse_command_line(argc, argv, desc), vm);
+	po::notify(vm);    
+	
+	if (vm.count("help")) {
+		std::cout << desc << std::endl;
+	    return 1;
+	}
+
+	TString file="201X";
+	if (vm.count("data")) {
+		file = vm["data"].as<std::string>();
+		std::cout << "Running over dataset:" << file << std::endl;
+	}
+	dataFile = "/data/zjet/zjet_"+file+".root";
+
+	if (vm.count("dir")) {
+		savedir = vm["dir"].as<std::string>();
+		std::cout << "Saving to directory:" << savedir << std::endl;
+	}
+	if (vm.count("unfold-mode")) {
+		unfoldingMode = vm["unfold-mode"].as<std::string>();
+		std::cout << "Using unfolding mode: " << unfoldingMode << std::endl;
+	}
+	if (vm.count("unfold-reg")) {
+		unfoldingReg = vm["unfold-reg"].as<double>();
+		std::cout << "Unfolding regularisation parameter set to " << unfoldingReg << std::endl;
+	}
+
 	gSaveDir = savedir;
 	gSystem->Exec("mkdir -p "+savedir);
-	gStyle->SetOptStat(0);
 
 	double nB(0.), eB(0.), nC(0.), eC(0.), nQ(0.), eQ(0.), nZ(0.), eZ(0.);
 
-	const int npt(3);
-	double ptBounds[npt+1] = {15000.,20000.,30000.,50000.};//TODO 100000.
+	const int npt(4);
+	double ptBounds[npt+1] = {15000.,20000.,30000.,50000.,100000.};
 	//const int nzy(2);
 	//double zyBounds[nzy+1] = {2.0,3.0,4.5};
 	const int nzy(5);
 	double zyBounds[nzy+1] = {2.0,2.5,3.0,3.5,4.0,4.5};
+	double zyBoundsOneBin[2] = {2.0,4.5};
 
 	TH1D ptScheme("ptScheme","",npt,ptBounds);
 	TH1D zyScheme("zyScheme","",nzy,zyBounds);
@@ -83,7 +135,8 @@ int main() {
 	TH2D hC("hC","",npt,ptBounds,nzy,zyBounds);
 	TH2D hJ("hJ","",npt,ptBounds,nzy,zyBounds);
 	TH2D hE("hE","",npt,ptBounds,nzy,zyBounds);
-	TH2D hE2("hE2","",npt,ptBounds,1,zyBounds[0],zyBounds[nzy]);
+	TH2D hE4("hE4","",npt,ptBounds,1,zyBoundsOneBin);
+	TH2D hE5("hE5","",npt,ptBounds,1,zyBoundsOneBin);
 	TH2D hR("hR","",npt,ptBounds,nzy,zyBounds);
 	TH2D hUR("hUR","",npt,ptBounds,nzy,zyBounds);
 	TH2D hCE("hCE","",npt,ptBounds,nzy,zyBounds);
@@ -97,7 +150,8 @@ int main() {
 	hC.Sumw2();
 	hJ.Sumw2();
 	hE.Sumw2();
-	hE2.Sumw2();
+	hE4.Sumw2();
+	hE5.Sumw2();
 	hR.Sumw2();
 	hUR.Sumw2();
 	hCE.Sumw2();
@@ -117,12 +171,18 @@ int main() {
 	//jetTruePtWeights->SetBinContent(3,0.5);
 	//jetTruePtWeights->SetBinContent(4,0.04);
 
-	MCJets wmc("Zj");
-	wmc.setInputs(lightSimFile,charmSimFile,beautySimFile);
-	//wmc.setInputTruePtWeights(MCJets::jetRecoSV4,jetTruePtWeights);
-	//wmc.setInputTruePtWeights(MCJets::jetRecoSV5,jetTruePtWeights);
-	if(!wmc.weightMC(MCJets::jetRecoSV4,&hE2)) return 1;
-	if(!wmc.weightMC(MCJets::jetRecoSV5)) return 1;
+	DatasetManager* dm = DatasetManager::getInstance();
+	dm->loadDataset("light", "T",std::vector<TString>{lightSimFile});
+	dm->loadDataset("charm", "T",std::vector<TString>{charmSimFile});
+	dm->loadDataset("beauty","T",std::vector<TString>{beautySimFile});
+	dm->loadDataset("data",  "T",std::vector<TString>{dataFile});
+
+	MCJets mcj("Zj");
+	mcj.setInputs("light","charm","beauty","","");
+	//mcj.setInputTruePtWeights(MCJets::jetRecoSV4,jetTruePtWeights);
+	//mcj.setInputTruePtWeights(MCJets::jetRecoSV5,jetTruePtWeights);
+	if(!mcj.weightMC(MCJets::jetRecoSV4,&hE4)) return 1;
+	if(!mcj.weightMC(MCJets::jetRecoSV5,&hE5)) return 1;
 
 	//for(int j=1; j<=nzy; ++j) {
 	//	hE.SetBinContent(1,j,0.191);
@@ -141,15 +201,19 @@ int main() {
 	//zfit.fixShape();
 
 	SVFitter svfit("ZjFit", &ptScheme, &zyScheme);
-	svfit.setInputs(lightDataFile,wmc.outputName(MCJets::jetRecoSV4),wmc.outputName(MCJets::jetRecoSV5),dataFile);
+	dm->loadDataset("charmSV", "T",std::vector<TString>{mcj.outputName(MCJets::jetRecoSV4)});
+	dm->loadDataset("beautySV","T",std::vector<TString>{mcj.outputName(MCJets::jetRecoSV5)});
+	svfit.setInputs("light","charmSV","beautySV","data",true);
+	svfit.setInputWeightings(false,true,true);
 	//svfit.setSVBinning(18,500.,5000.,3);
+	svfit.setSVBinning(94,600.,10000.,3);
 	svfit.makeSVFitHists(0);
 	svfit.makeSVFitHists(4);
 	svfit.makeSVFitHists(5);
 	svfit.makeSVFitHists(7);
 
 	//SVFitter sssvfit("SSFit", &ptScheme, &zyScheme);
-	//sssvfit.setInputs(lightDataFile,wmc.outputName(MCJets::jetRecoSV4),wmc.outputName(MCJets::jetRecoSV5),ssDataFile);
+	//sssvfit.setInputs(lightDataFile,mcj.outputName(MCJets::jetRecoSV4),mcj.outputName(MCJets::jetRecoSV5),ssDataFile);
 	////svfit.setSVBinning(18,500.,5000.,3);
 	//sssvfit.makeSVFitHists(0);
 	//sssvfit.makeSVFitHists(4);
@@ -158,10 +222,10 @@ int main() {
 
 	for(int i=1; i<=npt; ++i) {
 		for(int j=1; j<=nzy; ++j) {
-			hE.SetBinContent(i,j,hE2.GetBinContent(i,1));
-			hE.SetBinError  (i,j,hE2.GetBinError  (i,1));
-			if(svfit.fitSV(nB,eB,nC,eC,nQ,eQ,i,j)) {
-				double corr = wmc.getPtCorrFactor(MCJets::jetRecoSV4,ptBounds[i-1],ptBounds[i]);
+			hE.SetBinContent(i,j,hE4.GetBinContent(i,1));
+			hE.SetBinError  (i,j,hE4.GetBinError  (i,1));
+			if(svfit.fitSVSim(nB,eB,nC,eC,nQ,eQ,i,j)) {
+				double corr = mcj.getPtCorrFactor(MCJets::jetRecoSV4,ptBounds[i-1],ptBounds[i]);
 				hC.SetBinContent(i,j,corr*nC);
 				hC.SetBinError(  i,j,corr*eC);
 			}
@@ -176,8 +240,9 @@ int main() {
 		}
 	}
 
-	TH2D* hUC = wmc.unfold(&hC, MCJets::jetRecoSV4);//, true);
-	TH2D* hUJ = wmc.unfold(&hJ, MCJets::jetAll0);//, true);
+	mcj.setUnfoldingMethod(unfoldingMode,unfoldingReg);
+	TH2D* hUC = mcj.unfold(&hC, MCJets::jetRecoSV4);//, true);
+	TH2D* hUJ = mcj.unfold(&hJ, MCJets::jetAll0);//, true);
 
 	hZ.Divide(&hJ);
 	hCSS.Divide(&hC);

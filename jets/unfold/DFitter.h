@@ -14,9 +14,14 @@ class DFitter {
 			fitSidebandSub,
 			fitSBS1D
 		};
+		enum sampleType{
+			mixedSample,
+			charmSample,
+			beautySample
+		};
 
 		DFitter(TString name, TH1D* ptBins, TH1D* yBins=0) 
-			: _name(name), _type(fitSBS1D),
+			: _name(name), _type(fitSBS1D), _sample(mixedSample),
 			_useSimpleEffs(false), _dataIsMC(false),
 			_useRhoZCorr(true),
 			_inputsSet(false), _effsSet(false),
@@ -28,12 +33,15 @@ class DFitter {
 		void setInputs(TString data, TString eff, TString acc, bool simple=false, bool isMC=false, bool useRhoZCorr=true);
 		void setDPtRange(double ptmin, double ptmax);
 		inline void setFitType(fitType type) { _type = type; }
+		inline void setSampleType(sampleType sample) { _sample = sample; }
 
 		bool addEffs();
 		bool testEffs(int flavour);
-		bool fitD(int flavour, double& yield, double& error, uint binPT, uint binY=1u);
+		bool fitD(int flavour, double& yield, double& error, uint binPT, uint binY=1u, bool useEffs=true);
 
-		const inline TString dFileName() { return "D0jets"+_name+".root"; }
+		TString const dFileName();
+
+		TString const typeName(fitType type);
 
 	private:
 		bool addEffsFull();
@@ -50,6 +58,7 @@ class DFitter {
 		TString _name;
 
 		fitType _type;
+		sampleType _sample;
 
 		TString _dataFile;
 		TString _effFile;
@@ -74,5 +83,6 @@ class DFitter {
 		double _jptmax;
 		double _ymin;
 		double _ymax;
+		bool _useEffs;
 };
 #endif

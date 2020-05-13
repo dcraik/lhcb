@@ -38,6 +38,7 @@
 
 #include "cloneHists.h"
 #include "outputFunctions.h"
+#include "DatasetManager.h"
 
 void DFitter::setInputs(TString data, TString eff, TString acc, bool simple, bool isMC, bool useRhoZCorr) {
 	_dataFile  = data;
@@ -57,14 +58,16 @@ void DFitter::setDPtRange(double ptmin, double ptmax) {
 
 bool DFitter::addEffsFull() {
 	std::cout << "INFO : adding efficiencies to file " << _name << std::endl;
-	TFile* f0 = TFile::Open(_dataFile);
+	//TFile* f0 = TFile::Open(_dataFile);
 
 	TFile* f2 = TFile::Open(_effFile);
 	TFile* f3 = TFile::Open(_accFile);
 
-	TTree* t0 = dynamic_cast<TTree*>(f0->Get("T"));
+	DatasetManager* dm = DatasetManager::getInstance();
+	dm->setDataset(_dataFile);
+	//TTree* t0 = dynamic_cast<TTree*>(f0->Get("T"));
 
-	if(!t0) return false;
+	//if(!t0) return false;
 
 	TH2D* hacc = dynamic_cast<TH2D*>(f3->Get("eff"));
 	TH2D* hrec = dynamic_cast<TH2D*>(f3->Get("reff"));
@@ -138,36 +141,36 @@ bool DFitter::addEffsFull() {
 	double JetEta;
 	double JetTruePT;
 
-	t0->SetBranchAddress("D0M",           &vD0M);
-	t0->SetBranchAddress("D0IPCHI2",      &vD0IPCHI2);
-	t0->SetBranchAddress("D0PT",          &vD0PT);
-	t0->SetBranchAddress("D0PX",          &vD0PX);
-	t0->SetBranchAddress("D0PY",          &vD0PY);
-	t0->SetBranchAddress("D0PZ",          &vD0PZ);
-	t0->SetBranchAddress("D0E",           &vD0E);
-	t0->SetBranchAddress("D0X",           &vD0X);
-	t0->SetBranchAddress("D0Y",           &vD0Y);
-	t0->SetBranchAddress("D0Z",           &vD0Z);
-	t0->SetBranchAddress("D0KP",          &vD0KP);
-	t0->SetBranchAddress("D0KPT",         &vD0KPT);
-	t0->SetBranchAddress("D0KPX",         &vD0KPX);
-	t0->SetBranchAddress("D0KPY",         &vD0KPY);
-	t0->SetBranchAddress("D0KPZ",         &vD0KPZ);
-	t0->SetBranchAddress("D0PIP",         &vD0PIP);
-	t0->SetBranchAddress("D0PIPT",        &vD0PIPT);
-	t0->SetBranchAddress("D0PIPX",        &vD0PIPX);
-	t0->SetBranchAddress("D0PIPY",        &vD0PIPY);
-	t0->SetBranchAddress("D0PIPZ",        &vD0PIPZ);
-	t0->SetBranchAddress("D0KPNNK",       &vD0KPNNK);
-	t0->SetBranchAddress("D0PIPNNPI",     &vD0PIPNNPI);
-	t0->SetBranchAddress("D0KWEIGHT",     &vD0KWEIGHT);
-	t0->SetBranchAddress("D0PIWEIGHT",    &vD0PIWEIGHT);
+	dm->setBranchAddress("D0M",           &vD0M);
+	dm->setBranchAddress("D0IPCHI2",      &vD0IPCHI2);
+	dm->setBranchAddress("D0PT",          &vD0PT);
+	dm->setBranchAddress("D0PX",          &vD0PX);
+	dm->setBranchAddress("D0PY",          &vD0PY);
+	dm->setBranchAddress("D0PZ",          &vD0PZ);
+	dm->setBranchAddress("D0E",           &vD0E);
+	dm->setBranchAddress("D0X",           &vD0X);
+	dm->setBranchAddress("D0Y",           &vD0Y);
+	dm->setBranchAddress("D0Z",           &vD0Z);
+	dm->setBranchAddress("D0KP",          &vD0KP);
+	dm->setBranchAddress("D0KPT",         &vD0KPT);
+	dm->setBranchAddress("D0KPX",         &vD0KPX);
+	dm->setBranchAddress("D0KPY",         &vD0KPY);
+	dm->setBranchAddress("D0KPZ",         &vD0KPZ);
+	dm->setBranchAddress("D0PIP",         &vD0PIP);
+	dm->setBranchAddress("D0PIPT",        &vD0PIPT);
+	dm->setBranchAddress("D0PIPX",        &vD0PIPX);
+	dm->setBranchAddress("D0PIPY",        &vD0PIPY);
+	dm->setBranchAddress("D0PIPZ",        &vD0PIPZ);
+	dm->setBranchAddress("D0KPNNK",       &vD0KPNNK);
+	dm->setBranchAddress("D0PIPNNPI",     &vD0PIPNNPI);
+	dm->setBranchAddress("D0KWEIGHT",     &vD0KWEIGHT);
+	dm->setBranchAddress("D0PIWEIGHT",    &vD0PIWEIGHT);
 
-	t0->SetBranchAddress("JetPT",         &JetPT);
-	t0->SetBranchAddress("JetEta",        &JetEta);
-	if(_dataIsMC) t0->SetBranchAddress("JetTruePT",     &JetTruePT);
+	dm->setBranchAddress("JetPT",         &JetPT);
+	dm->setBranchAddress("JetEta",        &JetEta);
+	if(_dataIsMC) dm->setBranchAddress("JetTruePT",     &JetTruePT);
 
-	unsigned int nentries0 = t0->GetEntries();
+	unsigned int nentries0 = dm->getEntries();
 
 	TFile* fout = TFile::Open(dFileName(),"RECREATE");
 	TTree* tout = new TTree("T","");
@@ -188,9 +191,10 @@ bool DFitter::addEffsFull() {
 
 	//first make non-vector tree for fits
 	boost::progress_display progress( nentries0 );
-	for(unsigned int ientry=0; ientry<nentries0; ++ientry) {
+	//for(unsigned int ientry=0; ientry<nentries0; ++ientry)
+	while(dm->getNext()) {
 		++progress;
-		t0->GetEntry(ientry);
+		//t0->GetEntry(ientry);
 
 		for(unsigned int s=0; s<vD0M->size(); ++s) {
 			//first check in our tight acceptance
@@ -239,32 +243,34 @@ bool DFitter::addEffsFull() {
 
 			if(_dataIsMC) {
 				//put the PID efficiency into the weights for MC
-				if(D0P0.Pt()<25000. && D0P0.Mag()<500000.) {
-					weight4 *= vD0KWEIGHT->at(s);
-					weight5 *= vD0KWEIGHT->at(s);
-				}
+				//TODO//testWithPIDWeightsOffForTrueD0Sample//if(D0P0.Pt()<25000. && D0P0.Mag()<500000.) {
+				//TODO//testWithPIDWeightsOffForTrueD0Sample//	weight4 *= vD0KWEIGHT->at(s);
+				//TODO//testWithPIDWeightsOffForTrueD0Sample//	weight5 *= vD0KWEIGHT->at(s);
+				//TODO//testWithPIDWeightsOffForTrueD0Sample//}
 				//currently no pion PID
 				//if(D0P1.Pt()<25000. && D0P1.Mag()<500000.) {
 				//	weight4 *= vD0PIWEIGHT->at(s);
 				//	weight5 *= vD0PIWEIGHT->at(s);
 				//}
 				//scale weights for roughly continuous jet true pT
-				if(JetTruePT>50000.) {
-					weight4*=0.007;
-					weight5*=0.007;
-				} else if(JetTruePT>20000.) {
-					weight4*=0.10;
-					weight5*=0.10;
-				} else if(JetTruePT>15000.) {
-					weight4*=0.25;
-					weight5*=0.25;
-				}
-			}
-
+				//TODO//breaks eff if comparing against unweighted MC//if(JetTruePT>50000.) {
+				//TODO//breaks eff if comparing against unweighted MC//	weight4*=0.007;
+				//TODO//breaks eff if comparing against unweighted MC//	weight5*=0.007;
+				//TODO//breaks eff if comparing against unweighted MC//} else if(JetTruePT>20000.) {
+				//TODO//breaks eff if comparing against unweighted MC//	weight4*=0.10;
+				//TODO//breaks eff if comparing against unweighted MC//	weight5*=0.10;
+				//TODO//breaks eff if comparing against unweighted MC//} else if(JetTruePT>15000.) {
+				//TODO//breaks eff if comparing against unweighted MC//	weight4*=0.25;
+				//TODO//breaks eff if comparing against unweighted MC//	weight5*=0.25;
+				//TODO//breaks eff if comparing against unweighted MC//}
+			}       //TODO//breaks eff if comparing against unweighted MC//
+                                //TODO//breaks eff if comparing against unweighted MC//
 			tout->Fill();
 			break;//only keep one D0 candidate per entry
 		}
 	}
+
+	dm->reset();
 
 	tout->AutoSave();
 	fout->Close();
@@ -276,13 +282,15 @@ bool DFitter::addEffsFull() {
 
 bool DFitter::addEffsSimple() {
 	std::cout << "INFO : adding efficiencies to file " << _name << std::endl;
-	TFile* f0 = TFile::Open(_dataFile);
+	//TFile* f0 = TFile::Open(_dataFile);
 
 	TFile* f2 = TFile::Open(_effFile);
 
-	TTree* t0 = dynamic_cast<TTree*>(f0->Get("T"));
+	DatasetManager* dm = DatasetManager::getInstance();
+	dm->setDataset("data");
+	//TTree* t0 = dynamic_cast<TTree*>(f0->Get("T"));
 
-	if(!t0) return false;
+	//if(!t0) return false;
 
 	TH2D* heff4 = dynamic_cast<TH2D*>(f2->Get("effD04"));
 	TH2D* heff5 = dynamic_cast<TH2D*>(f2->Get("effD05"));
@@ -316,34 +324,34 @@ bool DFitter::addEffsSimple() {
 	double JetEta;
 	double JetTruePT;
 
-	t0->SetBranchAddress("D0M",           &vD0M);
-	t0->SetBranchAddress("D0IPCHI2",      &vD0IPCHI2);
-	t0->SetBranchAddress("D0PT",          &vD0PT);
-	t0->SetBranchAddress("D0PX",          &vD0PX);
-	t0->SetBranchAddress("D0PY",          &vD0PY);
-	t0->SetBranchAddress("D0PZ",          &vD0PZ);
-	t0->SetBranchAddress("D0E",           &vD0E);
-	t0->SetBranchAddress("D0X",           &vD0X);
-	t0->SetBranchAddress("D0Y",           &vD0Y);
-	t0->SetBranchAddress("D0Z",           &vD0Z);
-	t0->SetBranchAddress("D0KP",          &vD0KP);
-	t0->SetBranchAddress("D0KPT",         &vD0KPT);
-	t0->SetBranchAddress("D0KPX",         &vD0KPX);
-	t0->SetBranchAddress("D0KPY",         &vD0KPY);
-	t0->SetBranchAddress("D0KPZ",         &vD0KPZ);
-	t0->SetBranchAddress("D0PIP",         &vD0PIP);
-	t0->SetBranchAddress("D0PIPT",        &vD0PIPT);
-	t0->SetBranchAddress("D0PIPX",        &vD0PIPX);
-	t0->SetBranchAddress("D0PIPY",        &vD0PIPY);
-	t0->SetBranchAddress("D0PIPZ",        &vD0PIPZ);
-	t0->SetBranchAddress("D0KPNNK",       &vD0KPNNK);
-	t0->SetBranchAddress("D0PIPNNPI",     &vD0PIPNNPI);
+	dm->setBranchAddress("D0M",           &vD0M);
+	dm->setBranchAddress("D0IPCHI2",      &vD0IPCHI2);
+	dm->setBranchAddress("D0PT",          &vD0PT);
+	dm->setBranchAddress("D0PX",          &vD0PX);
+	dm->setBranchAddress("D0PY",          &vD0PY);
+	dm->setBranchAddress("D0PZ",          &vD0PZ);
+	dm->setBranchAddress("D0E",           &vD0E);
+	dm->setBranchAddress("D0X",           &vD0X);
+	dm->setBranchAddress("D0Y",           &vD0Y);
+	dm->setBranchAddress("D0Z",           &vD0Z);
+	dm->setBranchAddress("D0KP",          &vD0KP);
+	dm->setBranchAddress("D0KPT",         &vD0KPT);
+	dm->setBranchAddress("D0KPX",         &vD0KPX);
+	dm->setBranchAddress("D0KPY",         &vD0KPY);
+	dm->setBranchAddress("D0KPZ",         &vD0KPZ);
+	dm->setBranchAddress("D0PIP",         &vD0PIP);
+	dm->setBranchAddress("D0PIPT",        &vD0PIPT);
+	dm->setBranchAddress("D0PIPX",        &vD0PIPX);
+	dm->setBranchAddress("D0PIPY",        &vD0PIPY);
+	dm->setBranchAddress("D0PIPZ",        &vD0PIPZ);
+	dm->setBranchAddress("D0KPNNK",       &vD0KPNNK);
+	dm->setBranchAddress("D0PIPNNPI",     &vD0PIPNNPI);
 
-	t0->SetBranchAddress("JetPT",         &JetPT);
-	t0->SetBranchAddress("JetEta",        &JetEta);
-	if(_dataIsMC) t0->SetBranchAddress("JetTruePT",     &JetTruePT);
+	dm->setBranchAddress("JetPT",         &JetPT);
+	dm->setBranchAddress("JetEta",        &JetEta);
+	if(_dataIsMC) dm->setBranchAddress("JetTruePT",     &JetTruePT);
 
-	unsigned int nentries0 = t0->GetEntries();
+	unsigned int nentries0 = dm->getEntries();
 
 	TFile* fout = TFile::Open(dFileName(),"RECREATE");
 	TTree* tout = new TTree("T","");
@@ -363,9 +371,10 @@ bool DFitter::addEffsSimple() {
 
 	//first make non-vector tree for fits
 	boost::progress_display progress( nentries0 );
-	for(unsigned int ientry=0; ientry<nentries0; ++ientry) {
+	//for(unsigned int ientry=0; ientry<nentries0; ++ientry)
+	while(dm->getNext()) {
 		++progress;
-		t0->GetEntry(ientry);
+		//t0->GetEntry(ientry);
 
 		for(unsigned int s=0; s<vD0M->size(); ++s) {
 			//first check in our tight acceptance
@@ -402,23 +411,25 @@ bool DFitter::addEffsSimple() {
 			weight4 = 1./eff4;
 			weight5 = 1./eff5;
 
-			if(_dataIsMC) {//scale weights for roughly continuous jet true pT
-				if(JetTruePT>50000.) {
-					weight4*=0.007;
-					weight5*=0.007;
-				} else if(JetTruePT>20000.) {
-					weight4*=0.10;
-					weight5*=0.10;
-				} else if(JetTruePT>15000.) {
-					weight4*=0.25;
-					weight5*=0.25;
-				}
-			}
+			//TODO//breaks eff if comparing against unweighted MC//if(_dataIsMC) {//scale weights for roughly continuous jet true pT
+			//TODO//breaks eff if comparing against unweighted MC//	if(JetTruePT>50000.) {
+			//TODO//breaks eff if comparing against unweighted MC//		weight4*=0.007;
+			//TODO//breaks eff if comparing against unweighted MC//		weight5*=0.007;
+			//TODO//breaks eff if comparing against unweighted MC//	} else if(JetTruePT>20000.) {
+			//TODO//breaks eff if comparing against unweighted MC//		weight4*=0.10;
+			//TODO//breaks eff if comparing against unweighted MC//		weight5*=0.10;
+			//TODO//breaks eff if comparing against unweighted MC//	} else if(JetTruePT>15000.) {
+			//TODO//breaks eff if comparing against unweighted MC//		weight4*=0.25;
+			//TODO//breaks eff if comparing against unweighted MC//		weight5*=0.25;
+			//TODO//breaks eff if comparing against unweighted MC//	}
+			//TODO//breaks eff if comparing against unweighted MC//}
 
 			tout->Fill();
 			break;//only keep one D0 candidate per entry
 		}
 	}
+
+	dm->reset();
 
 	tout->AutoSave();
 	fout->Close();
@@ -449,6 +460,9 @@ bool DFitter::fitD_1D1D(double& yield, double& error) {
 		ptStr+="-";
 		ptStr+=_dptmax;
 	}
+	if(!_useEffs) {
+		ptStr+="_noEffCorr";
+	}
 
 	TFile* f0 = TFile::Open(dFileName());
 
@@ -459,9 +473,9 @@ bool DFitter::fitD_1D1D(double& yield, double& error) {
 	TString weightName;
 
 	if(_flavour==4) {
-		weightName = "weight4";
+		if(_useEffs) weightName = "weight4";
 	} else if(_flavour==5) {
-		weightName = "weight5";
+		if(_useEffs) weightName = "weight5";
 	} else {
 		return false;
 	}
@@ -491,9 +505,11 @@ bool DFitter::fitD_1D1D(double& yield, double& error) {
 	obs.add(DM);
 	obs.add(DPT);
 	obs.add(DLOGIPCHI2);
-	obs.add(DWeight);
+	if(_useEffs) obs.add(DWeight);
 
-	RooDataSet* ds = new RooDataSet("ds","ds", obs, RooFit::WeightVar(weightName), RooFit::Import(*t0));
+	RooDataSet* ds(0);
+	if(_useEffs) ds = new RooDataSet("ds","ds", obs, RooFit::WeightVar(weightName), RooFit::Import(*t0));
+	else ds = new RooDataSet("ds","ds", obs, RooFit::Import(*t0));
 
 	TString peakCut = "TMath::Abs("; peakCut+=dType; peakCut+="M-"; peakCut+=massVal; peakCut+=")<"; peakCut+=massScaleFact*20.;
 	TString sideCut = "TMath::Abs("; sideCut+=dType; sideCut+="M-"; sideCut+=massVal; sideCut+=")<"; sideCut+=massScaleFact*80.; sideCut+=" && ";
@@ -583,7 +599,7 @@ bool DFitter::fitD_1D1D(double& yield, double& error) {
 	RooAddPdf data_pdf( "data_pdf",  "data_pdf", RooArgList(sigMass,bkgMass), RooArgList(sigYield,bkgYield) );
 
 	// -- fit model pdf to the dataset ----------------------------------------------
-	gSystem->RedirectOutput(gSaveDir+"/"+dType+"_"+_name+"_"+ptStr+"_fits.log","w");
+	gSystem->RedirectOutput(gSaveDir+"/"+dType+"_"+_name+"_"+ptStr+typeName(_type)+"_fits.log","w");
 	/*RooFitResult * result =*/ data_pdf.fitTo(*ds, RooFit::Extended(), RooFit::Save(), RooFit::NumCPU(4), RooFit::Range("FIT"), RooFit::SumW2Error(kTRUE));
 	gSystem->RedirectOutput(0);
 
@@ -645,8 +661,20 @@ bool DFitter::fitD_1D1D(double& yield, double& error) {
 		//displacedMean.setConstant();
 		//displacedWidth.setConstant();
 	}
+	if(_sample==charmSample) {
+		fPrompt.setVal(1.0);
+		fPrompt.setConstant();
+		displacedMean.setConstant();
+		displacedWidth.setConstant();
+	}
+	if(_sample==beautySample) {
+		fPrompt.setVal(0.0);
+		fPrompt.setConstant();
+		promptMean.setConstant();
+		promptWidth.setConstant();
+	}
 
-	gSystem->RedirectOutput(gSaveDir+"/"+dType+"_"+_name+"_"+ptStr+"_fits.log","a");
+	gSystem->RedirectOutput(gSaveDir+"/"+dType+"_"+_name+"_"+ptStr+typeName(_type)+"_fits.log","a");
 	RooFitResult * result2 = data_pdf2_full.fitTo( *dsPeak, RooFit::Extended(), RooFit::Save(), RooFit::NumCPU(4), RooFit::Range("FIT"), RooFit::SumW2Error(kTRUE), RooFit::Constrain(RooArgSet(bkgYield)));
 	gSystem->RedirectOutput(0);
 
@@ -716,6 +744,9 @@ bool DFitter::fitD_SBS(double& yield, double& error) {
 		ptStr+="-";
 		ptStr+=_dptmax;
 	}
+	if(!_useEffs) {
+		ptStr+="_noEffCorr";
+	}
 
 	TFile* f0 = TFile::Open(dFileName());
 
@@ -723,12 +754,12 @@ bool DFitter::fitD_SBS(double& yield, double& error) {
 
 	if(!t0) return false;
 
-	TString weightName;
+	TString weightName("");
 
 	if(_flavour==4) {
-		weightName = "weight4";
+		if(_useEffs) weightName = "weight4";
 	} else if(_flavour==5) {
-		weightName = "weight5";
+		if(_useEffs) weightName = "weight5";
 	} else {
 		return false;
 	}
@@ -752,8 +783,9 @@ bool DFitter::fitD_SBS(double& yield, double& error) {
 	jetPTCut+="JetPT>"; jetPTCut+=_jptmin; jetPTCut+=" && ";
 	jetPTCut+="JetPT<"; jetPTCut+=_jptmax; jetPTCut+=")";
 
-	TString peakCut=weightName;
-	peakCut+=" * (TMath::Abs(";
+	TString peakCut("");
+	if(_useEffs) peakCut+=weightName+" * ";
+	peakCut+="(TMath::Abs(";
 	peakCut+=dType;
 	peakCut+="M-";
 	peakCut+=massVal;
@@ -761,8 +793,9 @@ bool DFitter::fitD_SBS(double& yield, double& error) {
 	peakCut+=massScaleFact*30.;
 	peakCut+=") * ";
 	peakCut+=jetPTCut;
-	TString sideCut=weightName;
-	sideCut+=" * (TMath::Abs(";
+	TString sideCut("");
+	if(_useEffs) sideCut+=weightName+" * ";
+	sideCut+="(TMath::Abs(";
 	sideCut+=dType;
 	sideCut+="M-";
 	sideCut+=massVal;
@@ -824,6 +857,9 @@ bool DFitter::fitD_SBS1D(double& yield, double& error) {
 		ptStr+="-";
 		ptStr+=_dptmax;
 	}
+	if(!_useEffs) {
+		ptStr+="_noEffCorr";
+	}
 
 	TFile* f0 = TFile::Open(dFileName());
 
@@ -831,12 +867,12 @@ bool DFitter::fitD_SBS1D(double& yield, double& error) {
 
 	if(!t0) return false;
 
-	TString weightName;
+	TString weightName="";
 
 	if(_flavour==4) {
-		weightName = "weight4";
+		if(_useEffs) weightName = "weight4";
 	} else if(_flavour==5) {
-		weightName = "weight5";
+		if(_useEffs) weightName = "weight5";
 	} else {
 		return false;
 	}
@@ -866,8 +902,9 @@ bool DFitter::fitD_SBS1D(double& yield, double& error) {
 	jetPTCut+="JetPT>"; jetPTCut+=_jptmin; jetPTCut+=" && ";
 	jetPTCut+="JetPT<"; jetPTCut+=_jptmax; jetPTCut+=")";
 
-	TString peakCut=weightName;
-	peakCut+=" * (TMath::Abs(";
+	TString peakCut("");
+	if(_useEffs) peakCut+=weightName+" * ";
+	peakCut+="(TMath::Abs(";
 	peakCut+=dType;
 	peakCut+="M-";
 	peakCut+=massVal;
@@ -875,8 +912,9 @@ bool DFitter::fitD_SBS1D(double& yield, double& error) {
 	peakCut+=massScaleFact*40.;
 	peakCut+=") * ";
 	peakCut+=jetPTCut;
-	TString sideCut=weightName;
-	sideCut+=" * (TMath::Abs(";
+	TString sideCut("");
+	if(_useEffs) sideCut+=weightName+" * ";
+	sideCut+="(TMath::Abs(";
 	sideCut+=dType;
 	sideCut+="M-";
 	sideCut+=massVal;
@@ -891,8 +929,9 @@ bool DFitter::fitD_SBS1D(double& yield, double& error) {
 	sideCut+=massScaleFact*40.;
 	sideCut+=") * ";
 	sideCut+=jetPTCut;
-	TString allCut=weightName;
-	allCut+=" * (TMath::Abs(";
+	TString allCut("");
+	if(_useEffs) allCut+=weightName+" * ";
+	allCut+="(TMath::Abs(";
 	allCut+=dType;
 	allCut+="M-";
 	allCut+=massVal;
@@ -985,10 +1024,23 @@ bool DFitter::fitD_SBS1D(double& yield, double& error) {
 	RooRealVar promptYield(     "promptYield",     "", maxyield/2.,    0.0,  1.1*maxyield);
 	RooRealVar displacedYield(  "displacedYield",  "", maxyield/2.,    0.0,  1.1*maxyield);
 
+	if(_sample==charmSample) {
+		displacedYield.setVal(0.0);
+		displacedYield.setConstant();
+		displacedMean.setConstant();
+		displacedWidth.setConstant();
+	}
+	if(_sample==beautySample) {
+		promptYield.setVal(0.0);
+		promptYield.setConstant();
+		promptMean.setConstant();
+		promptWidth.setConstant();
+	}
+
 	// -- total PDF
 	RooAddPdf data_pdf( "data_pdf",  "data_pdf", RooArgList(prompt,displaced), RooArgList(promptYield,displacedYield) );
 
-	gSystem->RedirectOutput(gSaveDir+"/"+dType+"_"+_name+"_"+ptStr+"_fits.log","w");
+	gSystem->RedirectOutput(gSaveDir+"/"+dType+"_"+_name+"_"+ptStr+typeName(_type)+"_fits.log","w");
 	/*RooFitResult * result =*/ data_pdf.fitTo( dh, RooFit::Extended(), RooFit::Save(), RooFit::NumCPU(4), RooFit::Range("FIT"), RooFit::SumW2Error(kTRUE));
 	gSystem->RedirectOutput(0);
 
@@ -1045,6 +1097,9 @@ bool DFitter::fitD_2D(double& yield, double& error) {
 		ptStr+="-";
 		ptStr+=_dptmax;
 	}
+	if(!_useEffs) {
+		ptStr+="_noEffCorr";
+	}
 
 	TFile* f0 = TFile::Open(dFileName());
 
@@ -1058,9 +1113,9 @@ bool DFitter::fitD_2D(double& yield, double& error) {
 	TString weightName;
 
 	if(_flavour==4) {
-		weightName = "weight4";
+		if(_useEffs) weightName = "weight4";
 	} else if(_flavour==5) {
-		weightName = "weight5";
+		if(_useEffs) weightName = "weight5";
 	} else {
 		return false;
 	}
@@ -1090,9 +1145,11 @@ bool DFitter::fitD_2D(double& yield, double& error) {
 	obs.add(DM);
 	obs.add(DPT);
 	obs.add(DLOGIPCHI2);
-	obs.add(DWeight);
+	if(_useEffs) obs.add(DWeight);
 
-	RooDataSet* ds = new RooDataSet("ds","ds", obs, RooFit::WeightVar(weightName), RooFit::Import(*t0));
+	RooDataSet* ds(0);
+	if(_useEffs) ds = new RooDataSet("ds","ds", obs, RooFit::WeightVar(weightName), RooFit::Import(*t0));
+	else ds = new RooDataSet("ds","ds", obs, RooFit::Import(*t0));
 
 	//mass PDFs
 	RooRealVar dMass("dMass","mass mean",massVal,massVal-massScaleFact*20.,massVal+massScaleFact*20.);
@@ -1144,11 +1201,24 @@ bool DFitter::fitD_2D(double& yield, double& error) {
 	RooRealVar displacedYield(  "displacedYield",  "", 750,    0.0,  maxyield);
 	RooRealVar bkgYield(        "bkgYield",        "", 750,    0.0,  maxyield);
 
+	if(_sample==charmSample) {
+		displacedYield.setVal(0.0);
+		displacedYield.setConstant();
+		displacedMean.setConstant();
+		displacedWidth.setConstant();
+	}
+	if(_sample==beautySample) {
+		promptYield.setVal(0.0);
+		promptYield.setConstant();
+		promptMean.setConstant();
+		promptWidth.setConstant();
+	}
+
 	// -- total PDF
 	RooAddPdf data_pdf( "data_pdf",  "data_pdf", RooArgList(prompt,displaced,bkg), RooArgList(promptYield,displacedYield,bkgYield) );
 
 	// -- fit model pdf to the dataset ----------------------------------------------
-	gSystem->RedirectOutput(gSaveDir+"/"+dType+"_"+_name+"_"+ptStr+"_fits.log","w");
+	gSystem->RedirectOutput(gSaveDir+"/"+dType+"_"+_name+"_"+ptStr+typeName(_type)+"_fits.log","w");
 	/*RooFitResult * result =*/ data_pdf.fitTo(*ds, RooFit::Extended(), RooFit::Save(), RooFit::NumCPU(4), RooFit::Range("FIT"), RooFit::SumW2Error(kTRUE));
 	gSystem->RedirectOutput(0);
 
@@ -1226,8 +1296,8 @@ bool DFitter::testEffs(int flavour) {
 	}
 }
 
-bool DFitter::fitD(int flavour, double& yield, double& error, uint binPT, uint binY) {
-	if(!_effsSet) {
+bool DFitter::fitD(int flavour, double& yield, double& error, uint binPT, uint binY, bool useEffs) {
+	if(useEffs && !_effsSet) {
 		std::cout << "INFO in DFitter::fitD: D efficiencies not calculated yet" << std::endl;
 		std::cout << "                       running now" << std::endl;
 		if(!addEffs()) return false;
@@ -1240,6 +1310,7 @@ bool DFitter::fitD(int flavour, double& yield, double& error, uint binPT, uint b
 		_ymin = _yBins->GetBinLowEdge(binY);
 		_ymax = _yBins->GetBinLowEdge(binY+1);
 	}
+	_useEffs = useEffs;
 
 	switch(_type) {
 		case fit1D1D:
@@ -1289,7 +1360,7 @@ bool DFitter::testEffsFull() {
 	stages.push_back("reconstruction");
 	stages.push_back("selection");
 	stages.push_back("PID");
-	std::vector<TH1D*> truD0truePT;
+	std::vector<TH1D*> truD0truePT;//the true distribution at this stage
 	truD0truePT.push_back(cloneTH1D("tru0truept", _ptBins));
 	truD0truePT.push_back(cloneTH1D("tru1truept", _ptBins));
 	truD0truePT.push_back(cloneTH1D("tru2truept", _ptBins));
@@ -1301,13 +1372,13 @@ bool DFitter::testEffsFull() {
 	effD0truePT.push_back(cloneTH1D("eff2truept", _ptBins));
 	effD0truePT.push_back(cloneTH1D("eff3truept", _ptBins));
 	effD0truePT.push_back(cloneTH1D("eff4truept", _ptBins));
-	std::vector<TH1D*> fitD0truePT;
+	std::vector<TH1D*> fitD0truePT;//sideband-subtracted distribution at this stage
 	fitD0truePT.push_back(cloneTH1D("fit0truept", _ptBins));
 	fitD0truePT.push_back(cloneTH1D("fit1truept", _ptBins));
 	fitD0truePT.push_back(cloneTH1D("fit2truept", _ptBins));
 	fitD0truePT.push_back(cloneTH1D("fit3truept", _ptBins));
 	fitD0truePT.push_back(cloneTH1D("fit4truept", _ptBins));
-	std::vector<TH1D*> fndD0truePT;
+	std::vector<TH1D*> fndD0truePT;//truth-matched distribution at this stage
 	fndD0truePT.push_back(cloneTH1D("fnd0truept", _ptBins));
 	fndD0truePT.push_back(cloneTH1D("fnd1truept", _ptBins));
 	fndD0truePT.push_back(cloneTH1D("fnd2truept", _ptBins));
@@ -2229,4 +2300,23 @@ bool DFitter::testEffsSimple() {
 	}
 	
 	return true;
+}
+
+TString const DFitter::dFileName() {
+	return gSaveDir+"/D0jets"+_name+".root";
+}
+
+TString const DFitter::typeName(fitType type) {
+	switch(type) {
+		case fit1D1D:
+			return "1D1Dfit";
+		case fit2D:
+			return "2Dfit";
+		case fitSidebandSub:
+			return "SBSSBSfit";
+		case fitSBS1D:
+			return "SBS1Dfit";
+		default:
+			return "";
+	}
 }

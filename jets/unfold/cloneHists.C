@@ -14,6 +14,15 @@ TH1D* cloneTH1D(TString name, TH1D* hist)
 	return cloneHist;
 }
 
+TH1D* cloneTH1D(TString name, std::vector<double> bins)
+{
+	TH1D* cloneHist = new TH1D(name,
+			"",
+			bins.size()-1,
+			bins.data());
+	return cloneHist;
+}
+
 TH2D* cloneTH2D(TString name, TH2D* hist)
 {
 	if (!hist) return 0;
@@ -23,6 +32,17 @@ TH2D* cloneTH2D(TString name, TH2D* hist)
 			hist->GetXaxis()->GetXbins()->GetArray(),
 			hist->GetNbinsY(),
 			hist->GetYaxis()->GetXbins()->GetArray());
+	return cloneHist;
+}
+
+TH2D* cloneTH2D(TString name, std::vector<double> binsX, std::vector<double> binsY)
+{
+	TH2D* cloneHist = new TH2D(name,
+			"",
+			binsX.size()-1,
+			binsX.data(),
+			binsY.size()-1,
+			binsY.data());
 	return cloneHist;
 }
 
