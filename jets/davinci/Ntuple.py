@@ -89,6 +89,7 @@ class Ntuple:
                    #'vz%i' % i for i in range(0, 61)])
         self.init('neu', ['idx_gen', 'idx_jet'] + mom + ['pid'] + l0trig + hlt1trig)
         self.init('z0', ['idx_pvr','idx_jet_trk0', 'idx_jet_trk1', 'idx_jet_dr'] + mom + pos + ['m', 'ip', 'ip_chi2','dr_jet'] + ['idx_trk%i' % i for i in range(0, 2)] + l0trig + hlt1trig + hlt2trig)
+        self.init('w', ['idx_trk0'])
         self.init('jpsi', ['idx_pvr','idx_jet','idx_jet_trk0', 'idx_jet_trk1', 'idx_jet_dr','dr_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 2)] + l0trig + hlt1trig)
         self.init('d0', ['idx_pvr','idx_jet','idx_jet_trk0', 'idx_jet_trk1', 'idx_jet_dr','dr_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 2)] + l0trig + hlt1trig)
         self.init('dp', ['idx_pvr','idx_jet','idx_jet_trk0', 'idx_jet_trk1', 'idx_jet_trk2', 'idx_jet_dr','dr_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 3)] + l0trig + hlt1trig)
@@ -418,7 +419,20 @@ class Ntuple:
             pass
 
         return False
-    def addDHad(self, obj, pre="d0"):
+    def addW(self, obj, pre="w"):
+        vrs = {}
+        try:
+            idx = self.addTrk(obj)
+            vrs['idx_trk0'] = idx
+            self.fill(pre, vrs = vrs)
+
+            return True
+
+        except:
+            pass
+        return False
+
+    def addDHad(self, obj, pre="d0", pvr=None):
         vrs = {}
         trks = []
         try:
@@ -444,7 +458,7 @@ class Ntuple:
 
             for dau in obj.daughters():
                 trks.append(self.addTrk(dau))
-            pvr = self.pvrTool.relatedPV(obj, 'Rec/Vertex/Primary')
+            if not pvr: pvr = self.pvrTool.relatedPV(obj, 'Rec/Vertex/Primary')
             self.fillPvr(pvr, vrs)
             self.fillDst(obj, pvr, 'ip', vrs)
             self.fillDst(obj.endVertex(), pvr, 'fd', vrs)

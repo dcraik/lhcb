@@ -174,6 +174,18 @@ SSZs = SimpleSelection (
     #Code = "(MINTREE('mu+'==ABSID,PT) > 10.*GeV)"
     )
 
+#Ws = DataOnDemand('/Event/EW/Phys/WMuLine/Particles')
+#Ws = DataOnDemand('Phys/WMuLine/Particles')
+
+Ws = SimpleSelection (
+    'Ws'         ,
+    FilterDesktop   ,
+    [ looseZmuons ]    ,
+    DecayDescriptor = "[mu+]cc",
+    Code = (
+            "(PT>20*GeV)"
+           )
+    )
 
 ###########################
 ##### J/psi candidates ####
@@ -210,6 +222,7 @@ recJpsi = SimpleSelection (
     DaughtersCuts   = dcJpsi,
     CombinationCut = (combcutsJpsi),
     MotherCut      =  (parentcutsJpsi),
+    ReFitPVs = True,#TODO
 )
 
 ###########################
@@ -271,6 +284,8 @@ recD0 = SimpleSelection (
     DaughtersCuts   = dcD0,
     CombinationCut = (combcutsD0),
     MotherCut      =  (parentcutsD0),
+    ReFitPVs = True,#TODO
+    ForceP2PVBuild = True,
 )
 
 dcDp = { }
@@ -300,6 +315,7 @@ recDp = SimpleSelection (
     DaughtersCuts   = dcDp,
     CombinationCut = (combcutsDp),
     MotherCut      =  (parentcutsDp),
+    ReFitPVs = True,#TODO
 )
 
 dcDs = { }
@@ -329,6 +345,7 @@ recDs = SimpleSelection (
     DaughtersCuts   = dcDs,
     CombinationCut = (combcutsDs),
     MotherCut      =  (parentcutsDs),
+    ReFitPVs = True,#TODO
 )
 
 dcLc = { }
@@ -361,6 +378,7 @@ recLc = SimpleSelection (
     DaughtersCuts   = dcLc,
     CombinationCut = (combcutsLc),
     MotherCut      =  (parentcutsLc),
+    ReFitPVs = True,#TODO
 )
 
 dcD02K3pi = { }
@@ -389,5 +407,6 @@ recD02K3pi = SimpleSelection (
     DaughtersCuts   = dcD02K3pi,
     CombinationCut = (combcutsD02K3pi),
     MotherCut      =  (parentcutsD02K3pi),
+    ReFitPVs = True,#TODO
 )
 
