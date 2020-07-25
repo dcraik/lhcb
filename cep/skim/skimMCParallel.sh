@@ -7,8 +7,8 @@
 workdir="/data/cep-phi"
 savedir="/data/cep-phi"
 
-cleanup=1
-rerun=1
+cleanup=0
+rerun=0
 
 for jobid in $@
 do
@@ -17,7 +17,7 @@ do
 	for f in `cat ../davinci/lfns/lfns${jobid}.log`
 	do
 		joblist=($(jobs -p))
-		while (( ${#joblist[*]} >= 12 ))
+		while (( ${#joblist[*]} >= 8 ))
 		do
 			sleep 1
 			joblist=($(jobs -p))
@@ -25,9 +25,9 @@ do
 		if [ "$f" != "NOFILE" ]
 		then
 			mkdir -p $workdir/$jobid/$subdir/
-			if (( rerun )) || [ ! -f $workdir/$jobid/$subdir/skimmed.root ] || [ $workdir/$jobid/$subdir/skimmed.root -ot ./skim ] #&& [ ! -f $savedir/$jobid/$subdir/skimmed.root ]
+			if (( rerun )) || [ ! -f $workdir/$jobid/$subdir/skimmed.root ] || [ $workdir/$jobid/$subdir/skimmed.root -ot ./skimMC ] #&& [ ! -f $savedir/$jobid/$subdir/skimmed.root ]
 			then
-				./doSkim.sh $f $workdir $jobid $subdir $cleanup &
+				./doSkimMC.sh $f $workdir $jobid $subdir $cleanup &
 			fi
 		else
 			echo Skipping subjob $subdir, not finished

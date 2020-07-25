@@ -5,7 +5,7 @@ ROOTFLAGS = `root-config --cflags` # --libs` `gsl-config --cflags` -lThread -lMi
 ROOTLIBS  = `root-config --glibs` -lRooFit -lThread -lMinuit -lMathCore -lRooStats -lRooFit -lRooFitCore -lFoam -lTreePlayer
 INCPATH   = -I.
 
-all : 	skim skimNew lumi
+all : 	skim skimMC getLumi getLumiFromZ addPtEffWeight
 
 skim.o : skim.C skim.h
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
@@ -13,14 +13,26 @@ skim.o : skim.C skim.h
 skim : skim.o
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
 
-skimNew.o : skimNew.C skimNew.h
+skimMC.o : skimMC.C skimMC.h
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
 
-skimNew : skimNew.o
+skimMC : skimMC.o
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
 
-lumi.o : lumi.C
+getLumi.o : getLumi.C
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
 
-lumi : lumi.o
+getLumi : getLumi.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
+
+getLumiFromZ.o : getLumiFromZ.C
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
+
+getLumiFromZ : getLumiFromZ.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
+
+addPtEffWeight.o : addPtEffWeight.C
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
+
+addPtEffWeight : addPtEffWeight.o
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
