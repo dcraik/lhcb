@@ -5,6 +5,7 @@
 #include "TLatex.h"
 #include "TLine.h"
 #include "TMath.h"
+#include "TPaveText.h"
 #include "TRegexp.h"
 #include "TROOT.h"
 #include "TStyle.h"
@@ -21,7 +22,7 @@ TString gSaveDir=".";
 void plotFit(RooRealVar& var, double min, double max, int nbins, RooAbsData* dh, RooAbsPdf& pdf,
              std::vector<std::string>& sig_pdfs,
 	     std::vector<std::string>& bkg_pdfs,
-	     TString name, TString title,
+	     TString name, TString title, TString label,
 	     int typeIdx,
 	     RooCmdArg /*extraArg0*/,
 	     RooCmdArg /*extraArg1*/,
@@ -75,7 +76,7 @@ void plotFit(RooRealVar& var, double min, double max, int nbins, RooAbsData* dh,
 		//} else {
 		//	for(int iType=0; iType<cat->numTypes(); ++iType) {
 		//		//TODO//std::cout << iType << ": making plot for " << cat->lookupType(iType)->GetName() << std::endl;
-		//		plotFit(var,min,max,nbins,dh,pdf,sig_pdfs,bkg_pdfs,name+cat->lookupType(iType)->GetName(),title,iType);
+		//		plotFit(var,min,max,nbins,dh,pdf,sig_pdfs,bkg_pdfs,name+cat->lookupType(iType)->GetName(),title,label,iType);
 		//	}
 		}
 	}
@@ -112,6 +113,13 @@ void plotFit(RooRealVar& var, double min, double max, int nbins, RooAbsData* dh,
 	plot->GetXaxis()->SetLabelOffset(0.02);
 	plot->GetXaxis()->SetTitleOffset(1.18);
 	plot->Draw();
+	TPaveText txt(0.65,0.8,0.9,0.9,"BRNDC");
+	txt.AddText(label);
+	txt.SetFillColor(0);
+	txt.SetTextAlign(12);
+	txt.SetBorderSize(0);
+	if(label!="") txt.Draw();
+	//std::cout << "!" << label << std::endl;//TODO
 
 	c1.SaveAs(gSaveDir+"/"+name+"_fit.pdf");
 	//TODO//c1.SaveAs(gSaveDir+"/"+name+"_fit.png");
@@ -120,19 +128,19 @@ void plotFit(RooRealVar& var, double min, double max, int nbins, RooAbsData* dh,
 
 	delete plot;
 
-//TODO off for now	//make subplots
-//TODO off for now	if(pdf.InheritsFrom(RooSimultaneous::Class())) {
-//TODO off for now		if(typeIdx==-1) {
-//TODO off for now			const RooCategory* cat = dynamic_cast<const RooCategory*>(&dynamic_cast<RooSimultaneous*>(&pdf)->indexCat());
-//TODO off for now//			for(int iType=0; iType<cat->numTypes(); ++iType) {
-//TODO off for now//			for(auto catType=cat->begin(); catType!=cat->end(); ++catType) {
-//TODO off for now			TIterator* it = cat->typeIterator();
-//TODO off for now			RooCatType* catType(0);
-//TODO off for now			while(catType = static_cast<RooCatType*>(it->Next())) {
-//TODO off for now				plotFit(var,min,max,nbins,dh,pdf,sig_pdfs,bkg_pdfs,name+catType->GetName(),title,catType->getVal());
-//TODO off for now			}
-//TODO off for now		}
-//TODO off for now	}
+	//make subplots
+	if(pdf.InheritsFrom(RooSimultaneous::Class())) {
+		if(typeIdx==-1) {
+			const RooCategory* cat = dynamic_cast<const RooCategory*>(&dynamic_cast<RooSimultaneous*>(&pdf)->indexCat());
+//			for(int iType=0; iType<cat->numTypes(); ++iType) {
+//			for(auto catType=cat->begin(); catType!=cat->end(); ++catType) {
+			TIterator* it = cat->typeIterator();
+			RooCatType* catType(0);
+			while(catType = static_cast<RooCatType*>(it->Next())) {
+				plotFit(var,min,max,nbins,dh,pdf,sig_pdfs,bkg_pdfs,name+catType->GetName(),title,label,catType->getVal());
+			}
+		}
+	}
 }
 
 void plotComparison(TString plotName, TString yLabel, std::vector<TH1D*> hists) {

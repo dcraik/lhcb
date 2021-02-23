@@ -42,9 +42,9 @@ void MCJets::setInputTruePtWeights(jetType type, TH1D* truePtWeights) {
 	_truePtWeights[type] = truePtWeights;
 }
 
-void MCJets::setD0PtRange(double minpt, double maxpt) {
-	_d0ptmin = minpt;
-	_d0ptmax = maxpt;
+void MCJets::setDPtRange(double minpt, double maxpt) {
+	_dptmin = minpt;
+	_dptmax = maxpt;
 }
 
 void MCJets::setUnfoldingMethod(UnfoldMethod unfoldingMethod, double regPar=-1) {
@@ -66,6 +66,11 @@ void MCJets::setUnfoldingMethod(TString unfoldingMethod, double regPar=-1) {
 	} else {
 		std::cout << "Unknown unfolding method " << unfoldingMethod << std::endl;
 	}
+}
+
+void MCJets::setUnfoldingScaleSmear(double scaleFactor, double smearFactor) {
+		_unfoldingScaleFactor = scaleFactor;
+		_unfoldingSmearFactor = smearFactor;
 }
 
 double MCJets::getPtCorrFactor(jetType type, double ptMin, double ptMax) {
@@ -95,6 +100,15 @@ double MCJets::getPtCorrFactor(jetType type, double ptMin, double ptMax) {
 		case jetRecoD04:
 			std::cout << "getting pT correction factor for c->D0 in " << ptMin << " to " << ptMax << " bin..." << std::endl;
 			return 1.;//no correction needed
+		case jetRecoDp4:
+			std::cout << "getting pT correction factor for c->D+ in " << ptMin << " to " << ptMax << " bin..." << std::endl;
+			return 1.;//no correction needed
+		case jetRecoDs4:
+			std::cout << "getting pT correction factor for c->Ds in " << ptMin << " to " << ptMax << " bin..." << std::endl;
+			return 1.;//no correction needed
+		case jetRecoLc4:
+			std::cout << "getting pT correction factor for c->Lc in " << ptMin << " to " << ptMax << " bin..." << std::endl;
+			return 1.;//no correction needed
 		case jetRecoSV4:
 			std::cout << "getting pT correction factor for c->SV in " << ptMin << " to " << ptMax << " bin..." << std::endl;
 			dm->setDataset(_charmInput);
@@ -109,6 +123,24 @@ double MCJets::getPtCorrFactor(jetType type, double ptMin, double ptMax) {
 			cut1+=" && JetTRUEb && !JetTRUEc && TMath::Abs(TRUEDID)==421 && TRUEDTRK0IDX!=-1 && TRUEDTRK2IDX==-1 && TRUEDTRUEB!=-1 && TRUEBPT[TRUEDTRUEB]>5.e3";
 			cut2+=" && JetTRUEb && !JetTRUEc && TMath::Abs(TRUEDID)==421 && TRUEDTRK0IDX!=-1 && TRUEDTRK2IDX==-1 && TRUEDTRUEB!=-1 && TRUEDPT>5.e3";
 			break;
+		case jetRecoDp5:
+			std::cout << "getting pT correction factor for b->D+ in " << ptMin << " to " << ptMax << " bin..." << std::endl;
+			dm->setDataset(_beautyInput);
+			cut1+=" && JetTRUEb && !JetTRUEc && TMath::Abs(TRUEDID)==411 && TRUEDTRK2IDX!=-1 && TRUEDTRK3IDX==-1 && TRUEDTRUEB!=-1 && TRUEBPT[TRUEDTRUEB]>5.e3";
+			cut2+=" && JetTRUEb && !JetTRUEc && TMath::Abs(TRUEDID)==411 && TRUEDTRK2IDX!=-1 && TRUEDTRK3IDX==-1 && TRUEDTRUEB!=-1 && TRUEDPT>5.e3";
+			break;
+		case jetRecoDs5:
+			std::cout << "getting pT correction factor for b->Ds in " << ptMin << " to " << ptMax << " bin..." << std::endl;
+			dm->setDataset(_beautyInput);
+			cut1+=" && JetTRUEb && !JetTRUEc && TMath::Abs(TRUEDID)==431 && TRUEDTRK2IDX!=-1 && TRUEDTRK3IDX==-1 && TRUEDTRUEB!=-1 && TRUEBPT[TRUEDTRUEB]>5.e3";
+			cut2+=" && JetTRUEb && !JetTRUEc && TMath::Abs(TRUEDID)==431 && TRUEDTRK2IDX!=-1 && TRUEDTRK3IDX==-1 && TRUEDTRUEB!=-1 && TRUEDPT>5.e3";
+			break;
+		case jetRecoLc5:
+			std::cout << "getting pT correction factor for b->Lc in " << ptMin << " to " << ptMax << " bin..." << std::endl;
+			dm->setDataset(_beautyInput);
+			cut1+=" && JetTRUEb && !JetTRUEc && TMath::Abs(TRUEDID)==4122 && TRUEDTRK2IDX!=-1 && TRUEDTRK3IDX==-1 && TRUEDTRUEB!=-1 && TRUEBPT[TRUEDTRUEB]>5.e3";
+			cut2+=" && JetTRUEb && !JetTRUEc && TMath::Abs(TRUEDID)==4122 && TRUEDTRK2IDX!=-1 && TRUEDTRK3IDX==-1 && TRUEDTRUEB!=-1 && TRUEDPT>5.e3";
+			break;
 		case jetRecoSV5:
 			std::cout << "getting pT correction factor for b->SV in " << ptMin << " to " << ptMax << " bin..." << std::endl;
 			dm->setDataset(_beautyInput);
@@ -122,14 +154,17 @@ double MCJets::getPtCorrFactor(jetType type, double ptMin, double ptMax) {
 	dm->reset();
 
 	//Take mean from previous toy results to save time
-	if(_useFastCorrFactors) {
-		TFile* f = TFile::Open("toyPtCorrFactors.root");
-		TString tname = TString::Format("%s_%.0f_%.0f", typeName(type).Data(), ptMin, ptMax);
-		TTree* t = static_cast<TTree*>(f->Get(tname));
-		if(t) {
-			TH1D htemp("htemp","",100,t->GetMinimum("corr"),t->GetMaximum("corr"));
-			t->Draw("corr>>htemp");
-			return htemp.GetMean();
+	if(_ptCorrFactorsFile!="") {
+		TFile* f = TFile::Open(_ptCorrFactorsFile);
+		if(f) {
+			TString tname = TString::Format("%s_%.0f_%.0f", typeName(type).Data(), ptMin, ptMax);
+			TTree* t = static_cast<TTree*>(f->Get(tname));
+			if(t) {
+				TH1D htemp("htemp","",100,t->GetMinimum("corr"),t->GetMaximum("corr"));
+				t->Draw("corr>>htemp");
+				std::cout << "Prec-calculated orrection factor: " << htemp.GetMean() << std::endl;
+				return htemp.GetMean();
+			}
 		}
 	}
 
@@ -243,26 +278,40 @@ bool MCJets::weightMC(jetType type, TH2D* effTrueHist, TH2D* effRecoHist) {
 			//if one fails then we need to go through and recreate them
 			bool good(true);
 
-			for(auto hist: hists) {
-				if(hist) {
-					TString hname = hist->GetName();
-					TH2D* saved = static_cast<TH2D*>(histsFile->Get(hname));
-					if(!saved) {
-						good = false;
-						break;
-					}
-					uint nbinsX = hist->GetNbinsX();
-					uint nbinsY = hist->GetNbinsY();
-					if(saved->GetNbinsX() != nbinsX || 
-					   saved->GetNbinsY() != nbinsY) {
-						good = false;
-						break;
-					}
+			if(effTrueHist) {
+				TString hname = effTrueHist->GetName();
+				TH2D* saved = static_cast<TH2D*>(histsFile->Get(hname));
+				uint nbinsX = effTrueHist->GetNbinsX();
+				uint nbinsY = effTrueHist->GetNbinsY();
+				if(!saved ||
+				   saved->GetNbinsX() != nbinsX || 
+				   saved->GetNbinsY() != nbinsY) {
+					good = false;
+				} else {
 					for(uint ibin=0; ibin<nbinsX; ++ibin) {
 						for(uint jbin=0; jbin<nbinsY; ++jbin) {
-							uint bin = hist->GetBin(ibin,jbin);
-							hist->SetBinContent(bin+1,saved->GetBinContent(bin+1));
-							hist->SetBinError(bin+1,saved->GetBinError(bin+1));
+							uint bin = effTrueHist->GetBin(ibin+1,jbin+1);
+							effTrueHist->SetBinContent(bin,saved->GetBinContent(bin));
+							effTrueHist->SetBinError(bin,saved->GetBinError(bin));
+						}
+					}
+				}
+			}
+			if(effRecoHist) {
+				TString hname = effRecoHist->GetName();
+				TH2D* saved = static_cast<TH2D*>(histsFile->Get(hname));
+				uint nbinsX = effRecoHist->GetNbinsX();
+				uint nbinsY = effRecoHist->GetNbinsY();
+				if(!saved ||
+				   saved->GetNbinsX() != nbinsX || 
+				   saved->GetNbinsY() != nbinsY) {
+					good = false;
+				} else {
+					for(uint ibin=0; ibin<nbinsX; ++ibin) {
+						for(uint jbin=0; jbin<nbinsY; ++jbin) {
+							uint bin = effRecoHist->GetBin(ibin+1,jbin+1);
+							effRecoHist->SetBinContent(bin,saved->GetBinContent(bin));
+							effRecoHist->SetBinError(bin,saved->GetBinError(bin));
 						}
 					}
 				}
@@ -275,11 +324,8 @@ bool MCJets::weightMC(jetType type, TH2D* effTrueHist, TH2D* effRecoHist) {
 		}
 
 		//if we failed to get all histograms then reset any we did get
-		for(auto hist: hists) {
-			if(hist) {
-				hist->Reset();
-			}
-		}
+		if(effTrueHist) effTrueHist->Reset();
+		if(effRecoHist) effRecoHist->Reset();
 	}
 
 	TH2D *effTrueNum(0), *effTrueDen(0);
@@ -307,12 +353,18 @@ bool MCJets::weightMC(jetType type, TH2D* effTrueHist, TH2D* effRecoHist) {
 			break;
 		case jetAll4:
 		case jetRecoD04:
+		case jetRecoDp4:
+		case jetRecoDs4:
+		case jetRecoLc4:
 		case jetRecoSV4:
 //			fin = TFile::Open(_charmInput);
 			dm->setDataset(_charmInput);
 			break;
 		case jetAll5:
 		case jetRecoD05:
+		case jetRecoDp5:
+		case jetRecoDs5:
+		case jetRecoLc5:
 		case jetRecoSV5:
 //			fin = TFile::Open(_beautyInput);
 			dm->setDataset(_beautyInput);
@@ -524,12 +576,12 @@ bool MCJets::weightMC(jetType type, TH2D* effTrueHist, TH2D* effRecoHist) {
 			case jetRecoD04:
 				if(JetTrueDPT<5e3) continue;
 				if(!JetTrueD0) continue;
-				if(D0PT < _d0ptmin || (_d0ptmax!=-1 && D0PT > _d0ptmax) ) continue;
+				if(D0PT < _dptmin || (_dptmax!=-1 && D0PT > _dptmax) ) continue;
 				break;
 			case jetRecoD05:
 				if(JetTrueBPT<5e3) continue;
 				if(!JetTrueD0) continue;
-				if(D0PT < _d0ptmin || (_d0ptmax!=-1 && D0PT > _d0ptmax) ) continue;
+				if(D0PT < _dptmin || (_dptmax!=-1 && D0PT > _dptmax) ) continue;
 				break;
 			case jetRecoSV4:
 				if(JetTrueDPT<5e3) continue;
@@ -643,6 +695,7 @@ RooUnfoldResponse* MCJets::trainUnfold(TH1D* binning, jetType type, uint ybin) {
 	int countSkip(0), countMiss(0), countFake(0), countReal(0);
 
 	double JetPT;
+	double JetScaledPT;
 	double JetTruePT;
 	double JetTrueEta;
 	double ZY(3.);
@@ -668,12 +721,16 @@ RooUnfoldResponse* MCJets::trainUnfold(TH1D* binning, jetType type, uint ybin) {
 		t->GetEntry(ientry);
 		if(JetTrueEta<2.2||JetTrueEta>4.2) continue;
 
+		//apply jet energy scale + smearing
+		JetScaledPT = gRandom->Gaus(_unfoldingScaleFactor*JetPT,
+				           _unfoldingSmearFactor*_unfoldingScaleFactor*JetPT);
+
 		//only use matching jets
 		switch(type) {
 			case jetRecoD04:
 			case jetRecoD05:
-				if(D0PT < _d0ptmin ||
-				   (_d0ptmax!=-1 && D0PT > _d0ptmax) ) continue;
+				if(D0PT < _dptmin ||
+				   (_dptmax!=-1 && D0PT > _dptmax) ) continue;
 				break;
 			case jetRecoSV4:
 				if(SVMCor<0) continue;
@@ -690,7 +747,7 @@ RooUnfoldResponse* MCJets::trainUnfold(TH1D* binning, jetType type, uint ybin) {
 		int nbins = binning->GetNbinsX();
 
 		truebin = binning->FindBin(JetTruePT);
-		recobin = binning->FindBin(JetPT);
+		recobin = binning->FindBin(JetScaledPT);
 
 		if((recobin<=0 || recobin>nbins) &&
 		   (truebin<=0 || truebin>nbins) ) {
@@ -701,10 +758,10 @@ RooUnfoldResponse* MCJets::trainUnfold(TH1D* binning, jetType type, uint ybin) {
 			resp->Miss(JetTruePT,weight);
 //		} else if(truebin<=0 || truebin>nbins) {//TODO fakes break Ids method
 //			++countFake;
-//			resp->Fake(JetPT,weight);
+//			resp->Fake(JetScaledPT,weight);
 		} else {
 			++countReal;
-			resp->Fill(JetPT,JetTruePT,weight);
+			resp->Fill(JetScaledPT,JetTruePT,weight);
 		}
 	}
 
@@ -727,11 +784,11 @@ TH1D* MCJets::unfold(TH1D* input, jetType type, uint ybin) {
 	}
 	std::cout << "INFO : unfolding " << nameStr << " results for file " << _name << std::endl;
 
-	if(_d0ptmin!=5000. || _d0ptmax!=-1) {
+	if(_dptmin!=5000. || _dptmax!=-1) {
 		nameStr+="_D0";
-		nameStr+=_d0ptmin;
+		nameStr+=_dptmin;
 		nameStr+="-";
-		nameStr+=_d0ptmax;
+		nameStr+=_dptmax;
 	}
 
 	//train unfolding on MC
@@ -753,20 +810,25 @@ TH1D* MCJets::unfold(TH1D* input, jetType type, uint ybin) {
 	TH1D* mcTrue  = dynamic_cast<TH1D*>(response->Htruth());
 	TH2D* respMat = dynamic_cast<TH2D*>(response->Hresponse());
 
-	mcTrue->SetLineStyle(kDashed);
-	input->SetLineColor(kRed);
-
+	setLHCbStyle();
+	gStyle->SetOptStat(0);
 	gStyle->SetPalette(1,0);
-	const Int_t NRGBs = 5;
-	const Int_t NCont = 255;
-	Double_t stops[NRGBs]  = { 0.00, 0.25, 0.50, 0.75, 1.00};
-	Double_t reds[NRGBs]   = { 1.00, 1.00, 1.00, 1.00, 0.00};
-	Double_t greens[NRGBs] = { 1.00, 0.95, 0.50, 0.00, 0.00};
-	Double_t blues[NRGBs]  = { 1.00, 0.00, 0.00, 0.00, 0.00};
+	const Int_t NRGBs = 2;//5;
+	const Int_t NCont = 500;
+	Double_t stops[NRGBs]  = { 0.00, /*0.15, 0.40, 0.65,*/ 1.00};
+	Double_t reds[NRGBs]   = { 1.00, /*1.00, 1.00, 1.00,*/ 0.00};
+	Double_t greens[NRGBs] = { 1.00, /*0.95, 0.50, 0.00,*/ 0.00};
+	Double_t blues[NRGBs]  = { 1.00, /*0.00, 0.00, 0.00,*/ 0.00};
 	TColor::CreateGradientColorTable(NRGBs, stops, reds, greens, blues, NCont);
 	gStyle->SetNumberContours(NCont);
 	TCanvas c;
-	respMat->Draw("colz text");
+	respMat->GetXaxis()->SetTitle("#it{p}_{T}^{reco}(jet) [MeV/#it{c}]");
+	respMat->GetYaxis()->SetTitle("#it{p}_{T}^{true}(jet) [MeV/#it{c}]");
+	respMat->SetTitle("");
+	respMat->Draw("col");
+	c.UseCurrentStyle();
+	c.SetRightMargin(0.10);
+	c.SetTopMargin(0.07);
 	c.SaveAs(gSaveDir+"/unfoldingResponse_"+nameStr+".pdf");
 
 	//apply response
@@ -798,18 +860,33 @@ TH1D* MCJets::unfold(TH1D* input, jetType type, uint ybin) {
 	}
 	//RooUnfoldDagostini unfolded(response, input, 1);
 	TH1D* ret = dynamic_cast<TH1D*>(unfolded->Hreco());
-	ret->SetLineColor(kRed);
-	ret->SetLineStyle(kDashed);
 
 	mcTrue->Scale(input->Integral()/mcMeas->Integral());
 	mcMeas->Scale(input->Integral()/mcMeas->Integral());
 
+	std::cout << nameStr <<" "<<input->GetMaximum()<<" "<<ret->GetMaximum()<<" "<<mcMeas->GetMaximum()<<" "<<mcTrue->GetMaximum() << std::endl;//TODO
 	mcMeas->SetMaximum(1.1*TMath::Max(TMath::Max(input->GetMaximum(),ret->GetMaximum()),TMath::Max(mcMeas->GetMaximum(),mcTrue->GetMaximum())));
 	mcMeas->SetMinimum(0.);
+	mcMeas->GetXaxis()->SetTitle("#it{p}_{T}(jet) [MeV/#it{c}]");
+	mcMeas->GetYaxis()->SetTitle("Candidates");
+	mcMeas->SetTitle("");
 	mcMeas->Draw();
 	mcTrue->Draw("same");
 	input->Draw("same");
 	ret->Draw("same");
+	c.UseCurrentStyle();
+	mcMeas->GetYaxis()->SetTitleOffset(1.1);
+	mcTrue->SetMarkerStyle(22);
+	mcTrue->SetLineStyle(kDashed);
+	input->SetLineColor(kRed);
+	input->SetMarkerColor(kRed);
+	ret->SetLineColor(kRed);
+	ret->SetMarkerColor(kRed);
+	ret->SetMarkerStyle(22);
+	ret->SetLineStyle(kDashed);
+	c.SetRightMargin(0.10);
+	c.SetTopMargin(0.07);
+	c.SetLeftMargin(0.16);
 	c.SaveAs(gSaveDir+"/unfoldingMC_"+nameStr+".pdf");
 
 	return ret;
@@ -833,6 +910,11 @@ TH2D* MCJets::unfold(TH2D* input, jetType type, bool useYBins) {
 			unfolded->SetBinError(i,j,unfldSlice->GetBinError(i));
 		}
 	}
+
+	//run over y-integrated histogram for plots
+	TH1D* inputInt = input->ProjectionX(TString(input->GetName())+"_slice");
+	unfold(inputInt,type);
+
 	return unfolded;
 }
 
@@ -906,7 +988,6 @@ TH2D* MCJets::unfold(TH2D* input, jetType type, bool useYBins) {
 //	return _resampledName;
 //}
 
-//TODO reweite to use DatasetManager
 bool MCJets::getTruth(TString file, TH1D* true4, TH1D* true5, TH1D* trueD04, TH1D* trueD05, TH1D* trueD0Sel4, TH1D* trueD0Sel5, TH1D* trueSV4, TH1D* trueSV5, bool useTruePT) {
 	std::cout << "INFO in MCJets::getTruth: getting truth information" << std::endl;
 	if(!true4 || !true5 || !trueD04 || !trueD05 || !trueD0Sel4 || !trueD0Sel5 || !trueSV4 || !trueSV5) return false;
@@ -1136,6 +1217,191 @@ bool MCJets::getTruth(TString file, TH1D* true4, TH1D* true5, TH1D* trueD04, TH1
 	trueD05->Write();
 	trueD0Sel4->Write();
 	trueD0Sel5->Write();
+	trueSV4->Write();
+	trueSV5->Write();
+	histsFile->Close();
+
+	dm->reset();
+
+	return true;
+}
+
+//2D variant of getTruth for Z+j fits
+bool MCJets::getTruth(TString file, TH2D* true0, TH2D* true4, TH2D* true5, TH2D* trueSV4, TH2D* trueSV5, bool useTruePT) {
+	std::cout << "INFO in MCJets::getTruth: getting truth information" << std::endl;
+	if(!true0 || !true4 || !true5 || !trueSV4 || !trueSV5) return false;
+
+	//check if we already calculated these
+	TString histsFileName = gSaveDir+"/truthHists2D_"+_name+"_"+file;
+	if(useTruePT) histsFileName+="_truePt";
+	histsFileName+=".root";
+	
+	TFile* histsFile = TFile::Open(histsFileName);
+	//container of all histograms to iterate
+	std::vector<TH2D*> hists {true0,true4,true5,trueSV4,trueSV5};
+	if(histsFile) {
+		//we need to load every histogram
+		//if one fails then we need to go through and recreate them
+		bool good(true);
+		for(auto hist: hists) {
+			TString name = hist->GetName();
+			TH2D* saved = static_cast<TH2D*>(histsFile->Get(name));
+			if(!saved) {
+				good = false;
+				break;
+			}
+
+			uint nbins = hist->GetNbinsX();
+			if(saved->GetNbinsX()!=nbins) {
+				good = false;
+				break;
+			}
+			for(uint ibin=0; ibin<nbins; ++ibin) {
+				hist->SetBinContent(ibin+1,saved->GetBinContent(ibin+1));
+				hist->SetBinError(ibin+1,saved->GetBinError(ibin+1));
+			}
+
+		}
+		histsFile->Close();
+		if(good) {
+			std::cout << "INFO in MCJets::getTruth: truth histograms already created" << std::endl;
+			return true;
+		}
+	}
+
+	for(auto hist: hists) {
+		hist->Reset();
+	}
+
+	DatasetManager* dm = DatasetManager::getInstance();
+	dm->setDataset(file);
+
+	double JetPT;
+	double JetTruePT;
+	double JetTrueD0;
+	double JetTrueDSV;
+	double JetTrueBSV;
+	double JetTRUEc;
+	double JetTRUEb;
+	double JetTrueDPT;
+	double JetTrueBPT;
+
+	double ZTRUEPZ;
+	double ZTRUEE;
+
+	std::vector<double>* TRUEDID = new std::vector<double>();
+	std::vector<double>* TRUEDFROMB = new std::vector<double>();
+
+	std::vector<double>* SVN = new std::vector<double>();
+	std::vector<double>* D0M = new std::vector<double>();
+	std::vector<double> *D0IPCHI2 = new std::vector<double>();
+	std::vector<double> *D0PT = new std::vector<double>();
+	std::vector<double> *D0PX = new std::vector<double>();
+	std::vector<double> *D0PY = new std::vector<double>();
+	std::vector<double> *D0PZ = new std::vector<double>();
+	std::vector<double> *D0E = new std::vector<double>();
+	std::vector<double> *D0X = new std::vector<double>();
+	std::vector<double> *D0Y = new std::vector<double>();
+	std::vector<double> *D0Z = new std::vector<double>();
+	std::vector<double> *D0KP = new std::vector<double>();
+	std::vector<double> *D0KPT = new std::vector<double>();
+	std::vector<double> *D0KPX = new std::vector<double>();
+	std::vector<double> *D0KPY = new std::vector<double>();
+	std::vector<double> *D0KPZ = new std::vector<double>();
+	std::vector<double> *D0PIP = new std::vector<double>();
+	std::vector<double> *D0PIPT = new std::vector<double>();
+	std::vector<double> *D0PIPX = new std::vector<double>();
+	std::vector<double> *D0PIPY = new std::vector<double>();
+	std::vector<double> *D0PIPZ = new std::vector<double>();
+	std::vector<double> *D0KPNNK = new std::vector<double>();
+	std::vector<double> *D0PIPNNPI = new std::vector<double>();
+	std::vector<double>* D0TRUEIDX = new std::vector<double>();
+
+	dm->setBranchAddress("JetPT",      &JetPT);
+	dm->setBranchAddress("JetTruePT",  &JetTruePT);
+	dm->setBranchAddress("JetTRUED0",  &JetTrueD0);
+	dm->setBranchAddress("JetTRUEDSV", &JetTrueDSV);
+	dm->setBranchAddress("JetTRUEBSV", &JetTrueBSV);
+	dm->setBranchAddress("JetTRUEc",   &JetTRUEc);
+	dm->setBranchAddress("JetTRUEb",   &JetTRUEb);
+	dm->setBranchAddress("JetTRUEDPT", &JetTrueDPT);
+	dm->setBranchAddress("JetTRUEBPT", &JetTrueBPT);
+
+	dm->setBranchAddress("ZTRUEPZ",    &ZTRUEPZ);
+	dm->setBranchAddress("ZTRUEE",     &ZTRUEE);
+
+	dm->setBranchAddress("TRUEDID",    &TRUEDID);
+	dm->setBranchAddress("TRUEDFROMB", &TRUEDFROMB);
+
+	dm->setBranchAddress("SVN",        &SVN);
+	dm->setBranchAddress("D0M",        &D0M);
+	dm->setBranchAddress("D0IPCHI2",   &D0IPCHI2);
+	dm->setBranchAddress("D0PT",       &D0PT);
+	dm->setBranchAddress("D0PX",       &D0PX);
+	dm->setBranchAddress("D0PY",       &D0PY);
+	dm->setBranchAddress("D0PZ",       &D0PZ);
+	dm->setBranchAddress("D0E",        &D0E);
+	dm->setBranchAddress("D0X",        &D0X);
+	dm->setBranchAddress("D0Y",        &D0Y);
+	dm->setBranchAddress("D0Z",        &D0Z);
+	dm->setBranchAddress("D0KP",       &D0KP);
+	dm->setBranchAddress("D0KPT",      &D0KPT);
+	dm->setBranchAddress("D0KPX",      &D0KPX);
+	dm->setBranchAddress("D0KPY",      &D0KPY);
+	dm->setBranchAddress("D0KPZ",      &D0KPZ);
+	dm->setBranchAddress("D0PIP",      &D0PIP);
+	dm->setBranchAddress("D0PIPT",     &D0PIPT);
+	dm->setBranchAddress("D0PIPX",     &D0PIPX);
+	dm->setBranchAddress("D0PIPY",     &D0PIPY);
+	dm->setBranchAddress("D0PIPZ",     &D0PIPZ);
+	dm->setBranchAddress("D0KPNNK",    &D0KPNNK);
+	dm->setBranchAddress("D0PIPNNPI",  &D0PIPNNPI);
+	dm->setBranchAddress("D0TRUEIDX",  &D0TRUEIDX);
+
+	boost::progress_display progress( dm->getEntries() );
+	//for(int i=0; i<t->GetEntries(); ++i)
+	while(dm->getNext()) {
+		++progress;
+		//t->GetEntry(i);
+		//TODO off for now//if(JetPT<10e3) continue;//only use jets that have been reconstructed
+		if(useTruePT) JetPT = JetTruePT;
+
+		double ZEta = 0.5*TMath::Log((ZTRUEE+ZTRUEPZ)/(ZTRUEE-ZTRUEPZ));
+
+		double weight(1.);
+		//if(JetTruePT>50000.) {
+		//	weight=0.007;
+		//} else if(JetTruePT>20000.) {
+		//	weight=0.10;
+		//} else if(JetTruePT>15000.) {
+		//	weight=0.25;
+		//}
+
+		true0->Fill(JetPT,ZEta,weight);
+		//b-jets
+		if(JetTRUEb && JetTrueBPT>5e3) {
+			true5->Fill(JetPT,ZEta,weight);
+			//b->SV
+			if(true) {
+			//if(JetTrueBSV) { //Note: turned off the requirement for the SV to be "real"
+				if(SVN->size()>0) trueSV5->Fill(JetPT,ZEta,weight);
+			}
+		//c-jets
+		} else if(JetTRUEc && JetTrueDPT>5e3) {
+			true4->Fill(JetPT,ZEta,weight);
+			//c->SV
+			if(true) {
+			//if(JetTrueDSV) { //Note: turned off the requirement for the SV to be "real"
+				if(SVN->size()>0) trueSV4->Fill(JetPT,ZEta,weight);
+			}
+		}
+	}
+
+	histsFile = TFile::Open(histsFileName, "RECREATE");
+	histsFile->cd();
+	true0->Write();
+	true4->Write();
+	true5->Write();
 	trueSV4->Write();
 	trueSV5->Write();
 	histsFile->Close();

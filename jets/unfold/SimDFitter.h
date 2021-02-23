@@ -14,6 +14,42 @@ class RooArgList;
 class RooRealVar;
 class RooWorkspace;
 
+struct DFitterOptions {
+	double minpt{5000};
+	double maxpt{-1};
+	bool skipSumw2Fits{false};
+	uint truthMatch{0};
+	uint nDPtBins{5u};
+	bool usePtFracBins{true};
+	bool combShapeSyst{false};
+	bool doEnhancedFits{false};
+	bool allowMassWidthScale{true};
+	bool allowPromptMeanShift{false};
+	bool allowPromptWidthScale{false};
+	bool allowDisplcMeanShift{false};
+	bool allowDisplcWidthScale{false};
+	bool enhanceMassWidthScale{false};
+	bool enhancePromptMeanShift{false};
+	bool enhancePromptWidthScale{false};
+	bool enhanceDisplcMeanShift{false};
+	bool enhanceDisplcWidthScale{false};
+	bool splitMassWidthScale{false};
+	bool splitPromptMeanShift{false};
+	bool splitPromptWidthScale{false};
+	bool splitDisplcMeanShift{false};
+	bool splitDisplcWidthScale{false};
+	bool splitBkgMassShape{false};
+	bool splitBkgIPShape{false};
+	bool allowLinearBkgMassShift{false};
+	double setMassWidthScale{-999.};
+	double setPromptMeanShift{-999.};
+	double setPromptWidthScale{-999.};
+	double setDisplcMeanShift{-999.};
+	double setDisplcWidthScale{-999.};
+	bool runToyFits{false};
+	bool useSimpleEffs{false};
+};
+
 struct SimDFitter {
 	enum class fitType {
 		fitMass,
@@ -26,6 +62,8 @@ struct SimDFitter {
 		fitJustSignal,
 		fitJustSideband,
 		fitData,
+		fitDataEnhancedC,
+		fitDataEnhancedB,
 		fitToys
 	};
 	enum class truthMatchType {
@@ -38,6 +76,7 @@ struct SimDFitter {
 		: _name(name) { initJetBinning(ptBins, yBins);}
 
 	void setInputs(TString data, TString charm, TString beauty, TString eff, TString acc, bool isMC=false);
+	void setOptions(DFitterOptions& options);
 	void setDPtRange(double ptmin, double ptmax);
 	TString const dFileName();
 
@@ -47,8 +86,9 @@ struct SimDFitter {
 	bool addEffs();
 	bool addEffs(int flavour);
 	bool testEffs(int flavour);
-	bool fitD(double& yield4, double& error4, double& yield5, double& error5, uint binPT, uint binY=0u, uint effType=4u);
+	bool fitD(double& yield4, double& error4, double& yield5, double& error5, int binPT, int binY=0u, uint effType=4u);
 	double getAveWeight(double flavour);
+	double getAveWeightError(double flavour);
 
 	void setRerunEffs(bool rerun=true) {_recreateInputs = rerun;}
 	void skipSumW2Fits(bool skip=true) {_skipSumW2Fits = skip;}
@@ -136,4 +176,36 @@ private:
 	double _ymax;
 	bool _useEffs;
 	bool _skipSumW2Fits{false};
+
+	//flags for systematics
+	bool _combShapeSyst{false};
+	bool _doEnhancedFits{false};
+	bool _allowMassWidthScale{true};
+	bool _allowPromptMeanShift{false};
+	bool _allowPromptWidthScale{false};
+	bool _allowDisplcMeanShift{false};
+	bool _allowDisplcWidthScale{false};
+	bool _enhanceMassWidthScale{false};
+	bool _enhancePromptMeanShift{false};
+	bool _enhancePromptWidthScale{false};
+	bool _enhanceDisplcMeanShift{false};
+	bool _enhanceDisplcWidthScale{false};
+	bool _splitMassWidthScale{false};
+	bool _splitPromptMeanShift{false};
+	bool _splitPromptWidthScale{false};
+	bool _splitDisplcMeanShift{false};
+	bool _splitDisplcWidthScale{false};
+	bool _splitBkgMassShape{false};
+	bool _splitBkgIPShape{false};
+	bool _allowLinearBkgMassShift{false};
+	double _setMassWidthScale{-999.};
+	double _setPromptMeanShift{-999.};
+	double _setPromptWidthScale{-999.};
+	double _setDisplcMeanShift{-999.};
+	double _setDisplcWidthScale{-999.};
+
+	bool _useSimpleEffs{false};
+
+	//toy study
+	bool _runToyFits{false};
 };

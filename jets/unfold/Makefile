@@ -5,12 +5,15 @@ ROOTFLAGS = `root-config --cflags` # --libs` `gsl-config --cflags` -lThread -lMi
 ROOTLIBS  = `root-config --glibs` -lRooFit -lThread -lMinuit -lMathCore -lRooStats -lRooFit -lRooFitCore -lFoam -lTreePlayer
 INCPATH   = -I. -I./RooUnfold/src
 
-all : 	unfoldJetPt RooUnfoldD0Mass
+all : 	fitZJetSVs getTaggingEffs
 
 clean :
 	rm -rf *.o fitZJetSVs getTaggingEffs
 
 cloneHists.o : cloneHists.C cloneHists.h
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
+
+AdaptBin.o : AdaptBin.cc AdaptBin.h
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
 
 outputFunctions.o : outputFunctions.C outputFunctions.h
@@ -44,6 +47,9 @@ RooCatKeysPdf.o : RooCatKeysPdf.cxx
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
 
 RooMultiKeysPdf.o : RooMultiKeysPdf.cxx
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
+
+RooModulatedHistPdf.o : RooModulatedHistPdf.cxx
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
 
 unfoldJetPt.o : unfoldJetPt.C
@@ -85,7 +91,7 @@ fitSVAndUnfold : fitSVAndUnfold.o RooUnfold/libRooUnfold.so RooPromptShape.o
 getTaggingEffs.o : getTaggingEffs.C
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCPATH) -c $< -o $@
 
-getTaggingEffs : getTaggingEffs.o RooUnfold/libRooUnfold.so RooMultiKeysPdf.o RooPromptShape.o outputFunctions.o cloneHists.o SVFitter.o SimDFitter.o MCJets.o DatasetManager.o
+getTaggingEffs : getTaggingEffs.o RooUnfold/libRooUnfold.so RooModulatedHistPdf.o RooMultiKeysPdf.o RooPromptShape.o outputFunctions.o cloneHists.o SVFitter.o SimDFitter.o MCJets.o DatasetManager.o AdaptBin.o
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS) -lboost_program_options RooUnfold/libRooUnfold.so
 
 d0FitTests.o : d0FitTests.C
@@ -182,4 +188,16 @@ makeWeightSim5Tuple_step2.o : makeWeightSim5Tuple_step2.C
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCPATH) -c $< -o $@
 
 makeWeightSim5Tuple_step2 : makeWeightSim5Tuple_step2.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
+
+SVFitSysts.o : SVFitSysts.C
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCPATH) -c $< -o $@
+
+SVFitSysts : SVFitSysts.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
+
+calcJetRecoEffs.o : calcJetRecoEffs.C
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCPATH) -c $< -o $@
+
+calcJetRecoEffs : calcJetRecoEffs.o
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)

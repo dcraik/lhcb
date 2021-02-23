@@ -138,7 +138,7 @@ bool ZFitter::fit(double& yieldZ, double& errorZ, uint binPT, uint binY) {
 	std::vector<std::string> bkg_pdfs;
 	bkg_pdfs.push_back( "bkg" );
 
-	plotFit(ZM, 60e3, 120e3, 100, ds, data_pdf, sig_pdfs, bkg_pdfs, "Z_"+_name+"_M_"+ptStr, "m");
+	//TODO//plotFit(ZM, 60e3, 120e3, 100, ds, data_pdf, sig_pdfs, bkg_pdfs, "Z_"+_name+"_M_"+ptStr, "m");
 
 	////print parameters
 	RooArgList params;

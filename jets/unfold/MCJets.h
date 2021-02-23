@@ -18,6 +18,12 @@ class MCJets {
 			jetAll5,
 			jetRecoD04,
 			jetRecoD05,
+			jetRecoDp4,
+			jetRecoDp5,
+			jetRecoDs4,
+			jetRecoDs5,
+			jetRecoLc4,
+			jetRecoLc5,
 			jetRecoSV4,
 			jetRecoSV5
 		};
@@ -32,19 +38,20 @@ class MCJets {
 
 		MCJets(TString name)
 			: _name(name), _inputsSet(false), _mcSampled(false),
-			  _d0ptmin(5000.), _d0ptmax(-1.),
-			  _ybins(0), _recreateInputs(false), _useFastCorrFactors(false) {}
+			  _dptmin(5000.), _dptmax(-1.),
+			  _ybins(0), _recreateInputs(false) {}
 
 		void setInputs(TString light, TString charm, TString beauty, TString svData="", TString d0Data="");
 		void setInputTruePtWeights(jetType type, TH1D* truePtWeights);
-		void setD0PtRange(double minpt, double maxpt);
+		void setDPtRange(double minpt, double maxpt);
 		void setYBins(TH1D* ybins) { _ybins = ybins; }
 
-		void setFastCorrFactors(bool useFastCorrFactors) {_useFastCorrFactors = useFastCorrFactors;}
+		void setPtCorrFactorsFile(TString ptCorrFactorsFile) {_ptCorrFactorsFile = ptCorrFactorsFile;}
 		void setRerunWeights(bool rerun=true) {_recreateInputs = rerun;}
 
 		void setUnfoldingMethod(UnfoldMethod unfoldingMethod, double regPar);
 		void setUnfoldingMethod(TString unfoldingMethod, double regPar);
+		void setUnfoldingScaleSmear(double scaleFactor=1., double smearFactor=0.);
 
 		double getPtCorrFactor(jetType type, double ptMin, double ptMax);
 
@@ -55,6 +62,8 @@ class MCJets {
 
 		//TString setupTrainTestSamples(int sample);
 		bool getTruth(TString file, TH1D* true4, TH1D* true5, TH1D* trueD04, TH1D* trueD05, TH1D* trueD0Sel4, TH1D* trueD0Sel5, TH1D* trueSV4, TH1D* trueSV5, bool useTruePT=false);
+		bool getTruth(TString file, TH2D* true0, TH2D* true4, TH2D* true5, TH2D* trueSV4, TH2D* trueSV5, bool useTruePT=false);
+
 
 		const TString outputName(jetType type);
 		const TString typeName(jetType type);
@@ -77,18 +86,20 @@ class MCJets {
 
 		UnfoldMethod _unfoldingMethod{unfoldBayes};
 		double _regPar{4};
+		double _unfoldingScaleFactor{1.};
+		double _unfoldingSmearFactor{0.};
 
 		std::map<jetType,TH1D*> _truePtWeights;
 		std::map<jetType, std::map<uint,RooUnfoldResponse*> > _unfoldings;
 
-		double _d0ptmin;
-		double _d0ptmax;
+		double _dptmin;
+		double _dptmax;
 
 		TH1D* _ybins;
 
 		bool _recreateInputs;
 
-		bool _useFastCorrFactors;
+		TString _ptCorrFactorsFile{""};
 };
 
 #endif

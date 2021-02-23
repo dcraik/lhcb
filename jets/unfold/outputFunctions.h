@@ -17,7 +17,7 @@ extern TString gSaveDir;
 void plotFit(RooRealVar& var, double min, double max, int nbins, RooAbsData* dh, RooAbsPdf& pdf,
 	     std::vector<std::string>& sig_pdfs,
 	     std::vector<std::string>& bkg_pdfs,
-	     TString name, TString title,
+	     TString name, TString title, TString label="",
 	     int typeIdx=-1,
 	     RooCmdArg extraArg0=RooCmdArg::none(),
 	     RooCmdArg extraArg1=RooCmdArg::none(),
