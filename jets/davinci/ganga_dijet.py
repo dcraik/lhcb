@@ -1,7 +1,7 @@
 import sys
 
 if len(sys.argv)<4:
-    print "Usage: ", sys.argv[0], "<MagUp|MagDown> <2016> <note>"
+    print("Usage: ", sys.argv[0], "<MagUp|MagDown> <2016> <note>")
     sys.exit()
 polarity = str(sys.argv[1]) #MagDown, MagUp
 year = str(sys.argv[2]) #2015, 2016
@@ -14,11 +14,12 @@ if year=='2018':
     script=str('Run2Jets_dijet18.py')
 
 job_name = "RIIJ_dijet" +str(note) + str(polarity) + str(year)
-print job_name
-print script
+print(job_name)
+print(script)
 
 #DV = GaudiExec(directory="~/DaVinciDev_v42r6p1")
-DV = GaudiExec(directory="/workspace/DaVinciDev_v44r9", platform="x86_64-slc6-gcc62-opt")
+#DV = GaudiExec(directory="/workspace/DaVinciDev_v44r9", platform="x86_64-slc6-gcc62-opt")
+DV = GaudiExec(directory="/workspace/DaVinciDev_v44r9", platform="x86_64-centos7-gcc62-opt")
 DV.options = [script]
 DV.useGaudiRun = False
 BK_locations = []
@@ -38,7 +39,7 @@ if note not in ["test","testgrid"]:
     for path in BK_locations:
         bk.path = path
         tmp = bk.getDataset()
-        print path, len(tmp.files)
+        print(path, len(tmp.files))
         if len(tmp.files) > 0:
             data.extend( tmp )
 

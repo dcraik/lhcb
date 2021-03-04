@@ -15,8 +15,8 @@ from GaudiKernel import SystemOfUnits as Units
 ##Type     = 'MC'
 JetPtMin = 10 * Units.GeV
 
-
-
+m4_ifdef(`TEST', from GaudiConf import IOHelper)
+m4_ifdef(`TEST', IOHelper('ROOT').inputFiles(['/data/zjet/00103400_00000032_1.ew.dst'],clear = True))
 
 from StandardParticles import StdAllNoPIDsMuons as loosemuons
 from PhysSelPython.Wrappers import SimpleSelection, MergedSelection, DataOnDemand, Selection
@@ -95,7 +95,7 @@ DaVinci().appendToMainSequence([recPF, recJB])
 #DaVinci().appendToMainSequence([recSVs_seq.sequence(), recMus_seq.sequence()])
 DaVinci().appendToMainSequence([Jpsi_seq.sequence(), D0_seq.sequence(), Dp_seq.sequence(), Ds_seq.sequence(),  Lc_seq.sequence(), D02K3pi_seq.sequence()])
 ##TODO adding recSVs and recMus changes the daughters of jet objects from smart poniters to Particles
-DaVinci().DataType = '2018'
+DaVinci().DataType = 'M4_DATAYEAR'
 DaVinci().EventPreFilters = fltrs.filters ('Filters')
 
 from Configurables import LumiIntegrateFSR, LumiIntegratorConf
@@ -132,7 +132,7 @@ tes   = gaudi.evtsvc()
 # Run.
 import sys, ROOT
 from math import floor
-evtmax = -1
+evtmax = m4_ifdef(`TEST',10000,-1)
 #'
 #try: evtmax = int(sys.argv[1])
 #except: evtmax = float('inf')

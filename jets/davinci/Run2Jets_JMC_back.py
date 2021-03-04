@@ -39,7 +39,7 @@ genJB.Output = 'Phys/JB/MCParticles'
 # Create the reconstructed jets.
 from Configurables import HltParticleFlow, HltJetBuilder
 from StandardParticles import (StdLooseKsDD, StdLooseKsLL, StdLooseKsLD,
-                               StdLooseLambdaDD, StdLooseLambdaLL, 
+                               StdLooseLambdaDD, StdLooseLambdaLL,
                                StdLooseLambdaLD)
 recPF = HltParticleFlow('recPF')
 recPF.Inputs = [
@@ -86,7 +86,7 @@ DaVinci().Simulation = True
 DaVinci().appendToMainSequence([genPF, genJB, recPF, recJB])
 #DaVinci().appendToMainSequence([recSVs_seq.sequence(), recMus_seq.sequence()])
 DaVinci().appendToMainSequence([Jpsi_seq.sequence(), D0_seq.sequence(), Dp_seq.sequence(), Ds_seq.sequence(),  Lc_seq.sequence(), D02K3pi_seq.sequence()])
-DaVinci().DataType = '2015'
+DaVinci().DataType = '2016'
 #DaVinci().EventPreFilters = fltrs.filters ('Filters')
 
 # Configure the BDT tagger.
@@ -94,6 +94,13 @@ from Configurables import LoKi__BDTTag
 tagger = LoKi__BDTTag()
 tagger.NbvSelect = False
 tagger.Backwards = True
+
+from Configurables import ToolSvc, TriggerTisTos
+for stage in ('Hlt1', 'Hlt2', 'Strip/Phys'):
+    ToolSvc().addTool(TriggerTisTos, stage + "TriggerTisTos")
+    tool = getattr(ToolSvc(), stage + "TriggerTisTos")
+    tool.HltDecReportsLocation = '/Event/' + stage + '/DecReports'
+    tool.HltSelReportsLocation = '/Event/' + stage + '/SelReports'
 
 # Access to classes.
 from collections import OrderedDict
@@ -155,6 +162,7 @@ while evtmax < 0 or evtnum < evtmax:
     # Fill reconstructed.
     try:
         jets = tes[recJB.Output]
+        ntuple.addTrigger()
         for jet in jets:
             ntuple.addJet(jet); fill = True;
     except: pass

@@ -10,10 +10,11 @@ class Ntuple:
     """
     Class to store an ntuple.
     """
-    def __init__(self, name, tes, toolSvc, detSvc, jetPath, recSvrPath, recMuPath, hasL0=True):
+    def __init__(self, name, tes, toolSvc, detSvc, jetPath, recSvrPath, recMuPath, hasL0=True, addBackTags=False):
         """
         Initialize the ntuple with the needed tools.
         """
+        self.addBackTags = addBackTags
         self.hasL0 = hasL0
         ROOT.gInterpreter.ProcessLine(
             "#include \"/cvmfs/lhcb.cern.ch/lib/lhcb/HLT/"
@@ -25,6 +26,10 @@ class Ntuple:
             interface = 'IRelatedPVFinder')
         self.tagTool = toolSvc.create(
             'LoKi::BDTTag',
+            interface = 'IJetTagTool')
+        self.backTagTool = toolSvc.create(
+            'LoKi::BDTTag',
+            name = 'Backwards',
             interface = 'IJetTagTool')
         self.genTool = toolSvc.create(
             'DaVinciSmartAssociator',
@@ -73,12 +78,15 @@ class Ntuple:
         mom = ['p','pt','px', 'py', 'pz', 'e', 'dp', 'dpt', 'dpx', 'dpy', 'dpz', 'de']
         pos = ['x', 'y', 'z']
         cov = ['dx', 'dy', 'dz', 'chi2', 'ndof']
-        l0trig = ['%s_%s' % (line,dec) for line in ['l0_hadron','l0_photon','l0_electron','l0_muon','l0_dimuon','l0_ewmuon'] for dec in ['dec','tis','tos']]
-        hlt1trig = ["%s_%s" % (line,dec) for line in ['hlt1_track','hlt1_ditrack','hlt1_hiptmu'] for dec in ['dec','tis','tos']]
-        hlt2trig = ["%s_%s" % (line,dec) for line in ['hlt2_hiptmu'] for dec in ['dec','tis','tos']]
+        l0trig = ['l0_%s_%s' % (line,dec) for line in ['global','hadron','photon','electron','muon','dimuon','ewmuon'] for dec in ['dec','tis','tos']]
+        hlt1trig = ["hlt1_%s_%s" % (line,dec) for line in ['global','track','ditrack','hiptmu'] for dec in ['dec','tis','tos']]
+        hlt2trig = ["hlt2_%s_%s" % (line,dec) for line in ['global','hiptmu'] for dec in ['dec','tis','tos']]
         self.init('gen', ['idx_pvr', 'idx_jet', 'idx_prnt', 'pid', 'q'] + mom + pos + ['prnt_pid', 'res_pid', 'from_sig'])
         self.init('pvr', pos + cov)
         self.init('svr', ['idx_pvr', 'idx_jet'] + [
+                'idx_trk%i' % i for i in range(0, 10)] +
+                  mom + pos + ['dx', 'dy', 'dz', 'm', 'm_cor', 'm_cor_err', 'm_cor_err_full', 'fd_min', 'fd_chi2', 'chi2', 'ip_chi2', 'ip_chi2_sum', 'ip_chi2_min_trk', 'abs_q_sum', 'tau', 'ntrk', 'ntrk_jet', 'jet_dr', 'jet_pt', 'pass', 'bdt0', 'bdt1', 'in_mtr', 'backwards', 'nTBVs'] + l0trig + hlt1trig)
+        self.init('bck', ['idx_pvr', 'idx_jet'] + [
                 'idx_trk%i' % i for i in range(0, 10)] +
                   mom + pos + ['dx', 'dy', 'dz', 'm', 'm_cor', 'm_cor_err', 'm_cor_err_full', 'fd_min', 'fd_chi2', 'chi2', 'ip_chi2', 'ip_chi2_sum', 'ip_chi2_min_trk', 'abs_q_sum', 'tau', 'ntrk', 'ntrk_jet', 'jet_dr', 'jet_pt', 'pass', 'bdt0', 'bdt1', 'in_mtr', 'backwards', 'nTBVs'] + l0trig + hlt1trig)
         self.init('jet', ['idx_pvr', 'ntrk', 'nneu'] + mom + l0trig + hlt1trig)
@@ -96,7 +104,7 @@ class Ntuple:
         self.init('ds', ['idx_pvr','idx_jet','idx_jet_trk0', 'idx_jet_trk1', 'idx_jet_trk2', 'idx_jet_dr','dr_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 3)] + l0trig + hlt1trig)
         self.init('lc', ['idx_pvr','idx_jet','idx_jet_trk0', 'idx_jet_trk1', 'idx_jet_trk2', 'idx_jet_dr','dr_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 3)] + l0trig + hlt1trig)
         self.init('k3pi', ['idx_pvr','idx_jet','idx_jet_trk0', 'idx_jet_trk1', 'idx_jet_trk2', 'idx_jet_trk3', 'idx_jet_dr','dr_jet'] + mom + pos + ['m', 'ip', 'ip_chi2', 'vtx_chi2', 'vtx_ndof', 'fd', 'fd_chi2', 'tau', 'tau_err', 'tau_chi2', 'ntrk_jet'] + ['idx_trk%i' % i for i in range(0, 4)] + l0trig + hlt1trig)
-        self.init('evt', ['dec'] + ['%s_%s' % (k,l) for k in ['j1', 'j2'] for l in ['idx','dR','nsv','nmu','ntrk','nneu'] + mom ] + ['nbktrk','ndwntrk','nftclust','nghst','nitclust','nlngtrk','nmus0','nmus1','nmus2','nmus3','nmus4','nmutrk','notclust','npv','nrich1hit','nrich2hit','nspdhit','nttclust','nttrk','ntrk','nutclust','nuptrk','nveloclust','nvelotrk'])
+        self.init('evt', ['dec'] + ['%s_%s' % (k,l) for k in ['j1', 'j2'] for l in ['idx','dR','nsv','nmu','ntrk','nneu'] + mom ] + ['nbktrk','ndwntrk','nftclust','nghst','nitclust','nlngtrk','nmus0','nmus1','nmus2','nmus3','nmus4','nmutrk','notclust','npv','nrich1hit','nrich2hit','nspdhit','nttclust','nttrk','ntrk','nutclust','nuptrk','nveloclust','nvelotrk','runno','evtno','gpstime','tck'])
         self.ntuple['evt_pvr_n'] = array.array('d', [-1])
         self.ntuple['evt_trk_n'] = array.array('d', [-1])
         for key, val in self.ntuple.iteritems():
@@ -330,13 +338,22 @@ class Ntuple:
             vrs['hlt1_hiptmu_dec'] = dec.decision()
             vrs['hlt1_hiptmu_tis'] = dec.tis()
             vrs['hlt1_hiptmu_tos'] = dec.tos()
+            dec = self.hlt1Tool.triggerTisTos("Hlt1Global")
+            vrs['hlt1_global_dec'] = dec.decision()
+            vrs['hlt1_global_tis'] = dec.tis()
+            vrs['hlt1_global_tos'] = dec.tos()
             self.hlt2Tool.setOfflineInput()
             self.hlt2Tool.addToOfflineInput(obj)
             dec = self.hlt2Tool.triggerTisTos(obj,"Hlt2SingleMuonHighPTDecision")
             vrs['hlt2_hiptmu_dec'] = dec.decision()
             vrs['hlt2_hiptmu_tis'] = dec.tis()
             vrs['hlt2_hiptmu_tos'] = dec.tos()
+            dec = self.hlt2Tool.triggerTisTos("Hlt2Global")
+            vrs['hlt2_global_dec'] = dec.decision()
+            vrs['hlt2_global_tis'] = dec.tis()
+            vrs['hlt2_global_tos'] = dec.tos()
         except:
+            raise#TODO
             pass
         if not self.hasL0: return
         try:
@@ -366,7 +383,12 @@ class Ntuple:
             vrs['l0_ewmuon_dec'] = dec.decision()
             vrs['l0_ewmuon_tis'] = dec.tis()
             vrs['l0_ewmuon_tos'] = dec.tos()
+            dec = self.l0Tool.triggerTisTos("L0Global")
+            vrs['l0_global_dec'] = dec.decision()
+            vrs['l0_global_tis'] = dec.tis()
+            vrs['l0_global_tos'] = dec.tos()
         except:
+            raise#TODO
             pass
 
     def addZ(self, obj, pre="z0"):
@@ -416,6 +438,7 @@ class Ntuple:
                 return True
 
         except:
+            print("fail Z")
             pass
 
         return False
@@ -429,6 +452,7 @@ class Ntuple:
             return True
 
         except:
+            print("fail W")
             pass
         return False
 
@@ -477,6 +501,7 @@ class Ntuple:
 
             self.fill(pre, vrs = vrs)
         except:
+            print("fail D")
             pass
 
     def addTrigger(self, pre = 'evt'):
@@ -592,7 +617,7 @@ class Ntuple:
 
                 self.fill(pre, vrs = vrs)
 
-    def addGen(self, obj, jet = -1, pre = 'gen', par = None):
+    def addGen(self, obj, jet = -1, pre = 'gen', par = None, upwards=False):
         key = self.key(obj)
         if key in self.saved[pre]: return self.saved[pre][key]
         parent = obj.mother()
@@ -605,7 +630,6 @@ class Ntuple:
         fromSig=0
         if obj.fromSignal(): fromSig = 1
         vrs = {}
-        idx = len(self.saved[pre])
         self.fillPid(obj.particleID(), vrs)
         self.fillMom(obj.momentum(), vrs)
         self.fillPos(obj.originVertex(), vrs)
@@ -617,25 +641,28 @@ class Ntuple:
         if parent:
             parKey = self.key(parent)
             if parKey in self.saved[pre]: parIdx = self.saved[pre][parKey]
+            else: parIdx = self.addGen(parent, upwards=True)#TODO
             vrs['idx_prnt'] = parIdx
             vrs['prnt_pid'] = parent.particleID().pid()
+        idx = len(self.saved[pre])
         self.saved[pre][key] = idx
         self.fill(pre, vrs = vrs)
         #also print immediate decay products of heavy hadrons
-        pid = obj.particleID()
-        if pid.isHadron() and (pid.hasCharm() or pid.hasBottom()):
-            if pid.abspid() in self.Ds:
-                for part in self.finalChildren(obj)[0]:
-                    self.addGen(part,par=obj)
-            else:
+        if not upwards:
+            pid = obj.particleID()
+            if pid.isHadron() and (pid.hasCharm() or pid.hasBottom()):
+                if pid.abspid() in self.Ds:
+                    for part in self.finalChildren(obj)[0]:
+                        self.addGen(part,par=obj)
+                else:
+                    for part in self.children(obj):
+                        self.addGen(part)
+            if pid.pid() == 23:
                 for part in self.children(obj):
                     self.addGen(part)
-        if pid.pid() == 23:
-            for part in self.children(obj):
-                self.addGen(part)
-            #for vtx in obj.endVertices():
-            #    for part in vtx.products():
-            #        self.addGen(part)
+                #for vtx in obj.endVertices():
+                #    for part in vtx.products():
+                #        self.addGen(part)
         return idx
     def addPvr(self, obj, pre = 'pvr'):
         key = self.key(obj)
@@ -663,7 +690,12 @@ class Ntuple:
 #        self.fill(pre, vrs = vrs)
     def addTags(self, obj, jet = -1, pre = 'svr'):
         tags = STD.map('string', 'double')()
-        if not self.tagTool.calculateJetProperty(obj, tags): return
+        if pre == 'bck':
+            if not self.backTagTool.calculateJetProperty(obj, tags): return
+            #pre = 'svr'
+        else:
+            if not self.tagTool.calculateJetProperty(obj, tags): return
+        #if not self.tagTool.calculateJetProperty(obj, tags): return
         ntag = int(tags['Tag'])
         for itag in range(0, ntag):
             vrs = {}
@@ -726,6 +758,8 @@ class Ntuple:
         vrs['ntrk'] = len(trks)
         vrs['nneu'] = nneu
         self.addTags(obj, idx)
+        if self.addBackTags:
+            self.addTags(obj, idx,'bck') #turn on here to have backwards-SV tags in the same tuple
         self.fill(pre, vrs = vrs)
     def addNeu(self, obj, jet = -1, pre = 'neu'):
         vrs = {}
@@ -780,5 +814,14 @@ class Ntuple:
         vrs['nuptrk'] = s.info(s.nUpstreamTracks,-1)
         vrs['nveloclust'] = s.info(s.nVeloClusters,-1)
         vrs['nvelotrk'] = s.info(s.nVeloTracks,-1)
+        try:
+            s = self.tes[LHCB.ODINLocation.Default]
+            vrs['evtno'] = s.eventNumber()
+            vrs['runno'] = s.runNumber()
+            vrs['gpstime'] = s.gpsTime()
+            vrs['tck'] = s.triggerConfigurationKey()
+        except:
+            print("addEventInfo : failed to get ODIN")
+            pass
         self.fill(pre, vrs = vrs)
 

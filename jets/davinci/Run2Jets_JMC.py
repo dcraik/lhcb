@@ -7,18 +7,19 @@ from GaudiKernel import SystemOfUnits as Units
 Type     = 'MC'
 JetPtMin = 10 * Units.GeV
 
-### Data.
-#from GaudiConf import IOHelper
-#IOHelper('ROOT').inputFiles([
-##'/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00042952/0000/00042952_00000001_1.ldst' #/tmp/dcraik/00042952_00000002_1.ldst' #/data/dst/MC15.MD.49000004.1.00.dst'
-##OLD###    '/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00042982/0000/00042982_00000002_1.ldst'#light
-##OLD##    '/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00042950/0000/00042950_00000001_1.ldst'#charm
-##OLD###    '/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00042972/0000/00042972_00000003_1.ldst'#beauty
+## Data.
+from GaudiConf import IOHelper
+IOHelper('ROOT').inputFiles([
+#'/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00042952/0000/00042952_00000001_1.ldst' #/tmp/dcraik/00042952_00000002_1.ldst' #/data/dst/MC15.MD.49000004.1.00.dst'
+#OLD###    '/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00042982/0000/00042982_00000002_1.ldst'#light
+#OLD##    '/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00042950/0000/00042950_00000001_1.ldst'#charm
+#OLD###    '/eos/lhcb/grid/prod/lhcb/MC/Dev/LDST/00042972/0000/00042972_00000003_1.ldst'#beauty
 #'/eos/lhcb/grid/prod/lhcb/MC/2016/ALLSTREAMS.DST/00082635/0000/00082635_00000010_7.AllStreams.dst'#charm
-##'/eos/lhcb/grid/prod/lhcb/MC/2016/ALLSTREAMS.DST/00082653/0000/00082653_00000008_7.AllStreams.dst'#beauty
-#    ],
-#    clear = True)
-##Type = 'MC'
+#'/eos/lhcb/grid/prod/lhcb/MC/2016/ALLSTREAMS.DST/00082653/0000/00082653_00000008_7.AllStreams.dst'#beauty
+'/data/dijets/00092763_00000002_7.AllStreams.dst'#charm
+    ],
+    clear = True)
+#Type = 'MC'
 
 # Create the generated jets.
 from Configurables import McParticleFlow, McJetBuilder
@@ -120,7 +121,7 @@ tes   = gaudi.evtsvc()
 # Run.
 import sys, ROOT
 from math import floor
-evtmax = -1
+evtmax = 100#-1
 #try: evtmax = int(sys.argv[1])
 #except: evtmax = float('inf')
 evtnum = 0
@@ -149,17 +150,17 @@ while evtmax < 0 or evtnum < evtmax:
                 ntuple.addGen(gen)
         #ntuple.addGen(gens[0])
         #ntuple.addGen(gens[1])
-    except: pass
+    except: raise#pass
     try:
         for gen in gens:
             pid = gen.particleID()
             if pid.isHadron() and (pid.hasCharm() or pid.hasBottom()):
                 ntuple.addGen(gen); fill = True
-    except: pass
+    except: raise#pass
     try:
         jets = tes[genJB.Output]
         for jet in jets: ntuple.addGen(jet); fill = True
-    except: pass
+    except: raise#pass
 
     # Fill reconstructed.
     try:
@@ -167,13 +168,20 @@ while evtmax < 0 or evtnum < evtmax:
         ntuple.addTrigger()
         for jet in jets:
             ntuple.addJet(jet); fill = True;
-    except: pass
+    except: raise#pass
 
     # fill other tracks
     try:
         for trk in tes['Phys/StdAllNoPIDsPions/Particles']:
             ntuple.addTrk(trk);
-    except: pass
+    except: raise#pass
+    #fill other true kaons, pions and protons
+    #try:
+    #    for gen in gens:
+    #        apid = abs(gen.particleID().pid())
+    #        if apid==211 or apid==321 or apid==2212:
+    #            ntuple.addGen(gen); fill = True
+    #except: pass
 
     # fill D's
     try:

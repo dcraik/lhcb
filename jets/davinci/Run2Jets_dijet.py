@@ -5,17 +5,17 @@ sys.path.append('.')
 from PhysConf.Filters import LoKi_Filters
 fltrs = LoKi_Filters (
 ####DiJet*
-#    STRIP_Code = """
-#   HLT_PASS_RE ( 'StrippingHltQEEJetsDiJet.*LineDecision'    )
-#   """
-#    )
-####DiJetSV{,HighPt,LowPt}
     STRIP_Code = """
-   HLT_PASS_RE ( 'StrippingHltQEEJetsDiJetSVLineDecision' )
-   | HLT_PASS_RE ( 'StrippingHltQEEJetsDiJetSVHighPtLineDecision' )
-   | HLT_PASS_RE ( 'StrippingHltQEEJetsDiJetSVLowPtLineDecision' )
+   HLT_PASS_RE ( 'StrippingHltQEEJetsDiJet.*LineDecision'    )
    """
     )
+####DiJetSV{,HighPt,LowPt}
+#    STRIP_Code = """
+#   HLT_PASS_RE ( 'StrippingHltQEEJetsDiJetSVLineDecision' )
+#   | HLT_PASS_RE ( 'StrippingHltQEEJetsDiJetSVHighPtLineDecision' )
+#   | HLT_PASS_RE ( 'StrippingHltQEEJetsDiJetSVLowPtLineDecision' )
+#   """
+#    )
 ####DiJetSV*
 #    STRIP_Code = """
 #   HLT_PASS_RE ( 'StrippingHltQEEJetsDiJetSV.*LineDecision' )
@@ -36,7 +36,7 @@ JetPtMin = 10 * Units.GeV
 
 ## Data.
 #from GaudiConf import IOHelper
-#IOHelper('ROOT').inputFiles(['/eos/lhcb/grid/prod/lhcb/LHCb/Collision16/BHADRONCOMPLETEEVENT.DST/00069603/0000/00069603_00001488_1.bhadroncompleteevent.dst'],#/eos/lhcb/grid/prod/lhcb/LHCb/Collision16/BHADRONCOMPLETEEVENT.DST/00059907/0001/00059907_00010184_1.bhadroncompleteevent.dst'],#/tmp/dcraik/00042952_00000002_1.ldst'], #/data/dst/MC15.MD.49000004.1.00.dst'],
+#IOHelper('ROOT').inputFiles(['/data/dijets/00069603_00000642_1.bhadroncompleteevent.dst'],
 #                            clear = True)
 ##Type = 'MC'
 
@@ -133,6 +133,9 @@ LumiIntegrateFSR('IntegrateBeamCrossing').SubtractBXTypes = ['None']
 from Configurables import LoKi__BDTTag
 tagger = LoKi__BDTTag()
 tagger.NbvSelect = False
+tagger = LoKi__BDTTag("Backwards")
+tagger.NbvSelect = False
+tagger.Backwards = True
 
 from Configurables import ToolSvc, TriggerTisTos
 for stage in ('Hlt1', 'Hlt2', 'Strip/Phys'):
@@ -157,11 +160,11 @@ tes   = gaudi.evtsvc()
 # Run.
 import sys, ROOT
 from math import floor
-evtmax = -1
+evtmax = -1#1000#-1
 #try: evtmax = int(sys.argv[1])
 #except: evtmax = float('inf')
 evtnum = 0
-ntuple = Ntuple('output.root', tes, gaudi.toolsvc(), gaudi.detSvc(), recJB.Output, recSVs.outputLocation(), recMus.algorithm().Output)
+ntuple = Ntuple('output.root', tes, gaudi.toolsvc(), gaudi.detSvc(), recJB.Output, recSVs.outputLocation(), recMus.algorithm().Output, addBackTags=True)
 while evtmax < 0 or evtnum < evtmax:
     gaudi.run(1)
     if not bool(tes['/Event']): break
@@ -217,33 +220,57 @@ while evtmax < 0 or evtnum < evtmax:
     # fill D's
     try:
         jpsis = tes[recJpsi.algorithm().Output]
+        p2pvTable = tes[recJpsi.algorithm().Output[:-1]+'2VertexRelations']
         for jpsi in jpsis:
-            ntuple.addDHad(jpsi,"jpsi")
+            relPVs = p2pvTable.relations(jpsi)
+            bestVertex = relPVs.back().to()
+            if relPVs.size()>1: print evtnum, relPVs.size()
+            ntuple.addDHad(jpsi,"jpsi",bestVertex)
     except: pass
     try:
         d0s = tes[recD0.algorithm().Output]
+        p2pvTable = tes[recD0.algorithm().Output[:-1]+'2VertexRelations']
         for d0 in d0s:
-            ntuple.addDHad(d0,"d0")
+            relPVs = p2pvTable.relations(d0)
+            bestVertex = relPVs.back().to()
+            if relPVs.size()>1: print evtnum, relPVs.size()
+            ntuple.addDHad(d0,"d0",bestVertex)
     except: pass
     try:
         dps = tes[recDp.algorithm().Output]
+        p2pvTable = tes[recDp.algorithm().Output[:-1]+'2VertexRelations']
         for dp in dps:
-            ntuple.addDHad(dp,"dp")
+            relPVs = p2pvTable.relations(dp)
+            bestVertex = relPVs.back().to()
+            if relPVs.size()>1: print evtnum, relPVs.size()
+            ntuple.addDHad(dp,"dp",bestVertex)
     except: pass
     try:
         dss = tes[recDs.algorithm().Output]
+        p2pvTable = tes[recDs.algorithm().Output[:-1]+'2VertexRelations']
         for ds in dss:
-            ntuple.addDHad(ds,"ds")
+            relPVs = p2pvTable.relations(ds)
+            bestVertex = relPVs.back().to()
+            if relPVs.size()>1: print evtnum, relPVs.size()
+            ntuple.addDHad(ds,"ds",bestVertex)
     except: pass
     try:
         lcs = tes[recLc.algorithm().Output]
+        p2pvTable = tes[recLc.algorithm().Output[:-1]+'2VertexRelations']
         for lc in lcs:
-            ntuple.addDHad(lc,"lc")
+            relPVs = p2pvTable.relations(lc)
+            bestVertex = relPVs.back().to()
+            if relPVs.size()>1: print evtnum, relPVs.size()
+            ntuple.addDHad(lc,"lc",bestVertex)
     except: pass
     try:
         d0s = tes[recD02K3pi.algorithm().Output]
+        p2pvTable = tes[recD02K3pi.algorithm().Output[:-1]+'2VertexRelations']
         for d0 in d0s:
-            ntuple.addDHad(d0,"k3pi")
+            relPVs = p2pvTable.relations(d0)
+            bestVertex = relPVs.back().to()
+            if relPVs.size()>1: print evtnum, relPVs.size()
+            ntuple.addDHad(d0,"k3pi",bestVertex)
     except: pass
 
     # Fill the ntuple.

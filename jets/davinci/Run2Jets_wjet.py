@@ -7,6 +7,7 @@ from PhysConf.Filters import LoKi_Filters
 fltrs = LoKi_Filters (
     STRIP_Code = """
     HLT_PASS_RE ( 'StrippingWMu.*' )
+   | HLT_PASS_RE ( 'StrippingZ02MuMu.*' )
     """
     )
 
@@ -31,6 +32,7 @@ from commonSelections import *
 
 from PhysSelPython.Wrappers import SelectionSequence
 W_seq = SelectionSequence('W_Seq', TopSelection=Ws)
+Z_seq = SelectionSequence('Z_Seq', TopSelection=Zs)
 
 # Create the generated jets.
 from Configurables import McParticleFlow, McJetBuilder
@@ -59,6 +61,7 @@ recPF = HltParticleFlow('recPF')
 recPF.Inputs = [
     #['Particle',       'daughters', 'Phys/Z02MuMuLine/Particles'],
     ['Particle',       'particle', Ws.outputLocation()],
+    ['Particle',       'daughters', Zs.outputLocation()],
     ['ProtoParticle',  'best',     'Rec/ProtoP/Charged'],
     ['ProtoParticle',  'gamma',    'Rec/ProtoP/Neutrals']
     ]
@@ -95,6 +98,7 @@ DaVinci().Simulation = False
 DaVinci().Lumi = True
 DaVinci().TupleFile = "LumiTuple.root"
 DaVinci().appendToMainSequence([W_seq.sequence()])
+DaVinci().appendToMainSequence([Z_seq.sequence()])
 DaVinci().appendToMainSequence([recPF, recJB])
 #DaVinci().appendToMainSequence([recSVs_seq.sequence(), recMus_seq.sequence()])
 DaVinci().appendToMainSequence([Jpsi_seq.sequence(), D0_seq.sequence(), Dp_seq.sequence(), Ds_seq.sequence(),  Lc_seq.sequence(), D02K3pi_seq.sequence()])
@@ -171,6 +175,13 @@ while evtmax < 0 or evtnum < evtmax:
     try:
         for w in tes[Ws.outputLocation()]:
             if ntuple.addW(w):
+                fill = True;
+    except: pass
+
+    ## fill Z
+    try:
+        for z in tes[Zs.outputLocation()]:
+            if ntuple.addZ(z):
                 fill = True;
     except: pass
 

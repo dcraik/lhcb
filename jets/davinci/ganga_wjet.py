@@ -1,7 +1,7 @@
 import sys
 
 if len(sys.argv)<4:
-    print "Usage: ", sys.argv[0], "<MagUp|MagDown> <2016|2017|2018> <note>"
+    print("Usage: ", sys.argv[0], "<MagUp|MagDown> <2016|2017|2018> <note>")
     sys.exit()
 polarity = str(sys.argv[1]) #MagDown, MagUp
 year = str(sys.argv[2]) #2016, 2017, 2018
@@ -16,8 +16,8 @@ if year=='2018':
     script=str('Run2Jets_wjet18.py')
 
 job_name = "RIIJ_Wjet" +str(note) + str(polarity) + str(year)
-print job_name
-print script
+print(job_name)
+print(script)
 
 #DV = GaudiExec(directory="~/DaVinciDev_v42r6p1")
 DV = GaudiExec(directory="/workspace/DaVinciDev_v44r9", platform="x86_64-slc6-gcc62-opt")
@@ -27,9 +27,9 @@ DV.useGaudiRun = False
 BK_locations = []
 
 if year=='2015':
-    BK_locations = ['/LHCb/Collision15/Beam6500GeV-VeloClosed-'+polarity+'/Real Data/Reco15a/Stripping24r1/90000000/EW.DST']
+    BK_locations = ['/LHCb/Collision15/Beam6500GeV-VeloClosed-'+polarity+'/Real Data/Reco15a/Stripping24r2/90000000/EW.DST']
 elif year=='2016':
-    BK_locations = ['/LHCb/Collision16/Beam6500GeV-VeloClosed-'+polarity+'/Real Data/Reco16/Stripping28r1/90000000/EW.DST']
+    BK_locations = ['/LHCb/Collision16/Beam6500GeV-VeloClosed-'+polarity+'/Real Data/Reco16/Stripping28r2/90000000/EW.DST']
 elif year=='2017':
     BK_locations = ['/LHCb/Collision17/Beam6500GeV-VeloClosed-'+polarity+'/Real Data/Reco17/Stripping29r2/90000000/EW.DST']
 elif year=='2018':
@@ -43,7 +43,7 @@ if note not in ["test","testgrid"]:
     for path in BK_locations:
         bk.path = path
         tmp = bk.getDataset()
-        print path, len(tmp.files)
+        print(path, len(tmp.files))
         if len(tmp.files) > 0:
             data.extend( tmp )
 

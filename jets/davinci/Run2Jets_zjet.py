@@ -16,11 +16,11 @@ from GaudiKernel import SystemOfUnits as Units
 JetPtMin = 10 * Units.GeV
 
 
-## Data.
-#from GaudiConf import IOHelper
-#IOHelper('ROOT').inputFiles(['/eos/lhcb/grid/prod/lhcb/LHCb/Collision16/EW.DST/00069603/0000/00069603_00005740_1.ew.dst'],#'/eos/lhcb/grid/prod/lhcb/LHCb/Collision16/EW.DST/00061346/0000/00061346_00007712_1.ew.dst'],#/tmp/dcraik/00042952_00000002_1.ldst'], #/data/dst/MC15.MD.49000004.1.00.dst'],
-#                            clear = True)
-##Type = 'MC'
+# Data.
+from GaudiConf import IOHelper
+IOHelper('ROOT').inputFiles(['/data/zjet/00103400_00000032_1.ew.dst'],#'/eos/lhcb/grid/prod/lhcb/LHCb/Collision16/EW.DST/00069603/0000/00069603_00005740_1.ew.dst'],#'/eos/lhcb/grid/prod/lhcb/LHCb/Collision16/EW.DST/00061346/0000/00061346_00007712_1.ew.dst'],#/tmp/dcraik/00042952_00000002_1.ldst'], #/data/dst/MC15.MD.49000004.1.00.dst'],
+                            clear = True)
+#Type = 'MC'
 
 from StandardParticles import StdAllNoPIDsMuons as loosemuons
 from PhysSelPython.Wrappers import SimpleSelection, MergedSelection, DataOnDemand, Selection
@@ -109,6 +109,9 @@ LumiIntegrateFSR('IntegrateBeamCrossing').SubtractBXTypes = ['None']
 from Configurables import LoKi__BDTTag
 tagger = LoKi__BDTTag()
 tagger.NbvSelect = False
+tagger = LoKi__BDTTag("Backwards")
+tagger.NbvSelect = False
+tagger.Backwards = True
 
 from Configurables import ToolSvc, TriggerTisTos
 for stage in ('Hlt1', 'Hlt2', 'Strip/Phys'):
@@ -133,7 +136,7 @@ tes   = gaudi.evtsvc()
 # Run.
 import sys, ROOT
 from math import floor
-evtmax = -1
+evtmax = 10000#-1
 #try: evtmax = int(sys.argv[1])
 #except: evtmax = float('inf')
 evtnum = 0
