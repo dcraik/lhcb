@@ -825,6 +825,7 @@ TH1D* MCJets::unfold(TH1D* input, jetType type, uint ybin) {
 	respMat->GetXaxis()->SetTitle("#it{p}_{T}^{reco}(jet) [MeV/#it{c}]");
 	respMat->GetYaxis()->SetTitle("#it{p}_{T}^{true}(jet) [MeV/#it{c}]");
 	respMat->SetTitle("");
+	respMat->Draw("colz");
 	respMat->Draw("col");
 	c.UseCurrentStyle();
 	c.SetRightMargin(0.10);
@@ -990,7 +991,7 @@ TH2D* MCJets::unfold(TH2D* input, jetType type, bool useYBins) {
 
 bool MCJets::getTruth(TString file, TH1D* true4, TH1D* true5, TH1D* trueD04, TH1D* trueD05, TH1D* trueD0Sel4, TH1D* trueD0Sel5, TH1D* trueSV4, TH1D* trueSV5, bool useTruePT) {
 	std::cout << "INFO in MCJets::getTruth: getting truth information" << std::endl;
-	if(!true4 || !true5 || !trueD04 || !trueD05 || !trueD0Sel4 || !trueD0Sel5 || !trueSV4 || !trueSV5) return false;
+	//if(!true4 || !true5 || !trueD04 || !trueD05 || !trueD0Sel4 || !trueD0Sel5 || !trueSV4 || !trueSV5) return false;
 
 	//check if we already calculated these
 	TString histsFileName = gSaveDir+"/truthHists_"+_name+"_"+file;
@@ -1005,6 +1006,7 @@ bool MCJets::getTruth(TString file, TH1D* true4, TH1D* true5, TH1D* trueD04, TH1
 		//if one fails then we need to go through and recreate them
 		bool good(true);
 		for(auto hist: hists) {
+			if(!hist) continue;
 			TString name = hist->GetName();
 			TH1D* saved = static_cast<TH1D*>(histsFile->Get(name));
 			if(!saved) {
@@ -1031,6 +1033,7 @@ bool MCJets::getTruth(TString file, TH1D* true4, TH1D* true5, TH1D* trueD04, TH1
 	}
 
 	for(auto hist: hists) {
+		if(!hist) continue;
 		hist->Reset();
 	}
 
@@ -1136,13 +1139,13 @@ bool MCJets::getTruth(TString file, TH1D* true4, TH1D* true5, TH1D* trueD04, TH1
 
 		//b-jets
 		if(JetTRUEb && JetTrueBPT>5e3) {
-			true5->Fill(JetPT,weight);
+			if(true5) true5->Fill(JetPT,weight);
 			//b->D0
 			if(JetTrueD0) {
 				for(unsigned int id=0; id<TRUEDID->size(); ++id) {
 					if(TMath::Abs(TRUEDID->at(id))!=421.) continue;
 					if(TRUEDFROMB->at(id)) {
-						trueD05->Fill(JetPT,weight);
+						if(trueD05) trueD05->Fill(JetPT,weight);
 						//TODO//if(D0M->size()>0) trueD0Sel5->Fill(JetPT,weight);
 						//TODO//if(D0M->size()>0 && D0TRUEIDX->at(0) == id) trueD0Sel5->Fill(JetPT,weight);
 						for(unsigned int irec=0; irec<D0TRUEIDX->size(); ++irec) {
@@ -1156,7 +1159,7 @@ bool MCJets::getTruth(TString file, TH1D* true4, TH1D* true5, TH1D* trueD04, TH1
 
 							if(D0KPNNK->at(irec)<0.2 && D0P0.Pt()<25000. && D0P0.Mag()<500000.) continue; //kaon PID turned off for high p or pT
 
-							if(D0TRUEIDX->at(irec) == id) trueD0Sel5->Fill(JetPT,weight);
+							if(trueD0Sel5 && D0TRUEIDX->at(irec) == id) trueD0Sel5->Fill(JetPT,weight);
 						}
 						//Note: the actual requirement in data is somewhere in between these last two options
 						// We only keep one D0 candidate but we apply some cuts before making that choice so 
@@ -1168,17 +1171,17 @@ bool MCJets::getTruth(TString file, TH1D* true4, TH1D* true5, TH1D* trueD04, TH1
 			//b->SV
 			if(true) {
 			//if(JetTrueBSV) { //Note: turned off the requirement for the SV to be "real"
-				if(SVN->size()>0) trueSV5->Fill(JetPT,weight);
+				if(trueSV5 && SVN->size()>0) trueSV5->Fill(JetPT,weight);
 			}
 		//c-jets
 		} else if(JetTRUEc && JetTrueDPT>5e3) {
-			true4->Fill(JetPT,weight);
+			if(true4) true4->Fill(JetPT,weight);
 			//c->D0
 			if(JetTrueD0) {
 				for(unsigned int id=0; id<TRUEDID->size(); ++id) {
 					if(TMath::Abs(TRUEDID->at(id))!=421.) continue;
 					if(!TRUEDFROMB->at(id)) {
-						trueD04->Fill(JetPT,weight);
+						if(trueD04) trueD04->Fill(JetPT,weight);
 						//TODO//if(D0M->size()>0) trueD0Sel4->Fill(JetPT,weight);
 						//TODO//if(D0M->size()>0 && D0TRUEIDX->at(0) == id) trueD0Sel4->Fill(JetPT,weight);
 						for(unsigned int irec=0; irec<D0TRUEIDX->size(); ++irec) {
@@ -1192,7 +1195,7 @@ bool MCJets::getTruth(TString file, TH1D* true4, TH1D* true5, TH1D* trueD04, TH1
 
 							if(D0KPNNK->at(irec)<0.2 && D0P0.Pt()<25000. && D0P0.Mag()<500000.) continue; //kaon PID turned off for high p or pT
 
-							if(D0TRUEIDX->at(irec) == id) trueD0Sel4->Fill(JetPT,weight);
+							if(trueD0Sel4 && D0TRUEIDX->at(irec) == id) trueD0Sel4->Fill(JetPT,weight);
 						}
 						//Note: the actual requirement in data is somewhere in between these last two options
 						// We only keep one D0 candidate but we apply some cuts before making that choice so 
@@ -1204,21 +1207,21 @@ bool MCJets::getTruth(TString file, TH1D* true4, TH1D* true5, TH1D* trueD04, TH1
 			//c->SV
 			if(true) {
 			//if(JetTrueDSV) { //Note: turned off the requirement for the SV to be "real"
-				if(SVN->size()>0) trueSV4->Fill(JetPT,weight);
+				if(trueSV4 && SVN->size()>0) trueSV4->Fill(JetPT,weight);
 			}
 		}
 	}
 
 	histsFile = TFile::Open(histsFileName, "RECREATE");
 	histsFile->cd();
-	true4->Write();
-	true5->Write();
-	trueD04->Write();
-	trueD05->Write();
-	trueD0Sel4->Write();
-	trueD0Sel5->Write();
-	trueSV4->Write();
-	trueSV5->Write();
+	if(true4) true4->Write();
+	if(true5) true5->Write();
+	if(trueD04) trueD04->Write();
+	if(trueD05) trueD05->Write();
+	if(trueD0Sel4) trueD0Sel4->Write();
+	if(trueD0Sel5) trueD0Sel5->Write();
+	if(trueSV4) trueSV4->Write();
+	if(trueSV5) trueSV5->Write();
 	histsFile->Close();
 
 	dm->reset();

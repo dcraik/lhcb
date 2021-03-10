@@ -337,9 +337,15 @@ int main(int argc, char** argv) {
 		dataIsResampledMC=true;
 
 		dm->loadDataset("light",   "T",std::vector<TString>{lightSimFile});
-		dm->loadDataset("!charm", "T",std::vector<TString>{charmSimFile},200000);
-		dm->loadDataset("!beauty","T",std::vector<TString>{beautySimFile},200000);
-		dm->buildDataset("data",   "T",std::vector<TString>{"!charm","!beauty"});
+		//dm->loadDataset("!charm", "T",std::vector<TString>{charmSimFile},200000);
+		//dm->loadDataset("!beauty","T",std::vector<TString>{beautySimFile},200000);
+		dm->loadDataset("charm", "T",std::vector<TString>{charmSimFile});
+		dm->loadDataset("beauty","T",std::vector<TString>{beautySimFile});
+		dm->loadDataset("datacharm", "T",std::vector<TString>{scaledCharmSimFile},200000);
+		dm->loadDataset("databeauty","T",std::vector<TString>{scaledBeautySimFile},200000);
+		dm->loadDataset("datalight", "T",std::vector<TString>{lightDataFile},300000);
+		dm->buildDataset("data",   "T",std::vector<TString>{"datacharm","databeauty","datalight"});
+		dm->loadDataset("back", "T",std::vector<TString>{lightDataFile});
 	} else {
 		if(file.BeginsWith("sim")) {
 			dataIsMC=true;
@@ -1119,6 +1125,37 @@ int main(int argc, char** argv) {
 			std::cout << std::endl;
 		}
 	}
+
+	//ANA D0 YIELDS TABLE 
+	std::cout << std::endl;
+	std::cout << "ANA TABLES" << std::endl;
+	std::cout << std::endl;
+	printf("$N_{\\rm prmpt}$ ");
+	for (unsigned int i=1; i<=npt; ++i) printf("& $%5.0f\\pm%3.0f$ ",recoD0Sel4.GetBinContent(i), recoD0Sel4.GetBinError(i));
+	printf("\\\\\n$N_{\\rm displ}$ ");
+	for (unsigned int i=1; i<=npt; ++i) printf("& $%5.0f\\pm%3.0f$ ",recoD0Sel5.GetBinContent(i), recoD0Sel5.GetBinError(i));
+	printf("\\\\\n\\midrule\n$w_{\\rm prmpt}$ ");
+	for (unsigned int i=1; i<=npt; ++i) printf("& $%6.3f\\pm%6.3f$ ",recoD0Weight4.GetBinContent(i), recoD0Weight4.GetBinError(i));
+	printf("\\\\\n$w_{\\rm displ}$ ");
+	for (unsigned int i=1; i<=npt; ++i) printf("& $%6.3f\\pm%6.3f$ ",recoD0Weight5.GetBinContent(i), recoD0Weight5.GetBinError(i));
+	printf("\\\\\n\\midrule\n$N_{\\rm prmpt}^{\\rm corr}$ ");
+	for (unsigned int i=1; i<=npt; ++i) printf("& $%5.0f\\pm%3.0f$ ",recoD04_aveWeight.GetBinContent(i), recoD04_aveWeight.GetBinError(i));
+	printf("\\\\\n$N_{\\rm displ}^{\\rm corr}$ ");
+	for (unsigned int i=1; i<=npt; ++i) printf("& $%5.0f\\pm%3.0f$ ",recoD05_aveWeight.GetBinContent(i), recoD05_aveWeight.GetBinError(i));
+	printf("\\\\\n");
+	std::cout << std::endl;
+	std::cout << std::endl;
+
+	//ANA SV YIELDS TABLE
+	printf("$N_{\\cquark}$ ");
+	for (unsigned int i=1; i<=npt; ++i) printf("& $%6.0f\\pm%3.0f$ ",recoSV4.GetBinContent(i), recoSV4.GetBinError(i));
+	printf("\\\\\n$N_{\\bquark}$ ");
+	for (unsigned int i=1; i<=npt; ++i) printf("& $%6.0f\\pm%3.0f$ ",recoSV5.GetBinContent(i), recoSV5.GetBinError(i));
+	printf("\\\\\n");
+	std::cout << std::endl;
+	std::cout << std::endl;
+
+	//ANA naive tagging effs
 
 	//inputs for python script
 	fout.open(savedir+"/resultsOutput.log");

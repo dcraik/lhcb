@@ -55,6 +55,7 @@ TString unfoldingMode("bayes");
 double unfoldingReg(1.);
 double jetEnergyScale(0.95);
 double jetEnergySmear(0.14);
+double tagCorrFactor(0.985);
 
 void fillJetsHist(TH2D* h, bool isMC) {
 	DatasetManager* dm = DatasetManager::getInstance();
@@ -107,6 +108,7 @@ int main(int argc, char** argv) {
 	SVFitterOptions svOpts;
 	bool useBackDataForLightShape;
 	bool splitUnfoldingInY;
+	std::string ptCorrFile;
 	TString inputDir;
 	// Declare the supported options.
 	po::options_description general_options("General");
@@ -118,6 +120,8 @@ int main(int argc, char** argv) {
 	    ("y-bins", po::value<std::vector<double>>(&yBinBoundaries)->multitoken()->zero_tokens()->composing()->default_value(std::vector<double>{2.,2.5,3.,3.5,4.5}, "2., 2.5, 3., 3.5, 4.5"), "boundaries for rapidity bins")
 	    ("input-dir", po::value<std::string>(), "directory containing tagging efficiencies file and enhanced SV templates (defaults to dir)")
 	    ("tag-eff-file", po::value<std::string>(), "input tagging efficiencies")
+	    ("tag-corr-factor", po::value<double>(&tagCorrFactor)->default_value(0.985), "scale factor to correct tagging efficiencies by")
+	    ("pt-corr-file",po::value<std::string>(&ptCorrFile)->default_value("")->implicit_value("ptCorrFactorsZj.root"), "File to take hadron-pT correction factors from")
 	;
 	po::options_description svfit_options("SV fit options");
 	svfit_options.add_options()
@@ -131,6 +135,8 @@ int main(int argc, char** argv) {
 	    ("sv-mistag-shape-from-back", po::value<bool>(&useBackDataForLightShape)->default_value(false)->implicit_value(true), "use the back-tagged data file for the mis-tag SV shape (instead of simulation)")
 	    ("sv-light-yield-float", po::value<bool>(&svOpts.lightYieldFloat)->default_value(false)->implicit_value(true), "float the mistag yields")
 	    ("sv-light-yield-scale", po::value<double>(&svOpts.lightYieldScale)->default_value(1.), "scale the fixed mistag yields by a constant factor")
+	    ("sv-light-yield-correct", po::value<bool>(&svOpts.correctBackTagEff)->default_value(false)->implicit_value(true), "whether to correct the fixed mistag yield for backwards tagging efficiencies of light, charm and beauty jets")
+	    ("sv-light-yield-from-file", po::value<std::string>(&svOpts.useBackTagEffFromFile)->default_value(""), "file to load mistag yield constraints from")
 	;
 	po::options_description unfold_options("Unfolding options");
 	unfold_options.add_options()
@@ -393,6 +399,7 @@ int main(int argc, char** argv) {
 
 	MCJets mcj("Zj");
 	mcj.setInputs("light","charm","beauty","","");
+	if(ptCorrFile!="") mcj.setPtCorrFactorsFile(ptCorrFile);
 	//mcj.setInputTruePtWeights(MCJets::jetRecoSV4,jetTruePtWeights);
 	//mcj.setInputTruePtWeights(MCJets::jetRecoSV5,jetTruePtWeights);
 	if(!mcj.weightMC(MCJets::jetRecoSV4,&hE4)) return 1;
@@ -565,6 +572,8 @@ int main(int argc, char** argv) {
 			hUJNoErr.SetBinError(i+1,j+1,0.);
 		}
 	}
+
+	hEc.Scale(tagCorrFactor);
 
 	//hZ.Divide(&hJ);
 	//hCSS.Divide(&hC);

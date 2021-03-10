@@ -25,6 +25,8 @@ struct SVFitterOptions {
 	bool additiveMCorCorrectionFactor{false};
 	bool lightYieldFloat{false};
 	double lightYieldScale{1.};
+	bool correctBackTagEff{false};
+	std::string useBackTagEffFromFile{""};
 	bool runToyFits{false};
 };
 
@@ -100,6 +102,8 @@ class SVFitter {
 
 		bool _lightYieldFloat{false};
 		double _lightYieldScale{1.};
+		bool _correctBackTagEff{false};
+		TString _useBackTagEffFromFile{""};
 
 		bool _runToyFits{false};
 

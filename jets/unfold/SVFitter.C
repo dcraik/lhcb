@@ -37,6 +37,7 @@
 #include "RooSimultaneous.h"
 #include "RooThresholdCategory.h"
 
+#include "cloneHists.h"
 #include "outputFunctions.h"
 #include "DatasetManager.h"
 
@@ -73,6 +74,8 @@ void SVFitter::setOptions(SVFitterOptions& options) {
 	_additiveMCorCorrectionFactor = options.additiveMCorCorrectionFactor;
 	_lightYieldFloat      = options.lightYieldFloat;
 	_lightYieldScale      = options.lightYieldScale;
+	_correctBackTagEff    = options.correctBackTagEff;
+	_useBackTagEffFromFile = options.useBackTagEffFromFile;
 	_runToyFits           = options.runToyFits; 
 }
 
@@ -724,9 +727,40 @@ bool SVFitter::fitSVSim(double& NB, double& eB, double& NC, double& eC, double& 
 
 	//if we have backwards-tagged data and the yield is not being floated then fix the light background yield
 	double nLightBack(-1);
-	if(tb && !_lightYieldFloat) {
-		nLightBack = tb->GetEntries(cutStrData) * _lightYieldScale;
-		std::cout << "Fixing light yield to " << nLightBack << std::endl;
+	double fixedLightYield(-1), fixedLightErr(0.);
+	TFile* backScalesFile(0);
+	TH1D *backScaleLight(0), *backScaleCharm(0), *backScaleBeauty(0);
+	bool mistagConstraintSet(false);
+	if(_useBackTagEffFromFile!="") {
+				TFile* fConstr = TFile::Open(_useBackTagEffFromFile);
+				TH2D* hConstr = static_cast<TH2D*>(fConstr->Get("mistagConstraints"));
+				if(hConstr) {
+					fixedLightYield = hConstr->GetBinContent(binPT, binY);
+					fixedLightErr = hConstr->GetBinError(binPT, binY);
+					mistagConstraintSet = true;
+					std::cout << "Using pre-determined mis-tag yield constraint: " << fixedLightYield << "+/-" << fixedLightErr << std::endl;
+				}
+	}
+	if(!mistagConstraintSet) {
+		if(_correctBackTagEff) {
+			backScalesFile = TFile::Open("backTagFactors.root");
+			backScaleLight = static_cast<TH1D*>(backScalesFile->Get("backRatioLight"));
+			backScaleCharm = static_cast<TH1D*>(backScalesFile->Get("backRatioCharm"));
+			backScaleBeauty = static_cast<TH1D*>(backScalesFile->Get("backRatioBeauty"));
+		}
+		if(tb && !_lightYieldFloat) {
+			nLightBack = tb->GetEntries(cutStrData) * _lightYieldScale;
+			std::cout << "Backwards light-tag yield is " << nLightBack << std::endl;
+			if(backScaleLight && backScaleCharm && backScaleBeauty) {
+				std::cout << "Backwards/forwards tagging ratios found. Will correct yield constraint." << std::endl;
+				fixedLightYield = nLightBack / backScaleLight->GetBinContent(binPT);
+				fixedLightErr = fixedLightYield*TMath::Sqrt(1./nLightBack + TMath::Power(backScaleLight->GetBinError(binPT)/backScaleLight->GetBinContent(binPT),2.));
+			} else {
+				fixedLightYield = nLightBack;
+				fixedLightErr = TMath::Sqrt(nLightBack);
+			}
+			std::cout << "Fixing light yield to " << fixedLightYield << "+/-" << fixedLightErr << std::endl;
+		}
 	}
 
 	//std::cout << hSVN0.GetEntries() << " " << hSVN4.GetEntries() << " " << hSVN5.GetEntries() << " " << hSVND.GetEntries() << std::endl;
@@ -768,9 +802,9 @@ bool SVFitter::fitSVSim(double& NB, double& eB, double& NC, double& eC, double& 
 	RooRealVar yieldC(  "yieldC",   "yieldC",  0.3*Ntot, -0.02*Ntot, Ntot);
 	RooRealVar yieldQ(  "yieldQ",   "yieldQ",  0.2*Ntot, -0.02*Ntot, Ntot);
 
-	if(nLightBack>=0) {
+	if(fixedLightYield>=0) {
 		//TODO//yieldQ.setConstant(true);
-		yieldQ.setVal(nLightBack);
+		yieldQ.setVal(fixedLightYield);
 	}
 
 	RooRealVar SVMmin("SVMmin","",_mmin);
@@ -949,9 +983,10 @@ bool SVFitter::fitSVSim(double& NB, double& eB, double& NC, double& eC, double& 
 	if(_pdfCache.empty()) cachePDFs(&SVM, &ds, &data_pdf, "pdfB*,pdfC*");
 
 	RooProdPdf* data_pdf_constr(0);
-	if(nLightBack>=0) {
-		RooRealVar* yieldQmean = new RooRealVar("yieldQmean","",nLightBack);
-		RooRealVar* yieldQsigma = new RooRealVar("yieldQsigma","",TMath::Sqrt(nLightBack));
+	RooRealVar *yieldQmean(0), *yieldQsigma(0);
+	if(fixedLightYield>=0) {
+		yieldQmean = new RooRealVar("yieldQmean","",fixedLightYield);
+		yieldQsigma = new RooRealVar("yieldQsigma","",fixedLightErr);
 		RooGaussian* light_constr = new RooGaussian("light_constr","",yieldQ,*yieldQmean,*yieldQsigma);
 		data_pdf_constr = new RooProdPdf("data_pdf_constr","",RooArgList(data_pdf,*light_constr));
 	}
@@ -964,8 +999,54 @@ bool SVFitter::fitSVSim(double& NB, double& eB, double& NC, double& eC, double& 
 		std::cout << "ATTEMPT " << attempt << std::endl;
 		std::cout << "STARTING NQ=" << yieldQ.getVal() << ", NC=" << yieldC.getVal() << ", NB=" << yieldB.getVal() << std::endl;
 		if(r) delete r;
-		if(nLightBack>=0) {
+		if(fixedLightYield>=0) {
 			r = data_pdf_constr->fitTo( ds, RooFit::Extended(), RooFit::Save(), RooFit::NumCPU(4), RooFit::Range("FIT"), RooFit::Constrain(RooArgSet(yieldQ)));//TODO
+			//rerun with charm and beauty accounted for
+			if(backScaleLight && backScaleCharm && backScaleBeauty) {
+				for(int i=0; i<2; ++i) {
+					if(r->status()==0 && r->covQual()==3) {
+						gSystem->RedirectOutput(0);
+						Ntot = yieldB.getValV()+yieldC.getValV()+yieldQ.getValV();
+						NB = yieldB.getValV();
+						NC = yieldC.getValV();
+						NQ = yieldQ.getValV();
+						eB = yieldB.getError();
+						eC = yieldC.getError();
+						eQ = yieldQ.getError();
+						printf("% 6.0f\t% 6.0f+/-% 4.0f\t% 6.0f+/-% 4.0f\t% 6.0f+/-% 4.0f\n\n", Ntot, NB, eB, NC, eC, NQ, eQ);
+						delete r;
+						double backCorrC = yieldC.getVal() * backScaleCharm->GetBinContent(binPT);
+						double backCorrB = yieldB.getVal() * backScaleBeauty->GetBinContent(binPT);
+						double backErrC = backCorrC*TMath::Sqrt(TMath::Power(yieldC.getError()/yieldC.getVal(),2.) 
+								                      + TMath::Power(backScaleCharm->GetBinError(binPT)/backScaleCharm->GetBinContent(binPT),2.));
+						double backErrB = backCorrB*TMath::Sqrt(TMath::Power(yieldB.getError()/yieldB.getVal(),2.) 
+								                      + TMath::Power(backScaleBeauty->GetBinError(binPT)/backScaleBeauty->GetBinContent(binPT),2.));
+						std::cout << "Correcting for estimated backwards tagged charm (" << backCorrC << "+/-" << backErrC << ") and beauty (" << backCorrB << "+/-" << backErrB << ")" << std::endl;
+						double correctedLightBack = nLightBack - backCorrC - backCorrB;
+						double correctedErrBack = TMath::Sqrt( nLightBack + backErrC*backErrC + backErrB*backErrB);
+						if(correctedLightBack<0) correctedLightBack=0.;
+						fixedLightYield = correctedLightBack / backScaleLight->GetBinContent(binPT);
+						fixedLightErr = fixedLightYield*TMath::Sqrt(TMath::Power(correctedErrBack/correctedLightBack,2.) + TMath::Power(backScaleLight->GetBinError(binPT)/backScaleLight->GetBinContent(binPT),2.));
+						std::cout << "Fixing light yield to " << fixedLightYield << "+/-" << fixedLightErr << std::endl;
+						yieldQ.setVal(fixedLightYield);
+						yieldQmean->setVal(fixedLightYield);
+						yieldQsigma->setVal(fixedLightErr);
+						gSystem->RedirectOutput(gSaveDir+"/log/SV2D_"+_name+"_"+ptStr+"_fits.log","a");
+
+						r = data_pdf_constr->fitTo( ds, RooFit::Extended(), RooFit::Save(), RooFit::NumCPU(4), RooFit::Range("FIT"), RooFit::Constrain(RooArgSet(yieldQ)));//TODO
+					}
+				}
+				//save factors for use in systematics
+				TFile* fConstr = TFile::Open(gSaveDir+"/mistagYieldConstraints.root","UPDATE");
+				TH2D* hConstr = static_cast<TH2D*>(fConstr->Get("mistagConstraints"));
+				if(!hConstr) {
+					hConstr = cloneTH2D("mistagConstraints", _ptBins, _yBins);
+				}
+				hConstr->SetBinContent(binPT, binY, yieldQmean->getVal());
+				hConstr->SetBinError(binPT, binY, yieldQsigma->getVal());
+				hConstr->Write();
+				fConstr->Close();
+			}
 		} else {
 			r = data_pdf.fitTo( ds, RooFit::Extended(), RooFit::Save(), RooFit::NumCPU(4), RooFit::Range("FIT"));
 		}
