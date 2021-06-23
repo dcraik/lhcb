@@ -108,6 +108,7 @@ int main(int argc, char** argv) {
 	SVFitterOptions svOpts;
 	bool useBackDataForLightShape;
 	bool splitUnfoldingInY;
+	bool tagEffFileROOT;
 	std::string ptCorrFile;
 	TString inputDir;
 	// Declare the supported options.
@@ -120,6 +121,7 @@ int main(int argc, char** argv) {
 	    ("y-bins", po::value<std::vector<double>>(&yBinBoundaries)->multitoken()->zero_tokens()->composing()->default_value(std::vector<double>{2.,2.5,3.,3.5,4.5}, "2., 2.5, 3., 3.5, 4.5"), "boundaries for rapidity bins")
 	    ("input-dir", po::value<std::string>(), "directory containing tagging efficiencies file and enhanced SV templates (defaults to dir)")
 	    ("tag-eff-file", po::value<std::string>(), "input tagging efficiencies")
+	    ("tag-eff-file-is-root", po::value<bool>(&tagEffFileROOT)->default_value(true), "whether the tagging efficiencies are in a ROOT histogram format")
 	    ("tag-corr-factor", po::value<double>(&tagCorrFactor)->default_value(0.985), "scale factor to correct tagging efficiencies by")
 	    ("pt-corr-file",po::value<std::string>(&ptCorrFile)->default_value("")->implicit_value("ptCorrFactorsZj.root"), "File to take hadron-pT correction factors from")
 	;
@@ -414,60 +416,98 @@ int main(int argc, char** argv) {
 	bool usingDataEffsB(false);
 	double bfffErr(0.);
 	double bfffErrB(0.);
-	TFile* feff = TFile::Open(inputDir+"/"+tagEffFile);
-	if(feff) {
-		TH1D* h = static_cast<TH1D*>(feff->Get("tagEff4"));
-		if(h) {
-			if(h->GetNbinsX() == static_cast<int>(npt)) {
-				for(uint i=0; i<npt; ++i) {
-					for(uint j=0; j<nzy; ++j) {
-						hEc.SetBinContent(i+1,j+1,h->GetBinContent(i+1));
-						hEc.SetBinError(i+1,j+1,h->GetBinError(i+1));
-						hEcNoErr.SetBinContent(i+1,j+1,h->GetBinContent(i+1));
-						hEcNoErr.SetBinError(i+1,j+1,0.);
-					}
-				}
-				usingDataEffsC=true;
-				std::cout << "Will use tagging efficiencies from input data file" << std::endl;
-			}
-		}
-		h = static_cast<TH1D*>(feff->Get("tagEff5"));
-		if(h) {
-			if(h->GetNbinsX() == static_cast<int>(npt)) {
-				for(uint i=0; i<npt; ++i) {
-					for(uint j=0; j<nzy; ++j) {
-						hEb.SetBinContent(i+1,j+1,h->GetBinContent(i+1));
-						hEb.SetBinError(i+1,j+1,h->GetBinError(i+1));
-						hEbNoErr.SetBinContent(i+1,j+1,h->GetBinContent(i+1));
-						hEbNoErr.SetBinError(i+1,j+1,0.);
-					}
-				}
-				usingDataEffsB=true;
-				std::cout << "Will use tagging efficiencies from input data file" << std::endl;
-			}
-		}
-		TH1D* hbfff = static_cast<TH1D*>(feff->Get("bfffErr4"));
-		if(hbfff) {
-			bfffErr = hbfff->GetBinError(1);
-			for(uint i=0; i<npt; ++i) {
-				for(uint j=0; j<nzy; ++j) {
-					hBFcErr.SetBinContent(i+1,j+1,1.);
-					hBFcErr.SetBinError(i+1,j+1,bfffErr);
-				}
-			}
-		}
-		hbfff = static_cast<TH1D*>(feff->Get("bfffErr5"));
-		if(hbfff) {
-			bfffErrB = hbfff->GetBinError(1);
-			for(uint i=0; i<npt; ++i) {
-				for(uint j=0; j<nzy; ++j) {
-					hBFbErr.SetBinContent(i+1,j+1,1.);
-					hBFbErr.SetBinError(i+1,j+1,bfffErrB);
-				}
-			}
-		}
-		feff->Close();
-	}
+    if(tagEffFileROOT) {
+	    TFile* feff = TFile::Open(inputDir+"/"+tagEffFile);
+	    if(feff) {
+	    	TH1D* h = static_cast<TH1D*>(feff->Get("tagEff4"));
+	    	if(h) {
+	    		if(h->GetNbinsX() == static_cast<int>(npt)) {
+	    			for(uint i=0; i<npt; ++i) {
+	    				for(uint j=0; j<nzy; ++j) {
+	    					hEc.SetBinContent(i+1,j+1,h->GetBinContent(i+1));
+	    					hEc.SetBinError(i+1,j+1,h->GetBinError(i+1));
+	    					hEcNoErr.SetBinContent(i+1,j+1,h->GetBinContent(i+1));
+	    					hEcNoErr.SetBinError(i+1,j+1,0.);
+	    				}
+	    			}
+	    			usingDataEffsC=true;
+	    			std::cout << "Will use tagging efficiencies from input data file" << std::endl;
+	    		}
+	    	}
+	    	h = static_cast<TH1D*>(feff->Get("tagEff5"));
+	    	if(h) {
+	    		if(h->GetNbinsX() == static_cast<int>(npt)) {
+	    			for(uint i=0; i<npt; ++i) {
+	    				for(uint j=0; j<nzy; ++j) {
+	    					hEb.SetBinContent(i+1,j+1,h->GetBinContent(i+1));
+	    					hEb.SetBinError(i+1,j+1,h->GetBinError(i+1));
+	    					hEbNoErr.SetBinContent(i+1,j+1,h->GetBinContent(i+1));
+	    					hEbNoErr.SetBinError(i+1,j+1,0.);
+	    				}
+	    			}
+	    			usingDataEffsB=true;
+	    			std::cout << "Will use tagging efficiencies from input data file" << std::endl;
+	    		}
+	    	}
+	    	TH1D* hbfff = static_cast<TH1D*>(feff->Get("bfffErr4"));
+	    	if(hbfff) {
+	    		bfffErr = hbfff->GetBinError(1);
+	    		for(uint i=0; i<npt; ++i) {
+	    			for(uint j=0; j<nzy; ++j) {
+	    				hBFcErr.SetBinContent(i+1,j+1,1.);
+	    				hBFcErr.SetBinError(i+1,j+1,bfffErr);
+	    			}
+	    		}
+	    	}
+	    	hbfff = static_cast<TH1D*>(feff->Get("bfffErr5"));
+	    	if(hbfff) {
+	    		bfffErrB = hbfff->GetBinError(1);
+	    		for(uint i=0; i<npt; ++i) {
+	    			for(uint j=0; j<nzy; ++j) {
+	    				hBFbErr.SetBinContent(i+1,j+1,1.);
+	    				hBFbErr.SetBinError(i+1,j+1,bfffErrB);
+	    			}
+	    		}
+	    	}
+	    	feff->Close();
+	    }
+	} else {
+        std::ifstream read;
+        read.open(tagEffFile);
+        double eff, err, errSyst;
+
+	    for(uint i=0; i<npt; ++i) {
+            read >> eff >> err >> errSyst;
+	    	for(uint j=0; j<nzy; ++j) {
+	    		hEc.SetBinContent(i+1,j+1,eff);
+	            hEc.SetBinError(i+1,j+1,err);
+	    		hEcNoErr.SetBinContent(i+1,j+1,eff);
+	    		hEcNoErr.SetBinError(i+1,j+1,0.);
+                //Note this is actually loading the full systematic uncertainty - not just BFFF
+	    		hBFcErr.SetBinContent(i+1,j+1,1.);
+	    		hBFcErr.SetBinError(i+1,j+1,errSyst/eff);
+	    	}
+	    }
+	    usingDataEffsC=true;
+	    std::cout << "Will use charm tagging efficiencies from input ascii file" << std::endl;
+
+	    for(uint i=0; i<npt; ++i) {
+            read >> eff >> err >> errSyst;
+	    	for(uint j=0; j<nzy; ++j) {
+	    		hEb.SetBinContent(i+1,j+1,eff);
+	            hEb.SetBinError(i+1,j+1,err);
+	    		hEbNoErr.SetBinContent(i+1,j+1,eff);
+	    		hEbNoErr.SetBinError(i+1,j+1,0.);
+                //Note this is actually loading the full systematic uncertainty - not just BFFF
+	    		hBFbErr.SetBinContent(i+1,j+1,1.);
+	    		hBFbErr.SetBinError(i+1,j+1,errSyst);
+	    	}
+	    }
+	    usingDataEffsB=true;
+	    std::cout << "Will use beauty tagging efficiencies from input ascii file" << std::endl;
+
+        read.close();
+    }
 
 	//for(int j=1; j<=nzy; ++j) {
 	//	hEc.SetBinContent(1,j,0.191);
@@ -1025,8 +1065,10 @@ int main(int argc, char** argv) {
 	for (unsigned int i=1; i<=npt; ++i)  /*for(uint j=1; j<=nzy; ++j)*/ write << hEc.GetBinError(i,1/*j*/) << " ";//shared between y bins
 	for (unsigned int i=1; i<=npt; ++i)  /*for(uint j=1; j<=nzy; ++j)*/ write << hEb.GetBinError(i,1/*j*/) << " ";//shared between y bins
 	write << std::endl;
-	/*for (unsigned int i=1; i<=npt; ++i)  for(uint j=1; j<=nzy; ++j)*/ write << hBFcErr.GetBinError(1,1/*i,j*/) << " ";//shared between pT and y bins
-	/*for (unsigned int i=1; i<=npt; ++i)  for(uint j=1; j<=nzy; ++j)*/ write << hBFbErr.GetBinError(1,1/*i,j*/) << " ";//shared between pT and y bins
+	///*for (unsigned int i=1; i<=npt; ++i)  for(uint j=1; j<=nzy; ++j)*/ write << hBFcErr.GetBinError(1,1/*i,j*/) << " ";//shared between pT and y bins
+	///*for (unsigned int i=1; i<=npt; ++i)  for(uint j=1; j<=nzy; ++j)*/ write << hBFbErr.GetBinError(1,1/*i,j*/) << " ";//shared between pT and y bins
+	for (unsigned int i=1; i<=npt; ++i)  /*for(uint j=1; j<=nzy; ++j)*/ write << hEc.GetBinContent(i,1/*j*/)*hBFcErr.GetBinError(i,1/*j*/) << " ";//shared between y bins
+	for (unsigned int i=1; i<=npt; ++i)  /*for(uint j=1; j<=nzy; ++j)*/ write << hEb.GetBinContent(i,1/*j*/)*hBFbErr.GetBinError(i,1/*j*/) << " ";//shared between y bins
 	write << std::endl;
 	write.close();
 

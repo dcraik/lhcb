@@ -37,8 +37,8 @@ bool weightRecPt(false);
 //these may be overridden in certain cases, e.g. if doing an MC closure test
 bool scaledSim = false;
 
-TString charmSimFile  = "/data/dijets/dijets_sim4_reco.root";
-TString beautySimFile = "/data/dijets/dijets_sim5_reco.root";
+TString charmSimFile  = "/data/dijets/dijets_sim4_weights_reco.root";
+TString beautySimFile = "/data/dijets/dijets_sim5_weights_reco.root";
 TString scaledCharmSimFile  = "/data/dijets/dijets_sim4_scaled_reco.root";//TODO
 TString scaledBeautySimFile = "/data/dijets/dijets_sim5_scaled_reco.root";
 //TString scaledCharmSimFile  = "/data/dijets/dijets_sim4_scaled2_reco.root";
@@ -56,8 +56,9 @@ TString accFileD0 = "../efficiencies/D0AccEffNewUp200518.root";
 //TString accFileD0 = "../efficiencies/D0AccEffNewUp201118_fromD0.root";
 //TString accFileD0 = "../efficiencies/D0AccEffNewUp201118_fromC.root";
 //TString accFileD0 = "../efficiencies/D0AccEffNewUp201118_fromAll.root";
-TString effFileDp = "../efficiencies/DpEffs_2XX_16x8bins_up200506.root";
-TString accFileDp = "../efficiencies/DpAccEffNewUp200513.root";
+//TString effFileDp = "../efficiencies/DpEffs_2XX_16x8bins_up200506.root";
+TString effFileDp = "../efficiencies/DpEffs_45_16x8bins_up210220.root";
+TString accFileDp = "../efficiencies/DpAccEffNewUp210312.root";
 
 //unfolding
 TString unfoldingMode("bayes");
@@ -116,7 +117,7 @@ int main(int argc, char** argv) {
 	;
 	po::options_description dfit_options("D fit options");
 	dfit_options.add_options()
-	    ("dfits", po::value<std::vector<std::string>>()->multitoken()->zero_tokens()->composing(), "D fits to run [D0]:\n  D0: D0 -> Kpi")
+	    ("dfits", po::value<std::vector<std::string>>()->multitoken()->zero_tokens()->composing()->default_value(std::vector<std::string>{"D0","D+"}, "D0, D+"), "D fits to run [D0 D+]:\n  D0: D0 -> Kpi, D+: D+ -> Kpipi")
 	    ("dfit-minpt", po::value<double>(&dfitOpts.minpt)->default_value(5000.), "minimum D0 pT in MeV")
 	    ("dfit-maxpt", po::value<double>(&dfitOpts.maxpt)->default_value(-1.), "maximum D0 pT in MeV (-1 to turn off)")
 	    ("dfit-skip-sumw2-fits", po::value<bool>(&dfitOpts.skipSumw2Fits)->default_value(false)->implicit_value(true), "skip the second stage of D0 fits used to correctly scale uncertainties for fits to weighted datasets")
@@ -148,10 +149,18 @@ int main(int argc, char** argv) {
 	    ("dfit-setPromptWidthScale",po::value<double>(&dfitOpts.setPromptWidthScale)->default_value(-999.), "Set a scale factor in sigma_prompt between data and simulation")
 	    ("dfit-setDisplcMeanShift",po::value<double>(&dfitOpts.setDisplcMeanShift)->default_value(-999.), "Set a shift in mu_displc between data and simulation")
 	    ("dfit-setDisplcWidthScale",po::value<double>(&dfitOpts.setDisplcWidthScale)->default_value(-999.), "Set a scale factor in sigma_displc between data and simulation")
-	    ("dfit-setDisplcWidthScale",po::value<double>(&dfitOpts.setDisplcWidthScale)->default_value(-999.), "Set a scale factor in sigma_displc between data and simulation")
+	    ("dfit-shiftFixedMassWidth",po::value<double>(&dfitOpts.shiftFixedMassWidth)->default_value(0.), "Shift sigma(D) by N sigma after fixing")
+	    ("dfit-shiftFixedPromptMean",po::value<double>(&dfitOpts.shiftFixedPromptMean)->default_value(0.), "Shift mu_prompt by N sigma after fixing")
+	    ("dfit-shiftFixedPromptWidth",po::value<double>(&dfitOpts.shiftFixedPromptWidth)->default_value(0.), "Shift sigma_prompt by N sigma after fixing")
+	    ("dfit-shiftFixedDisplcMean",po::value<double>(&dfitOpts.shiftFixedDisplcMean)->default_value(0.), "Shift mu_displc by N sigma after fixing")
+	    ("dfit-shiftFixedDisplcWidth",po::value<double>(&dfitOpts.shiftFixedDisplcWidth)->default_value(0.), "Shift sigma_displc by N sigma after fixing")
 	    ("dfit-simpleEffs",po::value<bool>(&dfitOpts.useSimpleEffs)->default_value(false)->implicit_value(true), "Use simplified model for D efficiencies")
+	    ("dfit-jetPt-dep-effs",po::value<bool>(&dfitOpts.usePtBinCorrections)->default_value(false)->implicit_value(true), "Correct the D efficiency histograms for each jet reco pT bin")
+	    ("dfit-jetPt-binned-effs",po::value<bool>(&dfitOpts.useJetPtBinnedEffs)->default_value(false)->implicit_value(true), "Correct the D efficiency histograms for each jet reco pT bin")
 	    ("dfit-effCorrFile4",po::value<std::string>(), "File to take prompt D0 efficiency corrections from (based on simulation closure test)")
 	    ("dfit-effCorrFile5",po::value<std::string>(), "File to take displaced D0 efficiency corrections from (based on simulation closure test)")
+	    ("dfit-effFileD0",po::value<std::string>(), "Use alternative file for D0 efficiencies")
+	    ("dfit-effFileDp",po::value<std::string>(), "Use alternative file for D+ efficiencies")
 	    ("dfit-toyStudy",po::value<bool>(&dfitOpts.runToyFits)->default_value(false)->implicit_value(true), "Run a toy study after each fit to data")
 	    ("dfit-oldEff",po::value<bool>(&useOldEff)->default_value(false)->implicit_value(true), "Use old D0 efficiency files")
 	;
@@ -305,6 +314,13 @@ int main(int argc, char** argv) {
 	}
 	if(useOldEff) effFileD0 = oldEffFileD0;
 
+	if (vm.count("dfit-effFileD0")) {
+		effFileD0 = vm["dfit-effFileD0"].as<std::string>();
+	}
+	if (vm.count("dfit-effFileDp")) {
+		effFileDp = vm["dfit-effFileDp"].as<std::string>();
+	}
+
 	//unfolding configuration
 	if (vm.count("unfold-mode")) {
 		unfoldingMode = vm["unfold-mode"].as<std::string>();
@@ -432,8 +448,12 @@ int main(int argc, char** argv) {
 	TH1D recoSV5("recoSV5","",npt,ptBinBoundaries.data());
 	TH1D reco4("reco4","",npt,ptBinBoundaries.data());
 	TH1D reco5("reco5","",npt,ptBinBoundaries.data());
+	TH1D reco4_Dp("reco4_Dp","",npt,ptBinBoundaries.data());
+	TH1D reco5_Dp("reco5_Dp","",npt,ptBinBoundaries.data());
 	TH1D unfolded4("unfolded4","",npt,ptBinBoundaries.data());
 	TH1D unfolded5("unfolded5","",npt,ptBinBoundaries.data());
+	TH1D unfolded4_Dp("unfolded4_Dp","",npt,ptBinBoundaries.data());
+	TH1D unfolded5_Dp("unfolded5_Dp","",npt,ptBinBoundaries.data());
 
 	//truth histograms for MC studies
 	TH1D trueD04("trueD04","",npt,ptBinBoundaries.data());
@@ -506,11 +526,29 @@ int main(int argc, char** argv) {
 	TH2D hUE4("hUE4","",npt,ptBinBoundaries.data(),1,binsY);
 	TH2D hUE5("hUE5","",npt,ptBinBoundaries.data(),1,binsY);
 
+	unsigned int nptExtra=4;
+	double* extraWeightBins = new double[nptExtra +1]{15000.,20000.,30000.,50000.,100000.};
+	TH1D* extraPtWeights4D0 = new TH1D("extraPtWeights4D0","",nptExtra,extraWeightBins);
+	TH1D* extraPtWeights4Dp = new TH1D("extraPtWeights4Dp","",nptExtra,extraWeightBins);
+
+	extraPtWeights4D0->SetBinContent(1,1.04*1.05);
+	extraPtWeights4D0->SetBinContent(2,1.06*1.02);
+	extraPtWeights4D0->SetBinContent(3,0.86*0.91);
+	extraPtWeights4D0->SetBinContent(4,0.90*0.94);
+	extraPtWeights4Dp->SetBinContent(1,1.20*1.09);
+	extraPtWeights4Dp->SetBinContent(2,1.00*0.97);
+	extraPtWeights4Dp->SetBinContent(3,0.73*0.91);
+	extraPtWeights4Dp->SetBinContent(4,0.96*0.92);
+
 	//Setup the classes to do the work
 	MCJets mcj("jj");
 	mcj.setDPtRange(dfitOpts.minpt,dfitOpts.maxpt);
-	SimDFitter d0fit("jjDFit"+file, &trueD04);
-	SimDFitter dpfit("jjDFit"+file, &trueD04);
+	mcj.useInputPtWeightsFromTree(true);
+	mcj.setExtraPtWeights(MCJets::jetRecoD04,extraPtWeights4D0);
+	mcj.setExtraPtWeights(MCJets::jetRecoDp4,extraPtWeights4Dp);
+
+	SimDFitter d0fit("jjD0Fit"+file, &trueD04);
+	SimDFitter dpfit("jjDpFit"+file, &trueD04, 0, "D");
 	SVFitter svfit("jjFit"+file, &trueD04);
 
 	//the order of the following steps is slightly complicated
@@ -535,7 +573,7 @@ int main(int argc, char** argv) {
 		//mcj.getTruth("data",&trueUnfld4,&trueUnfld5,&trueUnfldD04,&trueUnfldD05,&trueUnfldD0Sel4,&trueUnfldD0Sel5,&trueUnfldSV4,&trueUnfldSV5,true);
 		if(weightSimTruePt<0) weightSimTruePt=0;
 	} else {
-		mcj.setInputs("","charm","beauty","",d0fit.dFileName());
+		mcj.setInputs("","charm","beauty","",d0fit.dFileName(),dpfit.dFileName());
 		if(weightSimTruePt<0) weightSimTruePt=1;
 	}
 	if(ptCorrFile!="") mcj.setPtCorrFactorsFile(ptCorrFile);
@@ -543,6 +581,8 @@ int main(int argc, char** argv) {
 	if(weightSimTruePt) {// !scaledSim) {
 		mcj.setInputTruePtWeights(MCJets::jetRecoD04,jetTruePtWeights4);//d);
 		mcj.setInputTruePtWeights(MCJets::jetRecoD05,jetTruePtWeights5);//d);
+		mcj.setInputTruePtWeights(MCJets::jetRecoDp4,jetTruePtWeights4);//d);
+		mcj.setInputTruePtWeights(MCJets::jetRecoDp5,jetTruePtWeights5);//d);
 		mcj.setInputTruePtWeights(MCJets::jetRecoSV4,jetTruePtWeights4);//s);
 		mcj.setInputTruePtWeights(MCJets::jetRecoSV5,jetTruePtWeights5);//s);
 	}
@@ -553,12 +593,18 @@ int main(int argc, char** argv) {
 	//	//d0fit.setInputs("data","charm","beauty",simpleEffFile,"",true,dataIsMC,useRhoZEffCor);
 	//} else {
 		d0fit.setInputs("data","charm","beauty",effFileD0,accFileD0,dataIsMC);//,false,dataIsMC,useRhoZEffCor);
+		dpfit.setInputs("data","charm","beauty",effFileDp,accFileDp,dataIsMC);//,false,dataIsMC,useRhoZEffCor);
 	//}
 	d0fit.setOptions(dfitOpts);
-	if(runStages.count(stageEffs)) d0fit.setRerunEffs();
+	dpfit.setOptions(dfitOpts);
+	if(runStages.count(stageEffs)) {
+		d0fit.setRerunEffs();
+		dpfit.setRerunEffs();
+	}
 	//d0fit.setTruthMatchType(dTruthMatch);
 	//if(skipSumW2Fits) d0fit.skipSumW2Fits();
 	d0fit.addEffs();
+	dpfit.addEffs();
 
 	//now weight the MC
 	if(runStages.count(stageWeight)) mcj.setRerunWeights();
@@ -567,17 +613,48 @@ int main(int argc, char** argv) {
 
 	if(!mcj.weightMC(MCJets::jetRecoD04)) return 1;
 	if(!mcj.weightMC(MCJets::jetRecoD05)) return 1;
+	if(!mcj.weightMC(MCJets::jetRecoDp4)) return 1;
+	if(!mcj.weightMC(MCJets::jetRecoDp5)) return 1;
 
 	if(dataIsMC) {
 		//mcj.getTruth(mcj.resampledName(),&true4,&true5,&trueD04,&trueD05,&trueD0Sel4,&trueD0Sel5,&trueSV4,&trueSV5);
 		//mcj.getTruth(mcj.resampledName(),&trueUnfld4,&trueUnfld5,&trueUnfldD04,&trueUnfldD05,&trueUnfldD0Sel4,&trueUnfldD0Sel5,&trueUnfldSV4,&trueUnfldSV5,true);
-		mcj.getTruth("data",&true4,&true5,&trueD04,&trueD05,&trueD0Sel4,&trueD0Sel5,&trueSV4,&trueSV5);
-		mcj.getTruth("data",&trueUnfld4,&trueUnfld5,&trueUnfldD04,&trueUnfldD05,&trueUnfldD0Sel4,&trueUnfldD0Sel5,&trueUnfldSV4,&trueUnfldSV5,true);
+		//mcj.getTruth("data",&true4,&true5,&trueD04,&trueD05,&trueD0Sel4,&trueD0Sel5,&trueSV4,&trueSV5);
+		//mcj.getTruth("data",&trueUnfld4,&trueUnfld5,&trueUnfldD04,&trueUnfldD05,&trueUnfldD0Sel4,&trueUnfldD0Sel5,&trueUnfldSV4,&trueUnfldSV5,true);
+		std::map<std::string,TH1D*> hMapRecoJPt;
+		hMapRecoJPt["true4"] = &true4;
+		hMapRecoJPt["true5"] = &true5;
+		hMapRecoJPt["trueD04"] = &trueD04;
+		hMapRecoJPt["trueD05"] = &trueD05;
+		hMapRecoJPt["trueD0Sel4"] = &trueD0Sel4;
+		hMapRecoJPt["trueD0Sel5"] = &trueD0Sel5;
+		hMapRecoJPt["trueDp4"] = &trueDp4;
+		hMapRecoJPt["trueDp5"] = &trueDp5;
+		hMapRecoJPt["trueDpSel4"] = &trueDpSel4;
+		hMapRecoJPt["trueDpSel5"] = &trueDpSel5;
+		hMapRecoJPt["trueSV4"] = &trueSV4;
+		hMapRecoJPt["trueSV5"] = &trueSV5;
+		std::map<std::string,TH1D*> hMapTrueJPt;
+		hMapTrueJPt["true4"] = &trueUnfld4;
+		hMapTrueJPt["true5"] = &trueUnfld5;
+		hMapTrueJPt["trueD04"] = &trueUnfldD04;
+		hMapTrueJPt["trueD05"] = &trueUnfldD05;
+		hMapTrueJPt["trueD0Sel4"] = &trueUnfldD0Sel4;
+		hMapTrueJPt["trueD0Sel5"] = &trueUnfldD0Sel5;
+		hMapTrueJPt["trueDp4"] = &trueUnfldDp4;
+		hMapTrueJPt["trueDp5"] = &trueUnfldDp5;
+		hMapTrueJPt["trueDpSel4"] = &trueUnfldDpSel4;
+		hMapTrueJPt["trueDpSel5"] = &trueUnfldDpSel5;
+		hMapTrueJPt["trueSV4"] = &trueUnfldSV4;
+		hMapTrueJPt["trueSV5"] = &trueUnfldSV5;
+		mcj.getTruth("data",hMapRecoJPt);
+		mcj.getTruth("data",hMapTrueJPt,true);
 		//for the real MC samples, test D0 efficiencies and return
 		//for permutations, compare truth results to extracted yields
 		if(!dataIsResampledMC) {
 			if(file.BeginsWith("sim4")) {
 				d0fit.testEffs(4);
+				//TODO testEffs needs to be updated to work with D+
 			}
 			if(file.BeginsWith("sim5")) {
 				d0fit.testEffs(5);
@@ -599,22 +676,66 @@ int main(int argc, char** argv) {
 	if(runStages.count(stageSVTemplates)) svfit.setRerunTemplates();
 	svfit.makeSVFitHists();
 
+	bool rerunD0(false), rerunDp(false);
+
 	if(!gSystem->AccessPathName(savedir+"/histsOut.root")) {
 		TFile* fin = TFile::Open(savedir+"/histsOut.root");
-		TH1D* hds4 = static_cast<TH1D*>(fin->Get("recoD0Sel4"));
-		TH1D* hds5 = static_cast<TH1D*>(fin->Get("recoD0Sel5"));
-		TH1D* hd4 = static_cast<TH1D*>(fin->Get("recoD04_evtByEvtWeight"));
-		TH1D* hd5 = static_cast<TH1D*>(fin->Get("recoD05_evtByEvtWeight"));
-		TH1D* hda4 = static_cast<TH1D*>(fin->Get("recoD04_aveWeight"));
-		TH1D* hda5 = static_cast<TH1D*>(fin->Get("recoD05_aveWeight"));
-		TH1D* hdw4 = static_cast<TH1D*>(fin->Get("recoD0Weight4"));
-		TH1D* hdw5 = static_cast<TH1D*>(fin->Get("recoD0Weight5"));
+		TH1D* hd0s4 = static_cast<TH1D*>(fin->Get("recoD0Sel4"));
+		TH1D* hd0s5 = static_cast<TH1D*>(fin->Get("recoD0Sel5"));
+		TH1D* hd04 = static_cast<TH1D*>(fin->Get("recoD04_evtByEvtWeight"));
+		TH1D* hd05 = static_cast<TH1D*>(fin->Get("recoD05_evtByEvtWeight"));
+		TH1D* hd0a4 = static_cast<TH1D*>(fin->Get("recoD04_aveWeight"));
+		TH1D* hd0a5 = static_cast<TH1D*>(fin->Get("recoD05_aveWeight"));
+		TH1D* hd0w4 = static_cast<TH1D*>(fin->Get("recoD0Weight4"));
+		TH1D* hd0w5 = static_cast<TH1D*>(fin->Get("recoD0Weight5"));
+		TH1D* hds4 = static_cast<TH1D*>(fin->Get("recoDpSel4"));
+		TH1D* hds5 = static_cast<TH1D*>(fin->Get("recoDpSel5"));
+		TH1D* hd4 = static_cast<TH1D*>(fin->Get("recoDp4_evtByEvtWeight"));
+		TH1D* hd5 = static_cast<TH1D*>(fin->Get("recoDp5_evtByEvtWeight"));
+		TH1D* hda4 = static_cast<TH1D*>(fin->Get("recoDp4_aveWeight"));
+		TH1D* hda5 = static_cast<TH1D*>(fin->Get("recoDp5_aveWeight"));
+		TH1D* hdw4 = static_cast<TH1D*>(fin->Get("recoDpWeight4"));
+		TH1D* hdw5 = static_cast<TH1D*>(fin->Get("recoDpWeight5"));
 		TH1D* hs4 = static_cast<TH1D*>(fin->Get("recoSV4"));
 		TH1D* hs5 = static_cast<TH1D*>(fin->Get("recoSV5"));
 
-		if(!hds4 || !hds5 || !hd4 || !hd5 || !hda4 || !hda5 || !hdw4 || !hdw5) {
+		if(!hd0s4 || !hd0s5 || !hd04 || !hd05 || !hd0a4 || !hd0a5 || !hd0w4 || !hd0w5) {
 			std::cout << "Existing D0 reco histograms not found - rerunning fits" << std::endl;
-			runStages.insert(stageFittingD);
+			rerunD0=true;
+		} else if(static_cast<uint>(hd0s4->GetNbinsX())!=npt ||
+		          static_cast<uint>(hd0s5->GetNbinsX())!=npt ||
+		          static_cast<uint>(hd04->GetNbinsX())!=npt ||
+		          static_cast<uint>(hd05->GetNbinsX())!=npt ||
+		          static_cast<uint>(hd0a4->GetNbinsX())!=npt ||
+		          static_cast<uint>(hd0a5->GetNbinsX())!=npt ||
+		          static_cast<uint>(hd0w4->GetNbinsX())!=npt ||
+		          static_cast<uint>(hd0w5->GetNbinsX())!=npt) {
+			std::cout << "Existing D0 reco histograms have wrong number of bins - rerunning fits" << std::endl;
+			rerunD0=true;
+		} else {
+			for(uint i=0; i<npt; ++i) {
+				recoD0Sel4.SetBinContent(i+1, hd0s4->GetBinContent(i+1));
+				recoD0Sel4.SetBinError(i+1, hd0s4->GetBinError(i+1));
+				recoD0Sel5.SetBinContent(i+1, hd0s5->GetBinContent(i+1));
+				recoD0Sel5.SetBinError(i+1, hd0s5->GetBinError(i+1));
+				recoD04_evtByEvtWeight.SetBinContent(i+1, hd04->GetBinContent(i+1));
+				recoD04_evtByEvtWeight.SetBinError(i+1, hd04->GetBinError(i+1));
+				recoD05_evtByEvtWeight.SetBinContent(i+1, hd05->GetBinContent(i+1));
+				recoD05_evtByEvtWeight.SetBinError(i+1, hd05->GetBinError(i+1));
+				recoD04_aveWeight.SetBinContent(i+1, hd0a4->GetBinContent(i+1));
+				recoD04_aveWeight.SetBinError(i+1, hd0a4->GetBinError(i+1));
+				recoD05_aveWeight.SetBinContent(i+1, hd0a5->GetBinContent(i+1));
+				recoD05_aveWeight.SetBinError(i+1, hd0a5->GetBinError(i+1));
+				recoD0Weight4.SetBinContent(i+1, hd0w4->GetBinContent(i+1));
+				recoD0Weight4.SetBinError(i+1, hd0w4->GetBinError(i+1));
+				recoD0Weight5.SetBinContent(i+1, hd0w5->GetBinContent(i+1));
+				recoD0Weight5.SetBinError(i+1, hd0w5->GetBinError(i+1));
+			}
+		}
+
+		if(!hds4 || !hds5 || !hd4 || !hd5 || !hda4 || !hda5 || !hdw4 || !hdw5) {
+			std::cout << "Existing D+ reco histograms not found - rerunning fits" << std::endl;
+			rerunDp=true;
 		} else if(static_cast<uint>(hds4->GetNbinsX())!=npt ||
 		          static_cast<uint>(hds5->GetNbinsX())!=npt ||
 		          static_cast<uint>(hd4->GetNbinsX())!=npt ||
@@ -623,26 +744,26 @@ int main(int argc, char** argv) {
 		          static_cast<uint>(hda5->GetNbinsX())!=npt ||
 		          static_cast<uint>(hdw4->GetNbinsX())!=npt ||
 		          static_cast<uint>(hdw5->GetNbinsX())!=npt) {
-			std::cout << "Existing D0 reco histograms have wrong number of bins - rerunning fits" << std::endl;
-			runStages.insert(stageFittingD);
+			std::cout << "Existing D+ reco histograms have wrong number of bins - rerunning fits" << std::endl;
+			rerunDp=true;
 		} else {
 			for(uint i=0; i<npt; ++i) {
-				recoD0Sel4.SetBinContent(i+1, hds4->GetBinContent(i+1));
-				recoD0Sel4.SetBinError(i+1, hds4->GetBinError(i+1));
-				recoD0Sel5.SetBinContent(i+1, hds5->GetBinContent(i+1));
-				recoD0Sel5.SetBinError(i+1, hds5->GetBinError(i+1));
-				recoD04_evtByEvtWeight.SetBinContent(i+1, hd4->GetBinContent(i+1));
-				recoD04_evtByEvtWeight.SetBinError(i+1, hd4->GetBinError(i+1));
-				recoD05_evtByEvtWeight.SetBinContent(i+1, hd5->GetBinContent(i+1));
-				recoD05_evtByEvtWeight.SetBinError(i+1, hd5->GetBinError(i+1));
-				recoD04_aveWeight.SetBinContent(i+1, hda4->GetBinContent(i+1));
-				recoD04_aveWeight.SetBinError(i+1, hda4->GetBinError(i+1));
-				recoD05_aveWeight.SetBinContent(i+1, hda5->GetBinContent(i+1));
-				recoD05_aveWeight.SetBinError(i+1, hda5->GetBinError(i+1));
-				recoD0Weight4.SetBinContent(i+1, hdw4->GetBinContent(i+1));
-				recoD0Weight4.SetBinError(i+1, hdw4->GetBinError(i+1));
-				recoD0Weight5.SetBinContent(i+1, hdw5->GetBinContent(i+1));
-				recoD0Weight5.SetBinError(i+1, hdw5->GetBinError(i+1));
+				recoDpSel4.SetBinContent(i+1, hds4->GetBinContent(i+1));
+				recoDpSel4.SetBinError(i+1, hds4->GetBinError(i+1));
+				recoDpSel5.SetBinContent(i+1, hds5->GetBinContent(i+1));
+				recoDpSel5.SetBinError(i+1, hds5->GetBinError(i+1));
+				recoDp4_evtByEvtWeight.SetBinContent(i+1, hd4->GetBinContent(i+1));
+				recoDp4_evtByEvtWeight.SetBinError(i+1, hd4->GetBinError(i+1));
+				recoDp5_evtByEvtWeight.SetBinContent(i+1, hd5->GetBinContent(i+1));
+				recoDp5_evtByEvtWeight.SetBinError(i+1, hd5->GetBinError(i+1));
+				recoDp4_aveWeight.SetBinContent(i+1, hda4->GetBinContent(i+1));
+				recoDp4_aveWeight.SetBinError(i+1, hda4->GetBinError(i+1));
+				recoDp5_aveWeight.SetBinContent(i+1, hda5->GetBinContent(i+1));
+				recoDp5_aveWeight.SetBinError(i+1, hda5->GetBinError(i+1));
+				recoDpWeight4.SetBinContent(i+1, hdw4->GetBinContent(i+1));
+				recoDpWeight4.SetBinError(i+1, hdw4->GetBinError(i+1));
+				recoDpWeight5.SetBinContent(i+1, hdw5->GetBinContent(i+1));
+				recoDpWeight5.SetBinError(i+1, hdw5->GetBinError(i+1));
 			}
 		}
 
@@ -668,7 +789,7 @@ int main(int argc, char** argv) {
 		runStages.insert(stageFittingD);
 		runStages.insert(stageFittingSV);
 	}
-	if(runStages.count(stageFittingD)) {
+	if(dfits.count("D0") && (runStages.count(stageFittingD) || rerunD0)) {
 		//first do D0 fits for denominators
 		double yield4(0.), yield5(0.), error4(0.), error5(0.), corr4(1.), corr5(1.), aveWeight4(1.), aveWeight5(1.), aveWeightErr4(0.), aveWeightErr5(0.);
 		//fit all pT bins together
@@ -704,6 +825,73 @@ int main(int argc, char** argv) {
 				recoD05_evtByEvtWeight.SetBinError(  i,error5*corr5);
 			} //TODO//else return 1;
 		}
+
+		// Save histograms
+		TFile* fHistsOut = TFile::Open(savedir+"/histsOut.root","UPDATE");
+		trueD04.Write();
+		recoD04_evtByEvtWeight.Write();
+		recoD04_aveWeight.Write();
+		recoD0Weight4.Write();
+		trueD05.Write();
+		recoD05_evtByEvtWeight.Write();
+		recoD05_aveWeight.Write();
+		recoD0Weight5.Write();
+		trueD0Sel4.Write();
+		recoD0Sel4.Write();
+		trueD0Sel5.Write();
+		recoD0Sel5.Write();
+		fHistsOut->Close();
+	}
+	if(dfits.count("D+") && (runStages.count(stageFittingD) || rerunDp)) {
+		double yield4(0.), yield5(0.), error4(0.), error5(0.), corr4(1.), corr5(1.), aveWeight4(1.), aveWeight5(1.), aveWeightErr4(0.), aveWeightErr5(0.);
+		dpfit.fitD(yield4,error4,yield5,error5,-1,0,0);
+		for(int i=1; i<=recoDp4_evtByEvtWeight.GetNbinsX(); ++i) {
+			corr4 = mcj.getPtCorrFactor(MCJets::jetRecoDp4,recoDp4_evtByEvtWeight.GetBinLowEdge(i),recoDp4_evtByEvtWeight.GetBinLowEdge(i+1));
+			corr5 = mcj.getPtCorrFactor(MCJets::jetRecoDp5,recoDp5_evtByEvtWeight.GetBinLowEdge(i),recoDp5_evtByEvtWeight.GetBinLowEdge(i+1));
+			if(dpfit.fitD(yield4,error4,yield5,error5,i-1,0,0)) {
+				aveWeight4 = dpfit.getAveWeight(4);
+				aveWeight5 = dpfit.getAveWeight(5);
+				aveWeightErr4 = dpfit.getAveWeightError(4);
+				aveWeightErr5 = dpfit.getAveWeightError(5);
+				printf("eff weights: %.3f+/-%.3f %.3f+/-%.3f\n",aveWeight4,aveWeightErr4,aveWeight5,aveWeightErr5);
+				recoDpSel4.SetBinContent(i,yield4*corr4);
+				recoDpSel4.SetBinError(  i,error4*corr4);
+				recoDpSel5.SetBinContent(i,yield5*corr5);
+				recoDpSel5.SetBinError(  i,error5*corr5);
+				recoDp4_aveWeight.SetBinContent(i,yield4*corr4*aveWeight4);
+				recoDp4_aveWeight.SetBinError(  i,error4*corr4*aveWeight4);
+				recoDp5_aveWeight.SetBinContent(i,yield5*corr5*aveWeight5);
+				recoDp5_aveWeight.SetBinError(  i,error5*corr5*aveWeight5);
+				recoDpWeight4.SetBinContent(i,aveWeight4);
+				recoDpWeight4.SetBinError(  i,aveWeightErr4);
+				recoDpWeight5.SetBinContent(i,aveWeight5);
+				recoDpWeight5.SetBinError(  i,aveWeightErr5);
+			} else return 1;
+			if(dpfit.fitD(yield4,error4,yield5,error5,i-1,0,4)) {
+				recoDp4_evtByEvtWeight.SetBinContent(i,yield4*corr4);
+				recoDp4_evtByEvtWeight.SetBinError(  i,error4*corr4);
+			} //TODO//else return 1;
+			if(dpfit.fitD(yield4,error4,yield5,error5,i-1,0,5)) {
+				recoDp5_evtByEvtWeight.SetBinContent(i,yield5*corr5);
+				recoDp5_evtByEvtWeight.SetBinError(  i,error5*corr5);
+			} //TODO//else return 1;
+		}
+
+		// Save histograms
+		TFile* fHistsOut = TFile::Open(savedir+"/histsOut.root","UPDATE");
+		trueDp4.Write();
+		recoDp4_evtByEvtWeight.Write();
+		recoDp4_aveWeight.Write();
+		recoDpWeight4.Write();
+		trueDp5.Write();
+		recoDp5_evtByEvtWeight.Write();
+		recoDp5_aveWeight.Write();
+		recoDpWeight5.Write();
+		trueDpSel4.Write();
+		recoDpSel4.Write();
+		trueDpSel5.Write();
+		recoDpSel5.Write();
+		fHistsOut->Close();
 	}
 
 	if(runStages.count(stageFittingSV)) {
@@ -721,17 +909,39 @@ int main(int argc, char** argv) {
 			recoSV5.SetBinContent(i,nB*corrB);
 			recoSV5.SetBinError(  i,eB*corrB);
 		}
+
+		TFile* fHistsOut = TFile::Open(savedir+"/histsOut.root","UPDATE");
+		trueSV4.Write();
+		recoSV4.Write();
+		trueSV5.Write();
+		recoSV5.Write();
+		true4.Write();
+		reco4.Write();
+		reco4_Dp.Write();
+		true5.Write();
+		reco5.Write();
+		reco5_Dp.Write();
+		fHistsOut->Close();
 	}
 
 	//do unfolding
 	mcj.setUnfoldingMethod(unfoldingMode,unfoldingReg);
 	mcj.setUnfoldingScaleSmear(jetEnergyScale,jetEnergySmear);
+	//D0
 	TH1D* unfoldedD04_evtByEvtWeight = mcj.unfold(&recoD04_evtByEvtWeight, MCJets::jetRecoD04);
 	TH1D* unfoldedD05_evtByEvtWeight = mcj.unfold(&recoD05_evtByEvtWeight, MCJets::jetRecoD05);
 	TH1D* unfoldedD04_aveWeight = mcj.unfold(&recoD04_aveWeight, MCJets::jetRecoD04);
 	TH1D* unfoldedD05_aveWeight = mcj.unfold(&recoD05_aveWeight, MCJets::jetRecoD05);
 	TH1D* unfoldedD0Sel4 = mcj.unfold(&recoD0Sel4, MCJets::jetRecoD04);
 	TH1D* unfoldedD0Sel5 = mcj.unfold(&recoD0Sel5, MCJets::jetRecoD05);
+	//D+
+	TH1D* unfoldedDp4_evtByEvtWeight = mcj.unfold(&recoDp4_evtByEvtWeight, MCJets::jetRecoDp4);
+	TH1D* unfoldedDp5_evtByEvtWeight = mcj.unfold(&recoDp5_evtByEvtWeight, MCJets::jetRecoDp5);
+	TH1D* unfoldedDp4_aveWeight = mcj.unfold(&recoDp4_aveWeight, MCJets::jetRecoDp4);
+	TH1D* unfoldedDp5_aveWeight = mcj.unfold(&recoDp5_aveWeight, MCJets::jetRecoDp5);
+	TH1D* unfoldedDpSel4 = mcj.unfold(&recoDpSel4, MCJets::jetRecoDp4);
+	TH1D* unfoldedDpSel5 = mcj.unfold(&recoDpSel5, MCJets::jetRecoDp5);
+	//SV
 	TH1D* unfoldedSV4 = mcj.unfold(&recoSV4, MCJets::jetRecoSV4);
 	TH1D* unfoldedSV5 = mcj.unfold(&recoSV5, MCJets::jetRecoSV5);
 
@@ -753,6 +963,12 @@ int main(int argc, char** argv) {
 	unfoldedD05_aveWeight->SetName("unfoldedD05_aveWeight");
 	unfoldedD0Sel4->SetName("unfoldedD0Sel4");
 	unfoldedD0Sel5->SetName("unfoldedD0Sel5");
+	unfoldedDp4_evtByEvtWeight->SetName("unfoldedDp4_evtByEvtWeight");
+	unfoldedDp5_evtByEvtWeight->SetName("unfoldedDp5_evtByEvtWeight");
+	unfoldedDp4_aveWeight->SetName("unfoldedDp4_aveWeight");
+	unfoldedDp5_aveWeight->SetName("unfoldedDp5_aveWeight");
+	unfoldedDpSel4->SetName("unfoldedDpSel4");
+	unfoldedDpSel5->SetName("unfoldedDpSel5");
 	unfoldedSV4->SetName("unfoldedSV4");
 	unfoldedSV5->SetName("unfoldedSV5");
 	unfoldedD04_evtByEvtWeight->SetTitle("");
@@ -761,6 +977,12 @@ int main(int argc, char** argv) {
 	unfoldedD05_aveWeight->SetTitle("");
 	unfoldedD0Sel4->SetTitle("");
 	unfoldedD0Sel5->SetTitle("");
+	unfoldedDp4_evtByEvtWeight->SetTitle("");
+	unfoldedDp5_evtByEvtWeight->SetTitle("");
+	unfoldedDp4_aveWeight->SetTitle("");
+	unfoldedDp5_aveWeight->SetTitle("");
+	unfoldedDpSel4->SetTitle("");
+	unfoldedDpSel5->SetTitle("");
 	unfoldedSV4->SetTitle("");
 	unfoldedSV5->SetTitle("");
 
@@ -832,6 +1054,8 @@ int main(int argc, char** argv) {
 
 	double bfffErr4 = TMath::Sqrt( (errFFc2D0/ffc2D0)*(errFFc2D0/ffc2D0) + (errBFD0/bfD0)*(errBFD0/bfD0) );
 	double bfffErr5 = TMath::Sqrt( (errFFb2D0/ffb2D0)*(errFFb2D0/ffb2D0) + (errBFD0/bfD0)*(errBFD0/bfD0) );
+	double dpbfffErr4 = TMath::Sqrt( (errFFc2Dp/ffc2Dp)*(errFFc2Dp/ffc2Dp) + (errBFDp/bfDp)*(errBFDp/bfDp) );
+	double dpbfffErr5 = TMath::Sqrt( (errFFb2Dp/ffb2Dp)*(errFFb2Dp/ffb2Dp) + (errBFDp/bfDp)*(errBFDp/bfDp) );
 
 	std::cout << "MC efficiency reco/true" << std::endl;
 	for (unsigned int i=1; i<=npt; ++i) std::cout << hE4.GetBinContent(i,1) << " +/- " << hE4.GetBinError(i,1) << std::endl;
@@ -910,6 +1134,18 @@ int main(int argc, char** argv) {
 		unfolded5.SetBinError(i, TMath::Power(TMath::Power(unfoldedD05_evtByEvtWeight->GetBinError(i) / (bfD0 * ffb2D0),2) + TMath::Power(bfffErr5*unfoldedD05_evtByEvtWeight->GetBinContent(i) / (bfD0 * ffb2D0),2),0.5));
 	}
 
+	//Dp results scaled
+	for (unsigned int i=1; i<=npt; ++i) {
+		reco4_Dp.SetBinContent(i, recoDp4_evtByEvtWeight.GetBinContent(i) / (bfDp * ffc2Dp));
+		reco4_Dp.SetBinError(i, TMath::Power(TMath::Power(recoDp4_evtByEvtWeight.GetBinError(i) / (bfDp * ffc2Dp),2) + TMath::Power(dpbfffErr4*recoDp4_evtByEvtWeight.GetBinContent(i) / (bfDp * ffc2Dp),2),0.5));
+		reco5_Dp.SetBinContent(i, recoDp5_evtByEvtWeight.GetBinContent(i) / (bfDp * ffb2Dp));
+		reco5_Dp.SetBinError(i, TMath::Power(TMath::Power(recoDp5_evtByEvtWeight.GetBinError(i) / (bfDp * ffb2Dp),2) + TMath::Power(dpbfffErr5*recoDp5_evtByEvtWeight.GetBinContent(i) / (bfDp * ffb2Dp),2),0.5));
+		unfolded4_Dp.SetBinContent(i, unfoldedDp4_evtByEvtWeight->GetBinContent(i) / (bfDp * ffc2Dp));
+		unfolded4_Dp.SetBinError(i, TMath::Power(TMath::Power(unfoldedDp4_evtByEvtWeight->GetBinError(i) / (bfDp * ffc2Dp),2) + TMath::Power(dpbfffErr4*unfoldedDp4_evtByEvtWeight->GetBinContent(i) / (bfDp * ffc2Dp),2),0.5));
+		unfolded5_Dp.SetBinContent(i, unfoldedDp5_evtByEvtWeight->GetBinContent(i) / (bfDp * ffb2Dp));
+		unfolded5_Dp.SetBinError(i, TMath::Power(TMath::Power(unfoldedDp5_evtByEvtWeight->GetBinError(i) / (bfDp * ffb2Dp),2) + TMath::Power(dpbfffErr5*unfoldedDp5_evtByEvtWeight->GetBinContent(i) / (bfDp * ffb2Dp),2),0.5));
+	}
+
 	std::cout << "jet reco4/5/unfld4/5/true(fromD0)4/5/true(fromD0)unfld4/5/true4/5/trueunfld4/5" << std::endl;
 	for (unsigned int i=1; i<=npt; ++i) std::cout << recoD04_evtByEvtWeight.GetBinContent(i) / (bfD0 * ffc2D0) << " +/- " << recoD04_evtByEvtWeight.GetBinError(i) / (bfD0 * ffc2D0) << " +/- " << bfffErr4*recoD04_evtByEvtWeight.GetBinContent(i) / (bfD0 * ffc2D0) << std::endl;
 	for (unsigned int i=1; i<=npt; ++i) std::cout << recoD05_evtByEvtWeight.GetBinContent(i) / (bfD0 * ffb2D0) << " +/- " << recoD05_evtByEvtWeight.GetBinError(i) / (bfD0 * ffb2D0) << " +/- " << bfffErr5*recoD05_evtByEvtWeight.GetBinContent(i) / (bfD0 * ffb2D0) << std::endl;
@@ -935,6 +1171,13 @@ int main(int argc, char** argv) {
 	for (unsigned int i=1; i<=npt; ++i) std::cout << trueUnfld5.GetBinContent(i) << " +/- " << trueUnfld5.GetBinError(i) << std::endl;
 	std::cout << std::endl;
 
+	std::cout << "jet(from D+) reco4/5/unfld4/5" << std::endl;
+	for (unsigned int i=1; i<=npt; ++i) std::cout << recoDp4_evtByEvtWeight.GetBinContent(i) / (bfDp * ffc2Dp) << " +/- " << recoDp4_evtByEvtWeight.GetBinError(i) / (bfDp * ffc2Dp) << " +/- " << dpbfffErr4*recoDp4_evtByEvtWeight.GetBinContent(i) / (bfDp * ffc2Dp) << std::endl;
+	for (unsigned int i=1; i<=npt; ++i) std::cout << recoDp5_evtByEvtWeight.GetBinContent(i) / (bfDp * ffb2Dp) << " +/- " << recoDp5_evtByEvtWeight.GetBinError(i) / (bfDp * ffb2Dp) << " +/- " << dpbfffErr5*recoDp5_evtByEvtWeight.GetBinContent(i) / (bfDp * ffb2Dp) << std::endl;
+	std::cout << std::endl;
+
+	for (unsigned int i=1; i<=npt; ++i) std::cout << unfoldedDp4_evtByEvtWeight->GetBinContent(i) / (bfDp * ffc2Dp) << " +/- " << unfoldedDp4_evtByEvtWeight->GetBinError(i) / (bfDp * ffc2Dp) << " +/- " << dpbfffErr4*unfoldedDp4_evtByEvtWeight->GetBinContent(i) / (bfDp * ffc2Dp) << std::endl;
+	for (unsigned int i=1; i<=npt; ++i) std::cout << unfoldedDp5_evtByEvtWeight->GetBinContent(i) / (bfDp * ffb2Dp) << " +/- " << unfoldedDp5_evtByEvtWeight->GetBinError(i) / (bfDp * ffb2Dp) << " +/- " << dpbfffErr5*unfoldedDp5_evtByEvtWeight->GetBinContent(i) / (bfDp * ffb2Dp) << std::endl;
 	//SV results
 	std::cout << "SV reco4/5/unfld4/5/true4/5/trueunfld4/5" << std::endl;
 	for (unsigned int i=1; i<=npt; ++i) std::cout << recoSV4.GetBinContent(i) << " +/- " << recoSV4.GetBinError(i) << "\t";
@@ -984,30 +1227,46 @@ int main(int argc, char** argv) {
 	//ratios
 	std::vector<double> ratioRec4;
 	std::vector<double> ratioRec5;
+	std::vector<double> ratioRec4_Dp;
+	std::vector<double> ratioRec5_Dp;
 	std::vector<double> ratioUnfld4;
 	std::vector<double> ratioUnfld5;
+	std::vector<double> ratioUnfld4_Dp;
+	std::vector<double> ratioUnfld5_Dp;
 	std::vector<double> ratioTrue4;
 	std::vector<double> ratioTrue5;
 	std::vector<double> ratioTrueUnfld4;
 	std::vector<double> ratioTrueUnfld5;
 	std::vector<double> errorRec4;
 	std::vector<double> errorRec5;
+	std::vector<double> errorRec4_Dp;
+	std::vector<double> errorRec5_Dp;
 	std::vector<double> errorUnfld4;
 	std::vector<double> errorUnfld5;
+	std::vector<double> errorUnfld4_Dp;
+	std::vector<double> errorUnfld5_Dp;
 	for (unsigned int i=1; i<=npt; ++i) {
 		if(evtByEvtWeighting) {
 			ratioRec4.push_back(recoSV4.GetBinContent(i) / (recoD04_evtByEvtWeight.GetBinContent(i) / (bfD0 * ffc2D0)));
 			ratioRec5.push_back(recoSV5.GetBinContent(i) / (recoD05_evtByEvtWeight.GetBinContent(i) / (bfD0 * ffb2D0)));
+			ratioRec4_Dp.push_back(recoSV4.GetBinContent(i) / (recoDp4_evtByEvtWeight.GetBinContent(i) / (bfDp * ffc2Dp)));
+			ratioRec5_Dp.push_back(recoSV5.GetBinContent(i) / (recoDp5_evtByEvtWeight.GetBinContent(i) / (bfDp * ffb2Dp)));
 		} else {
 			ratioRec4.push_back(recoSV4.GetBinContent(i) / (recoD04_aveWeight.GetBinContent(i) / (bfD0 * ffc2D0)));
 			ratioRec5.push_back(recoSV5.GetBinContent(i) / (recoD05_aveWeight.GetBinContent(i) / (bfD0 * ffb2D0)));
+			ratioRec4_Dp.push_back(recoSV4.GetBinContent(i) / (recoDp4_aveWeight.GetBinContent(i) / (bfDp * ffc2Dp)));
+			ratioRec5_Dp.push_back(recoSV5.GetBinContent(i) / (recoDp5_aveWeight.GetBinContent(i) / (bfDp * ffb2Dp)));
 		}
 		if(evtByEvtWeighting) {
 			ratioUnfld4.push_back(unfoldedSV4->GetBinContent(i) / (unfoldedD04_evtByEvtWeight->GetBinContent(i) / (bfD0 * ffc2D0)));
 			ratioUnfld5.push_back(unfoldedSV5->GetBinContent(i) / (unfoldedD05_evtByEvtWeight->GetBinContent(i) / (bfD0 * ffb2D0)));
+			ratioUnfld4_Dp.push_back(unfoldedSV4->GetBinContent(i) / (unfoldedDp4_evtByEvtWeight->GetBinContent(i) / (bfDp * ffc2Dp)));
+			ratioUnfld5_Dp.push_back(unfoldedSV5->GetBinContent(i) / (unfoldedDp5_evtByEvtWeight->GetBinContent(i) / (bfDp * ffb2Dp)));
 		} else {
 			ratioUnfld4.push_back(unfoldedSV4->GetBinContent(i) / (unfoldedD04_aveWeight->GetBinContent(i) / (bfD0 * ffc2D0)));
 			ratioUnfld5.push_back(unfoldedSV5->GetBinContent(i) / (unfoldedD05_aveWeight->GetBinContent(i) / (bfD0 * ffb2D0)));
+			ratioUnfld4_Dp.push_back(unfoldedSV4->GetBinContent(i) / (unfoldedDp4_aveWeight->GetBinContent(i) / (bfDp * ffc2Dp)));
+			ratioUnfld5_Dp.push_back(unfoldedSV5->GetBinContent(i) / (unfoldedDp5_aveWeight->GetBinContent(i) / (bfDp * ffb2Dp)));
 		}
 		ratioTrue4.push_back(trueSV4.GetBinContent(i) / (trueD04.GetBinContent(i) / (bfD0 * ffc2D0)));
 		ratioTrue5.push_back(trueSV5.GetBinContent(i) / (trueD05.GetBinContent(i) / (bfD0 * ffb2D0)));
@@ -1018,22 +1277,45 @@ int main(int argc, char** argv) {
 			errorRec5.push_back(ratioRec5[i-1]*TMath::Sqrt(TMath::Power(recoSV5.GetBinError(i)/recoSV5.GetBinContent(i),2)+TMath::Power(recoD05_evtByEvtWeight.GetBinError(i)/recoD05_evtByEvtWeight.GetBinContent(i),2)));
 			errorUnfld4.push_back(ratioUnfld4[i-1]*TMath::Sqrt(TMath::Power(unfoldedSV4->GetBinError(i)/unfoldedSV4->GetBinContent(i),2)+TMath::Power(unfoldedD04_evtByEvtWeight->GetBinError(i)/unfoldedD04_evtByEvtWeight->GetBinContent(i),2)));
 			errorUnfld5.push_back(ratioUnfld5[i-1]*TMath::Sqrt(TMath::Power(unfoldedSV5->GetBinError(i)/unfoldedSV5->GetBinContent(i),2)+TMath::Power(unfoldedD05_evtByEvtWeight->GetBinError(i)/unfoldedD05_evtByEvtWeight->GetBinContent(i),2)));
+
+			errorRec4_Dp.push_back(ratioRec4_Dp[i-1]*TMath::Sqrt(TMath::Power(recoSV4.GetBinError(i)/recoSV4.GetBinContent(i),2)+TMath::Power(recoDp4_evtByEvtWeight.GetBinError(i)/recoDp4_evtByEvtWeight.GetBinContent(i),2)));
+			errorRec5_Dp.push_back(ratioRec5_Dp[i-1]*TMath::Sqrt(TMath::Power(recoSV5.GetBinError(i)/recoSV5.GetBinContent(i),2)+TMath::Power(recoDp5_evtByEvtWeight.GetBinError(i)/recoDp5_evtByEvtWeight.GetBinContent(i),2)));
+			errorUnfld4_Dp.push_back(ratioUnfld4_Dp[i-1]*TMath::Sqrt(TMath::Power(unfoldedSV4->GetBinError(i)/unfoldedSV4->GetBinContent(i),2)+TMath::Power(unfoldedDp4_evtByEvtWeight->GetBinError(i)/unfoldedDp4_evtByEvtWeight->GetBinContent(i),2)));
+			errorUnfld5_Dp.push_back(ratioUnfld5_Dp[i-1]*TMath::Sqrt(TMath::Power(unfoldedSV5->GetBinError(i)/unfoldedSV5->GetBinContent(i),2)+TMath::Power(unfoldedDp5_evtByEvtWeight->GetBinError(i)/unfoldedDp5_evtByEvtWeight->GetBinContent(i),2)));
 		} else {
 			errorRec4.push_back(ratioRec4[i-1]*TMath::Sqrt(TMath::Power(recoSV4.GetBinError(i)/recoSV4.GetBinContent(i),2)+TMath::Power(recoD04_aveWeight.GetBinError(i)/recoD04_aveWeight.GetBinContent(i),2)));
 			errorRec5.push_back(ratioRec5[i-1]*TMath::Sqrt(TMath::Power(recoSV5.GetBinError(i)/recoSV5.GetBinContent(i),2)+TMath::Power(recoD05_aveWeight.GetBinError(i)/recoD05_aveWeight.GetBinContent(i),2)));
 			errorUnfld4.push_back(ratioUnfld4[i-1]*TMath::Sqrt(TMath::Power(unfoldedSV4->GetBinError(i)/unfoldedSV4->GetBinContent(i),2)+TMath::Power(unfoldedD04_aveWeight->GetBinError(i)/unfoldedD04_aveWeight->GetBinContent(i),2)));
 			errorUnfld5.push_back(ratioUnfld5[i-1]*TMath::Sqrt(TMath::Power(unfoldedSV5->GetBinError(i)/unfoldedSV5->GetBinContent(i),2)+TMath::Power(unfoldedD05_aveWeight->GetBinError(i)/unfoldedD05_aveWeight->GetBinContent(i),2)));
+			errorRec4_Dp.push_back(ratioRec4_Dp[i-1]*TMath::Sqrt(TMath::Power(recoSV4.GetBinError(i)/recoSV4.GetBinContent(i),2)+TMath::Power(recoDp4_aveWeight.GetBinError(i)/recoDp4_aveWeight.GetBinContent(i),2)));
+			errorRec5_Dp.push_back(ratioRec5_Dp[i-1]*TMath::Sqrt(TMath::Power(recoSV5.GetBinError(i)/recoSV5.GetBinContent(i),2)+TMath::Power(recoDp5_aveWeight.GetBinError(i)/recoDp5_aveWeight.GetBinContent(i),2)));
+			errorUnfld4_Dp.push_back(ratioUnfld4_Dp[i-1]*TMath::Sqrt(TMath::Power(unfoldedSV4->GetBinError(i)/unfoldedSV4->GetBinContent(i),2)+TMath::Power(unfoldedDp4_aveWeight->GetBinError(i)/unfoldedDp4_aveWeight->GetBinContent(i),2)));
+			errorUnfld5_Dp.push_back(ratioUnfld5_Dp[i-1]*TMath::Sqrt(TMath::Power(unfoldedSV5->GetBinError(i)/unfoldedSV5->GetBinContent(i),2)+TMath::Power(unfoldedDp5_aveWeight->GetBinError(i)/unfoldedDp5_aveWeight->GetBinContent(i),2)));
 		}
 	}
-	std::cout << "ratios reco4/5/unfld4/5/true4/5/trueunfld4/5" << std::endl;
+	std::cout << "ratios reco4D0/D+///5D0/D+///unfld4D0/D+///5D0/D+///true4/5/trueunfld4/5" << std::endl;
 	for (unsigned int i=0; i<npt; ++i)  printf("%.3f+/-%.3f+/-%.3f   ", ratioRec4[i], errorRec4[i], ratioRec4[i]*bfffErr4);
 	std::cout << std::endl;
+	for (unsigned int i=0; i<npt; ++i)  printf("%.3f+/-%.3f+/-%.3f   ", ratioRec4_Dp[i], errorRec4_Dp[i], ratioRec4_Dp[i]*dpbfffErr4);
+	std::cout << std::endl;
+	std::cout << std::endl;
+
 	for (unsigned int i=0; i<npt; ++i)  printf("%.3f+/-%.3f+/-%.3f   ", ratioRec5[i], errorRec5[i], ratioRec5[i]*bfffErr5);
 	std::cout << std::endl;
+	for (unsigned int i=0; i<npt; ++i)  printf("%.3f+/-%.3f+/-%.3f   ", ratioRec5_Dp[i], errorRec5_Dp[i], ratioRec5_Dp[i]*dpbfffErr5);
 	std::cout << std::endl;
+	std::cout << std::endl;
+
 	for (unsigned int i=0; i<npt; ++i)  printf("%.3f+/-%.3f+/-%.3f   ", ratioUnfld4[i], errorUnfld4[i], ratioUnfld4[i]*bfffErr4);
 	std::cout << std::endl;
+	for (unsigned int i=0; i<npt; ++i)  printf("%.3f+/-%.3f+/-%.3f   ", ratioUnfld4_Dp[i], errorUnfld4_Dp[i], ratioUnfld4_Dp[i]*dpbfffErr4);
+	std::cout << std::endl;
+	std::cout << std::endl;
+
 	for (unsigned int i=0; i<npt; ++i)  printf("%.3f+/-%.3f+/-%.3f   ", ratioUnfld5[i], errorUnfld5[i], ratioUnfld5[i]*bfffErr5);
+	std::cout << std::endl;
+	for (unsigned int i=0; i<npt; ++i)  printf("%.3f+/-%.3f+/-%.3f   ", ratioUnfld5_Dp[i], errorUnfld5_Dp[i], ratioUnfld5_Dp[i]*dpbfffErr5);
+	std::cout << std::endl;
 	std::cout << std::endl;
 	std::cout << std::endl;
 	for (unsigned int i=1; i<=npt; ++i) printf("%.3f                   ",  trueSV4.GetBinContent(i) / (trueD04.GetBinContent(i) / (bfD0 * ffc2D0)));
@@ -1051,6 +1333,10 @@ int main(int argc, char** argv) {
 	std::cout << std::endl;
 	for (unsigned int i=1; i<=npt; ++i) printf("& $%6.0f\\pm%4.0f$ ",unfoldedD05_aveWeight->GetBinContent(i), unfoldedD05_aveWeight->GetBinError(i));
 	std::cout << std::endl;
+	for (unsigned int i=1; i<=npt; ++i) printf("& $%6.0f\\pm%4.0f$ ",unfoldedDp4_aveWeight->GetBinContent(i), unfoldedDp4_aveWeight->GetBinError(i));
+	std::cout << std::endl;
+	for (unsigned int i=1; i<=npt; ++i) printf("& $%6.0f\\pm%4.0f$ ",unfoldedDp5_aveWeight->GetBinContent(i), unfoldedDp5_aveWeight->GetBinError(i));
+	std::cout << std::endl;
 	for (unsigned int i=1; i<=npt; ++i) printf("& $%6.0f\\pm%4.0f$ ",unfoldedSV4->GetBinContent(i), unfoldedSV4->GetBinError(i));
 	std::cout << std::endl;
 	for (unsigned int i=1; i<=npt; ++i) printf("& $%6.0f\\pm%4.0f$ ",unfoldedSV5->GetBinContent(i), unfoldedSV5->GetBinError(i));
@@ -1058,6 +1344,10 @@ int main(int argc, char** argv) {
 	for (unsigned int i=0; i<npt; ++i)  printf("& $%.3f\\pm%.3f\\pm%.3f$ ", ratioUnfld4[i], errorUnfld4[i], ratioUnfld4[i]*bfffErr4);
 	std::cout << std::endl;
 	for (unsigned int i=0; i<npt; ++i)  printf("& $%.3f\\pm%.3f\\pm%.3f$ ", ratioUnfld5[i], errorUnfld5[i], ratioUnfld5[i]*bfffErr5);
+	std::cout << std::endl;
+	for (unsigned int i=0; i<npt; ++i)  printf("& $%.3f\\pm%.3f\\pm%.3f$ ", ratioUnfld4_Dp[i], errorUnfld4_Dp[i], ratioUnfld4_Dp[i]*dpbfffErr4);
+	std::cout << std::endl;
+	for (unsigned int i=0; i<npt; ++i)  printf("& $%.3f\\pm%.3f\\pm%.3f$ ", ratioUnfld5_Dp[i], errorUnfld5_Dp[i], ratioUnfld5_Dp[i]*dpbfffErr5);
 	std::cout << std::endl;
 
 	if(dataIsMC) {
@@ -1146,6 +1436,24 @@ int main(int argc, char** argv) {
 	std::cout << std::endl;
 	std::cout << std::endl;
 
+	//ANA D+ YIELDS TABLE
+	std::cout << std::endl;
+	printf("$N_{\\rm prmpt}$ ");
+	for (unsigned int i=1; i<=npt; ++i) printf("& $%5.0f\\pm%3.0f$ ",recoDpSel4.GetBinContent(i), recoDpSel4.GetBinError(i));
+	printf("\\\\\n$N_{\\rm displ}$ ");
+	for (unsigned int i=1; i<=npt; ++i) printf("& $%5.0f\\pm%3.0f$ ",recoDpSel5.GetBinContent(i), recoDpSel5.GetBinError(i));
+	printf("\\\\\n\\midrule\n$w_{\\rm prmpt}$ ");
+	for (unsigned int i=1; i<=npt; ++i) printf("& $%6.3f\\pm%6.3f$ ",recoDpWeight4.GetBinContent(i), recoDpWeight4.GetBinError(i));
+	printf("\\\\\n$w_{\\rm displ}$ ");
+	for (unsigned int i=1; i<=npt; ++i) printf("& $%6.3f\\pm%6.3f$ ",recoDpWeight5.GetBinContent(i), recoDpWeight5.GetBinError(i));
+	printf("\\\\\n\\midrule\n$N_{\\rm prmpt}^{\\rm corr}$ ");
+	for (unsigned int i=1; i<=npt; ++i) printf("& $%5.0f\\pm%3.0f$ ",recoDp4_aveWeight.GetBinContent(i), recoDp4_aveWeight.GetBinError(i));
+	printf("\\\\\n$N_{\\rm displ}^{\\rm corr}$ ");
+	for (unsigned int i=1; i<=npt; ++i) printf("& $%5.0f\\pm%3.0f$ ",recoDp5_aveWeight.GetBinContent(i), recoDp5_aveWeight.GetBinError(i));
+	printf("\\\\\n");
+	std::cout << std::endl;
+	std::cout << std::endl;
+
 	//ANA SV YIELDS TABLE
 	printf("$N_{\\cquark}$ ");
 	for (unsigned int i=1; i<=npt; ++i) printf("& $%6.0f\\pm%3.0f$ ",recoSV4.GetBinContent(i), recoSV4.GetBinError(i));
@@ -1170,9 +1478,110 @@ int main(int argc, char** argv) {
 	fout << std::endl;
 	fout.close();
 
+	fout.open(savedir+"/resultsOutput_Dp.log");
+	for (unsigned int i=0; i<npt; ++i)  fout << ratioUnfld4_Dp[i] << " ";
+	for (unsigned int i=0; i<npt; ++i)  fout << ratioUnfld5_Dp[i] << " ";
+	fout << std::endl;
+	for (unsigned int i=0; i<npt; ++i)  fout << errorUnfld4_Dp[i] << " ";
+	for (unsigned int i=0; i<npt; ++i)  fout << errorUnfld5_Dp[i] << " ";
+	fout << std::endl;
+	for (unsigned int i=0; i<npt; ++i)  fout << ratioUnfld4_Dp[i]*dpbfffErr4 << " ";
+	for (unsigned int i=0; i<npt; ++i)  fout << ratioUnfld5_Dp[i]*dpbfffErr5 << " ";
+	fout << std::endl;
+	fout.close();
+
+	fout.open(savedir+TString::Format("/resultsOutputFull_%s%.0f.log",unfoldingMode.Data(),unfoldingReg));
+	for (unsigned int i=0; i<npt; ++i)  fout << unfoldedSV4->GetBinContent(i+1) << " ";
+	for (unsigned int i=0; i<npt; ++i)  fout << unfoldedSV5->GetBinContent(i+1) << " ";
+	fout << std::endl;
+	for (unsigned int i=0; i<npt; ++i)  fout << unfoldedSV4->GetBinError(i+1) << " ";
+	for (unsigned int i=0; i<npt; ++i)  fout << unfoldedSV5->GetBinError(i+1) << " ";
+	fout << std::endl;
+	if(evtByEvtWeighting) {
+		for (unsigned int i=0; i<npt; ++i)  fout << unfoldedD04_evtByEvtWeight->GetBinContent(i+1) << " ";
+		for (unsigned int i=0; i<npt; ++i)  fout << unfoldedD05_evtByEvtWeight->GetBinContent(i+1) << " ";
+		fout << std::endl;
+		for (unsigned int i=0; i<npt; ++i)  fout << unfoldedD04_evtByEvtWeight->GetBinError(i+1) << " ";
+		for (unsigned int i=0; i<npt; ++i)  fout << unfoldedD05_evtByEvtWeight->GetBinError(i+1) << " ";
+		fout << std::endl;
+		for (unsigned int i=0; i<npt; ++i)  fout << bfD0 << " ";
+		for (unsigned int i=0; i<npt; ++i)  fout << bfD0 << " ";
+		fout << std::endl;
+		for (unsigned int i=0; i<npt; ++i)  fout << errBFD0 << " ";
+		for (unsigned int i=0; i<npt; ++i)  fout << errBFD0 << " ";
+		fout << std::endl;
+		for (unsigned int i=0; i<npt; ++i)  fout << ffc2D0 << " ";
+		for (unsigned int i=0; i<npt; ++i)  fout << ffb2D0 << " ";
+		fout << std::endl;
+		for (unsigned int i=0; i<npt; ++i)  fout << errFFc2D0 << " ";
+		for (unsigned int i=0; i<npt; ++i)  fout << errFFb2D0 << " ";
+		fout << std::endl;
+		for (unsigned int i=0; i<npt; ++i)  fout << unfoldedDp4_evtByEvtWeight->GetBinContent(i+1) << " ";
+		for (unsigned int i=0; i<npt; ++i)  fout << unfoldedDp5_evtByEvtWeight->GetBinContent(i+1) << " ";
+		fout << std::endl;
+		for (unsigned int i=0; i<npt; ++i)  fout << unfoldedDp4_evtByEvtWeight->GetBinError(i+1) << " ";
+		for (unsigned int i=0; i<npt; ++i)  fout << unfoldedDp5_evtByEvtWeight->GetBinError(i+1) << " ";
+		fout << std::endl;
+		for (unsigned int i=0; i<npt; ++i)  fout << bfDp << " ";
+		for (unsigned int i=0; i<npt; ++i)  fout << bfDp << " ";
+		fout << std::endl;
+		for (unsigned int i=0; i<npt; ++i)  fout << errBFDp << " ";
+		for (unsigned int i=0; i<npt; ++i)  fout << errBFDp << " ";
+		fout << std::endl;
+		for (unsigned int i=0; i<npt; ++i)  fout << ffc2Dp << " ";
+		for (unsigned int i=0; i<npt; ++i)  fout << ffb2Dp << " ";
+		fout << std::endl;
+		for (unsigned int i=0; i<npt; ++i)  fout << errFFc2Dp << " ";
+		for (unsigned int i=0; i<npt; ++i)  fout << errFFb2Dp << " ";
+		fout << std::endl;
+	} else {
+		for (unsigned int i=0; i<npt; ++i)  fout << unfoldedD04_aveWeight->GetBinContent(i+1) << " ";
+		for (unsigned int i=0; i<npt; ++i)  fout << unfoldedD05_aveWeight->GetBinContent(i+1) << " ";
+		fout << std::endl;
+		for (unsigned int i=0; i<npt; ++i)  fout << unfoldedD04_aveWeight->GetBinError(i+1) << " ";
+		for (unsigned int i=0; i<npt; ++i)  fout << unfoldedD05_aveWeight->GetBinError(i+1) << " ";
+		fout << std::endl;
+		for (unsigned int i=0; i<npt; ++i)  fout << bfD0 << " ";
+		for (unsigned int i=0; i<npt; ++i)  fout << bfD0 << " ";
+		fout << std::endl;
+		for (unsigned int i=0; i<npt; ++i)  fout << errBFD0 << " ";
+		for (unsigned int i=0; i<npt; ++i)  fout << errBFD0 << " ";
+		fout << std::endl;
+		for (unsigned int i=0; i<npt; ++i)  fout << ffc2D0 << " ";
+		for (unsigned int i=0; i<npt; ++i)  fout << ffb2D0 << " ";
+		fout << std::endl;
+		for (unsigned int i=0; i<npt; ++i)  fout << errFFc2D0 << " ";
+		for (unsigned int i=0; i<npt; ++i)  fout << errFFb2D0 << " ";
+		fout << std::endl;
+		for (unsigned int i=0; i<npt; ++i)  fout << unfoldedDp4_aveWeight->GetBinContent(i+1) << " ";
+		for (unsigned int i=0; i<npt; ++i)  fout << unfoldedDp5_aveWeight->GetBinContent(i+1) << " ";
+		fout << std::endl;
+		for (unsigned int i=0; i<npt; ++i)  fout << unfoldedDp4_aveWeight->GetBinError(i+1) << " ";
+		for (unsigned int i=0; i<npt; ++i)  fout << unfoldedDp5_aveWeight->GetBinError(i+1) << " ";
+		fout << std::endl;
+		for (unsigned int i=0; i<npt; ++i)  fout << bfDp << " ";
+		for (unsigned int i=0; i<npt; ++i)  fout << bfDp << " ";
+		fout << std::endl;
+		for (unsigned int i=0; i<npt; ++i)  fout << errBFDp << " ";
+		for (unsigned int i=0; i<npt; ++i)  fout << errBFDp << " ";
+		fout << std::endl;
+		for (unsigned int i=0; i<npt; ++i)  fout << ffc2Dp << " ";
+		for (unsigned int i=0; i<npt; ++i)  fout << ffb2Dp << " ";
+		fout << std::endl;
+		for (unsigned int i=0; i<npt; ++i)  fout << errFFc2Dp << " ";
+		for (unsigned int i=0; i<npt; ++i)  fout << errFFb2Dp << " ";
+		fout << std::endl;
+	}
+	fout.close();
+
 	fout.open(savedir+"/systMCStats.log");
 	for (unsigned int i=1; i<=npt; ++i)  fout << recoD0Weight4.GetBinError(i)/recoD0Weight4.GetBinContent(i) << " ";
 	for (unsigned int i=1; i<=npt; ++i)  fout << recoD0Weight5.GetBinError(i)/recoD0Weight5.GetBinContent(i) << " ";
+	fout << std::endl;
+	fout.close();
+	fout.open(savedir+"/systMCStats_Dp.log");
+	for (unsigned int i=1; i<=npt; ++i)  fout << recoDpWeight4.GetBinError(i)/recoDpWeight4.GetBinContent(i) << " ";
+	for (unsigned int i=1; i<=npt; ++i)  fout << recoDpWeight5.GetBinError(i)/recoDpWeight5.GetBinContent(i) << " ";
 	fout << std::endl;
 	fout.close();
 	fout.open(savedir+"/systWeighting.log");
@@ -1249,6 +1658,30 @@ int main(int argc, char** argv) {
 	recoD0Sel5.Write();
 	trueUnfldD0Sel5.Write();
 	unfoldedD0Sel5->Write();
+
+	trueDp4.Write();
+	recoDp4_evtByEvtWeight.Write();
+	recoDp4_aveWeight.Write();
+	recoDpWeight4.Write();
+	trueUnfldDp4.Write();
+	unfoldedDp4_evtByEvtWeight->Write();
+	unfoldedDp4_aveWeight->Write();
+	trueDp5.Write();
+	recoDp5_evtByEvtWeight.Write();
+	recoDp5_aveWeight.Write();
+	recoDpWeight5.Write();
+	trueUnfldDp5.Write();
+	unfoldedDp5_evtByEvtWeight->Write();
+	unfoldedDp5_aveWeight->Write();
+	trueDpSel4.Write();
+	recoDpSel4.Write();
+	trueUnfldDpSel4.Write();
+	unfoldedDpSel4->Write();
+	trueDpSel5.Write();
+	recoDpSel5.Write();
+	trueUnfldDpSel5.Write();
+	unfoldedDpSel5->Write();
+
 	trueSV4.Write();
 	recoSV4.Write();
 	trueUnfldSV4.Write();
@@ -1259,12 +1692,16 @@ int main(int argc, char** argv) {
 	unfoldedSV5->Write();
 	true4.Write();
 	reco4.Write();
+	reco4_Dp.Write();
 	trueUnfld4.Write();
 	unfolded4.Write();
+	unfolded4_Dp.Write();
 	true5.Write();
 	reco5.Write();
+	reco5_Dp.Write();
 	trueUnfld5.Write();
 	unfolded5.Write();
+	unfolded5_Dp.Write();
 	fHistsOut->Close();
 
 	//output tagging efficiencies for use by Z+j fit

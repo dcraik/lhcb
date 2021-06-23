@@ -25,7 +25,11 @@ class MCJets {
 			jetRecoLc4,
 			jetRecoLc5,
 			jetRecoSV4,
-			jetRecoSV5
+			jetRecoSV5,
+			jetTrueD04,
+			jetTrueD05,
+			jetTrueDp4,
+			jetTrueDp5
 		};
 
 		enum UnfoldMethod {
@@ -41,8 +45,10 @@ class MCJets {
 			  _dptmin(5000.), _dptmax(-1.),
 			  _ybins(0), _recreateInputs(false) {}
 
-		void setInputs(TString light, TString charm, TString beauty, TString svData="", TString d0Data="");
+		void setInputs(TString light, TString charm, TString beauty, TString svData="", TString d0Data="", TString dpData="");
 		void setInputTruePtWeights(jetType type, TH1D* truePtWeights);
+		void setExtraPtWeights(jetType type, TH1D* recoPtWeights);
+		void useInputPtWeightsFromTree(bool useInputPtWeights=true) { _useInputPtWeights = useInputPtWeights;}
 		void setDPtRange(double minpt, double maxpt);
 		void setYBins(TH1D* ybins) { _ybins = ybins; }
 
@@ -61,6 +67,7 @@ class MCJets {
 		TH2D* unfold(TH2D* input, jetType type, bool useYBins=false);
 
 		//TString setupTrainTestSamples(int sample);
+		bool getTruth(TString file, std::map<std::string,TH1D*> hists, bool useTruePT=false);
 		bool getTruth(TString file, TH1D* true4, TH1D* true5, TH1D* trueD04, TH1D* trueD05, TH1D* trueD0Sel4, TH1D* trueD0Sel5, TH1D* trueSV4, TH1D* trueSV5, bool useTruePT=false);
 		bool getTruth(TString file, TH2D* true0, TH2D* true4, TH2D* true5, TH2D* trueSV4, TH2D* trueSV5, bool useTruePT=false);
 
@@ -78,6 +85,7 @@ class MCJets {
 		TString _beautyInput;
 		TString _svDataInput;
 		TString _d0DataInput;
+		TString _dpDataInput;
 
 		TString _resampledName;
 
@@ -90,7 +98,9 @@ class MCJets {
 		double _unfoldingSmearFactor{0.};
 
 		std::map<jetType,TH1D*> _truePtWeights;
+		std::map<jetType,TH1D*> _extraPtWeights;
 		std::map<jetType, std::map<uint,RooUnfoldResponse*> > _unfoldings;
+		bool _useInputPtWeights;
 
 		double _dptmin;
 		double _dptmax;

@@ -94,6 +94,36 @@ getTaggingEffs.o : getTaggingEffs.C
 getTaggingEffs : getTaggingEffs.o RooUnfold/libRooUnfold.so RooModulatedHistPdf.o RooMultiKeysPdf.o RooPromptShape.o outputFunctions.o cloneHists.o SVFitter.o SimDFitter.o MCJets.o DatasetManager.o AdaptBin.o
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS) -lboost_program_options RooUnfold/libRooUnfold.so
 
+testUnfoldingMC.o : testUnfoldingMC.C
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCPATH) -c $< -o $@
+
+testUnfoldingMC : testUnfoldingMC.o RooUnfold/libRooUnfold.so outputFunctions.o cloneHists.o MCJets.o DatasetManager.o AdaptBin.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS) -lboost_program_options RooUnfold/libRooUnfold.so
+
+testUnfoldingMC2.o : testUnfoldingMC2.C
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCPATH) -c $< -o $@
+
+testUnfoldingMC2 : testUnfoldingMC2.o RooUnfold/libRooUnfold.so outputFunctions.o cloneHists.o MCJets.o DatasetManager.o AdaptBin.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS) -lboost_program_options RooUnfold/libRooUnfold.so
+
+testUnfoldingMC3.o : testUnfoldingMC3.C
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCPATH) -c $< -o $@
+
+testUnfoldingMC3 : testUnfoldingMC3.o RooUnfold/libRooUnfold.so outputFunctions.o cloneHists.o MCJets.o DatasetManager.o AdaptBin.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS) -lboost_program_options RooUnfold/libRooUnfold.so
+
+testUnfoldingMC_compare.o : testUnfoldingMC_compare.C
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCPATH) -c $< -o $@
+
+testUnfoldingMC_compare : testUnfoldingMC_compare.o RooUnfold/libRooUnfold.so outputFunctions.o cloneHists.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS) -lboost_program_options RooUnfold/libRooUnfold.so
+
+doDFits_DPtBins.o : doDFits_DPtBins.C
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCPATH) -c $< -o $@
+
+doDFits_DPtBins : doDFits_DPtBins.o RooUnfold/libRooUnfold.so RooModulatedHistPdf.o RooMultiKeysPdf.o RooPromptShape.o outputFunctions.o cloneHists.o SVFitter.o SimDFitter.o MCJets.o DatasetManager.o AdaptBin.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS) -lboost_program_options RooUnfold/libRooUnfold.so
+
 d0FitTests.o : d0FitTests.C
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCPATH) -c $< -o $@
 
@@ -190,6 +220,18 @@ makeWeightSim5Tuple_step2.o : makeWeightSim5Tuple_step2.C
 makeWeightSim5Tuple_step2 : makeWeightSim5Tuple_step2.o
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
 
+addWeightsToSim.o : addWeightsToSim.C
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCPATH) -c $< -o $@
+
+addWeightsToSim : addWeightsToSim.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
+
+addWeightsToSim5.o : addWeightsToSim5.C
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCPATH) -c $< -o $@
+
+addWeightsToSim5 : addWeightsToSim5.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
+
 SVFitSysts.o : SVFitSysts.C
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCPATH) -c $< -o $@
 
@@ -200,4 +242,16 @@ calcJetRecoEffs.o : calcJetRecoEffs.C
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCPATH) -c $< -o $@
 
 calcJetRecoEffs : calcJetRecoEffs.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
+
+effClosureTest.o : effClosureTest.C
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCPATH) -c $< -o $@
+
+effClosureTest : effClosureTest.o cloneHists.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
+
+effClosureTest_Dp.o : effClosureTest_Dp.C
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCPATH) -c $< -o $@
+
+effClosureTest_Dp : effClosureTest_Dp.o cloneHists.o
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)

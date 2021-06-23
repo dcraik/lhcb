@@ -28,18 +28,23 @@
 #include "outputFunctions.h"
 #include "DatasetManager.h"
 
-void MCJets::setInputs(TString light, TString charm, TString beauty, TString svData, TString d0Data) {
+void MCJets::setInputs(TString light, TString charm, TString beauty, TString svData, TString d0Data, TString dpData) {
 	_lightInput  = light;
 	_charmInput  = charm;
 	_beautyInput = beauty;
 	_svDataInput = svData;
 	_d0DataInput = d0Data;
+	_dpDataInput = dpData;
 
 	_inputsSet = true;
 }
 
 void MCJets::setInputTruePtWeights(jetType type, TH1D* truePtWeights) {
 	_truePtWeights[type] = truePtWeights;
+}
+
+void MCJets::setExtraPtWeights(jetType type, TH1D* recoPtWeights) {
+	_extraPtWeights[type] = recoPtWeights;
 }
 
 void MCJets::setDPtRange(double minpt, double maxpt) {
@@ -115,6 +120,12 @@ double MCJets::getPtCorrFactor(jetType type, double ptMin, double ptMax) {
 			cut1+=" && JetTRUEc && !JetTRUEb && TRUEDID[0] && TRUEDPT>5000. && SVM[0]";
 			cut2+=" && JetTRUEc && !JetTRUEb && TRUEDID[0] && SVM[0]";
 			break;
+		case jetTrueD04:
+			std::cout << "getting pT correction factor for c->all D0 in " << ptMin << " to " << ptMax << " bin..." << std::endl;
+			return 1.;//no correction needed
+		case jetTrueDp4:
+			std::cout << "getting pT correction factor for c->all D+ in " << ptMin << " to " << ptMax << " bin..." << std::endl;
+			return 1.;//no correction needed
 		case jetRecoD05:
 			std::cout << "getting pT correction factor for b->D0 in " << ptMin << " to " << ptMax << " bin..." << std::endl;
 			dm->setDataset(_beautyInput);
@@ -146,6 +157,18 @@ double MCJets::getPtCorrFactor(jetType type, double ptMin, double ptMax) {
 			dm->setDataset(_beautyInput);
 			cut1+=" && JetTRUEb && !JetTRUEc && TRUEBID[0] && TRUEBPT>5000. && SVM[0]";
 			cut2+=" && JetTRUEb && !JetTRUEc && TRUEBID[0] && SVM[0]";
+			break;
+		case jetTrueD05:
+			std::cout << "getting pT correction factor for b->all D0 in " << ptMin << " to " << ptMax << " bin..." << std::endl;
+			dm->setDataset(_beautyInput);
+			cut1+=" && JetTRUEb && !JetTRUEc && TMath::Abs(TRUEDID)==421 && TRUEDTRK0IDX!=-1 && TRUEDTRK2IDX==-1 && TRUEDTRUEB!=-1 && TRUEBPT[TRUEDTRUEB]>5.e3";
+			cut2+=" && JetTRUEb && !JetTRUEc && TMath::Abs(TRUEDID)==421 && TRUEDTRK0IDX!=-1 && TRUEDTRK2IDX==-1 && TRUEDTRUEB!=-1 && TRUEDPT>5.e3";
+			break;
+		case jetTrueDp5:
+			std::cout << "getting pT correction factor for b->all D+ in " << ptMin << " to " << ptMax << " bin..." << std::endl;
+			dm->setDataset(_beautyInput);
+			cut1+=" && JetTRUEb && !JetTRUEc && TMath::Abs(TRUEDID)==411 && TRUEDTRK2IDX!=-1 && TRUEDTRK3IDX==-1 && TRUEDTRUEB!=-1 && TRUEBPT[TRUEDTRUEB]>5.e3";
+			cut2+=" && JetTRUEb && !JetTRUEc && TMath::Abs(TRUEDID)==411 && TRUEDTRK2IDX!=-1 && TRUEDTRK3IDX==-1 && TRUEDTRUEB!=-1 && TRUEDPT>5.e3";
 			break;
 		default:
 			return 1.;
@@ -357,6 +380,8 @@ bool MCJets::weightMC(jetType type, TH2D* effTrueHist, TH2D* effRecoHist) {
 		case jetRecoDs4:
 		case jetRecoLc4:
 		case jetRecoSV4:
+		case jetTrueD04:
+		case jetTrueDp4:
 //			fin = TFile::Open(_charmInput);
 			dm->setDataset(_charmInput);
 			break;
@@ -366,6 +391,8 @@ bool MCJets::weightMC(jetType type, TH2D* effTrueHist, TH2D* effRecoHist) {
 		case jetRecoDs5:
 		case jetRecoLc5:
 		case jetRecoSV5:
+		case jetTrueD05:
+		case jetTrueDp5:
 //			fin = TFile::Open(_beautyInput);
 			dm->setDataset(_beautyInput);
 			break;
@@ -380,11 +407,13 @@ bool MCJets::weightMC(jetType type, TH2D* effTrueHist, TH2D* effRecoHist) {
 	double JetTruePT;
 	double JetTrueEta;
 	double JetTrueD0;
+	double JetTrueDP;
 	double JetTrueDSV;
 	double JetTrueBSV;
 	double JetTrueDPT;
 	double JetTrueBPT;
 	double NPV;
+	double ptWeight(1.);
 
 	double ZTRUEPZ, ZTRUEE, ZTRUEY;
 
@@ -397,10 +426,18 @@ bool MCJets::weightMC(jetType type, TH2D* effTrueHist, TH2D* effRecoHist) {
 	std::vector<double>* vD0KWEIGHT = new std::vector<double>();
 	std::vector<double>* vD0PIWEIGHT = new std::vector<double>();
 
+	std::vector<double>* vDM = new std::vector<double>();
+	std::vector<double>* vDPT = new std::vector<double>();
+	std::vector<double>* vDIPCHI2 = new std::vector<double>();
+	std::vector<double>* vDKWEIGHT = new std::vector<double>();
+	std::vector<double>* vDPI1WEIGHT = new std::vector<double>();
+	std::vector<double>* vDPI2WEIGHT = new std::vector<double>();
+
 	dm->setBranchAddress("JetPT",       &JetPT);
 	dm->setBranchAddress("JetTruePT",   &JetTruePT);
 	dm->setBranchAddress("JetTrueEta",  &JetTrueEta);
 	dm->setBranchAddress("JetTRUED0",   &JetTrueD0);
+	dm->setBranchAddress("JetTRUEDP",   &JetTrueDP);
 	dm->setBranchAddress("JetTRUEDSV",  &JetTrueDSV);
 	dm->setBranchAddress("JetTRUEBSV",  &JetTrueBSV);
 	dm->setBranchAddress("JetTRUEDPT",  &JetTrueDPT);
@@ -418,10 +455,20 @@ bool MCJets::weightMC(jetType type, TH2D* effTrueHist, TH2D* effRecoHist) {
 	dm->setBranchAddress("D0KWEIGHT",   &vD0KWEIGHT);
 	dm->setBranchAddress("D0PIWEIGHT",  &vD0PIWEIGHT);
 
+	dm->setBranchAddress("DM",         &vDM);
+	dm->setBranchAddress("DPT",        &vDPT);
+	dm->setBranchAddress("DIPCHI2",    &vDIPCHI2);
+	dm->setBranchAddress("DKWEIGHT",   &vDKWEIGHT);
+	dm->setBranchAddress("DPI1WEIGHT",  &vDPI1WEIGHT);
+	dm->setBranchAddress("DPI2WEIGHT",  &vDPI2WEIGHT);
+
 	dm->setBranchAddress("NPV",  &NPV);
 
 	//weight MC for continuous true jet pT
-	if(_truePtWeights.find(type)==_truePtWeights.end()) {
+	if(_useInputPtWeights) {
+		std::cout << "INFO in MCJets:weightMC: using weight branch from input tuple as pT weights" << std::endl;
+		dm->setBranchAddress("weight",  &ptWeight);
+	} else if(_truePtWeights.find(type)==_truePtWeights.end()) {
 		std::cout << "INFO in MCJets:weightMC: input true pT weights not set" << std::endl;
 		std::cout << "                           using weight of 1" << std::endl;
 		_truePtWeights[type] = new TH1D("jetTruePtWeights"+typeName(type),"",1,10e3,100e3);
@@ -432,23 +479,34 @@ bool MCJets::weightMC(jetType type, TH2D* effTrueHist, TH2D* effRecoHist) {
 	TH1D* fPtDWeights = new TH1D("fPtDWeights","",20,0.,2.0);
 	TH1D* ptRecWeights = new TH1D("ptRecWeights","",90,10.e3,100.e3);
 
-	//for D0 also weight to match pT(D0)/pT(jet) to data
+	//TH1D* fPtDData = new TH1D("fPtDData"+typeName(type),"",20,0.,2.0);
+	//TH1D* fPtDSim = new TH1D("fPtDSim"+typeName(type),"",20,0.,2.0);
+	//TH1D* fPtDSB = new TH1D("fPtDSB"+typeName(type),"",20,0.,2.0);
+		
+	//for D0/Dp also weight to match pT(D0)/pT(jet) to data
 	if(!_d0DataInput.IsNull() && (type==jetRecoD04 || type==jetRecoD05)) {
 		TFile* fdata = TFile::Open(_d0DataInput);
 		TTree* tdata = dynamic_cast<TTree*>(fdata->Get("T7"));
 
 		TH1D* fPtDData = new TH1D("fPtDData"+typeName(type),"",20,0.,2.0);
 		TH1D* fPtDSim = new TH1D("fPtDSim"+typeName(type),"",20,0.,2.0);
+		TH1D* fPtDSB = new TH1D("fPtDSB"+typeName(type),"",20,0.,2.0);
 
 		fPtDData->Sumw2();
 		fPtDSim->Sumw2();
+		fPtDSB->Sumw2();
 
-		dm->draw("D0PT/JetPT","D0M>0 && JetTRUED0 && D0KPNNK>0.2",fPtDSim);//TODO no pion PID cut && D0PIPNNPI>0.1",fPtDSim);
+		dm->draw("D0PT/JetPT","D0M>0 && JetTRUED0 && (D0KPNNK>0.2 || D0KPT>25000. || D0KP>500000.)",fPtDSim);//TODO no pion PID cut && D0PIPNNPI>0.1",fPtDSim);
 		if(type==jetRecoD04) {
 			tdata->Draw("D0PT/JetPT>>fPtDData"+typeName(type),"weight4*(TMath::Abs(D0M-1865)<30.)*(D0LogIPChi2<2.5)");
+			tdata->Draw("D0PT/JetPT>>fPtDSB"+typeName(type),"weight4*(TMath::Abs(D0M-1865)>30. && TMath::Abs(D0M-1865)<60.)*(D0LogIPChi2<2.5)");
 		} else if(type==jetRecoD05) {
 			tdata->Draw("D0PT/JetPT>>fPtDData"+typeName(type),"weight5*(TMath::Abs(D0M-1865)<30.)*(D0LogIPChi2>2.5)");
+			tdata->Draw("D0PT/JetPT>>fPtDSB"+typeName(type),"weight5*(TMath::Abs(D0M-1865)>30. && TMath::Abs(D0M-1865)<60.)*(D0LogIPChi2>2.5)");
 		}
+		std::cout << "!" << _d0DataInput << " " << tdata->GetEntries() << " " << fPtDData->Integral() << " " << fPtDSim->Integral() << " " << fPtDSB->Integral() << std::endl;//TODO
+
+		fPtDData->Add(fPtDSB,-1.);
 
 		fPtDData->Scale(1./fPtDData->Integral());
 		fPtDSim->Scale(1./fPtDSim->Integral());
@@ -463,6 +521,45 @@ bool MCJets::weightMC(jetType type, TH2D* effTrueHist, TH2D* effRecoHist) {
 
 		fPtDWeights->Draw();
 		c.SaveAs(gSaveDir+"/D0fPtWeights"+_name+"_"+nameStr+".pdf");
+
+		fdata->Close();
+	} else if(!_dpDataInput.IsNull() && (type==jetRecoDp4 || type==jetRecoDp5)) {
+		TFile* fdata = TFile::Open(_dpDataInput);
+		TTree* tdata = dynamic_cast<TTree*>(fdata->Get("T7"));
+
+		TH1D* fPtDData = new TH1D("fPtDData"+typeName(type),"",20,0.,2.0);
+		TH1D* fPtDSim = new TH1D("fPtDSim"+typeName(type),"",20,0.,2.0);
+		TH1D* fPtDSB = new TH1D("fPtDSB"+typeName(type),"",20,0.,2.0);
+
+		fPtDData->Sumw2();
+		fPtDSim->Sumw2();
+		fPtDSB->Sumw2();
+
+		dm->draw("DPT/JetPT","DM>0 && JetTRUEDP && (DKPNNK>0.2 || DKPT>25000. || DKP>500000.)",fPtDSim);//TODO no pion PID cut && D0PIPNNPI>0.1",fPtDSim);
+		if(type==jetRecoDp4) {
+			tdata->Draw("DPT/JetPT>>fPtDData"+typeName(type),"weight4*(TMath::Abs(DM-1870)<30.)*(DLogIPChi2<2.5)");
+			tdata->Draw("DPT/JetPT>>fPtDSB"+typeName(type),"weight4*(TMath::Abs(DM-1870)>30. && TMath::Abs(DM-1870)<60.)*(DLogIPChi2<2.5)");
+		} else if(type==jetRecoDp5) {
+			tdata->Draw("DPT/JetPT>>fPtDData"+typeName(type),"weight5*(TMath::Abs(DM-1870)<30.)*(DLogIPChi2>2.5)");
+			tdata->Draw("DPT/JetPT>>fPtDSB"+typeName(type),"weight5*(TMath::Abs(DM-1870)>30. && TMath::Abs(DM-1870)<60.)*(DLogIPChi2>2.5)");
+		}
+		std::cout << "!" << _dpDataInput << " " << tdata->GetEntries() << " " << fPtDData->Integral() << " " << fPtDSim->Integral() << " " << fPtDSB->Integral() << std::endl;//TODO
+
+		fPtDData->Add(fPtDSB,-1.);
+
+		fPtDData->Scale(1./fPtDData->Integral());
+		fPtDSim->Scale(1./fPtDSim->Integral());
+
+		fPtDWeights->Divide(fPtDData,fPtDSim);
+
+		fPtDSim->SetLineColor(kRed);
+		TCanvas c;
+		fPtDData->Draw();
+		fPtDSim->Draw("same");
+		c.SaveAs(gSaveDir+"/DpfPtReweighting"+_name+"_"+nameStr+".pdf");
+
+		fPtDWeights->Draw();
+		c.SaveAs(gSaveDir+"/DpfPtWeights"+_name+"_"+nameStr+".pdf");
 
 		fdata->Close();
 	}
@@ -523,7 +620,7 @@ bool MCJets::weightMC(jetType type, TH2D* effTrueHist, TH2D* effRecoHist) {
 	TTree* tout = new TTree("T","");
 	tout->SetDirectory(0);
 
-	double D0M(0.), D0PT(0.), D0LogIPChi2(0.), SVMCor(0.), SVN(0.), weight(0.);
+	double D0M(0.), D0PT(0.), D0LogIPChi2(0.), DM(0.), DPT(0.), DLogIPChi2(0.), SVMCor(0.), SVN(0.), weight(0.);
 
 	tout->Branch("JetPT",        &JetPT);
 	tout->Branch("JetTruePT",    &JetTruePT);
@@ -534,6 +631,9 @@ bool MCJets::weightMC(jetType type, TH2D* effTrueHist, TH2D* effRecoHist) {
 	tout->Branch("D0M",          &D0M);
 	tout->Branch("D0PT",         &D0PT);
 	tout->Branch("D0LogIPChi2",  &D0LogIPChi2);
+	tout->Branch("DM",           &DM);
+	tout->Branch("DPT",          &DPT);
+	tout->Branch("DLogIPChi2",   &DLogIPChi2);
 	tout->Branch("SVMCor",       &SVMCor);
 	tout->Branch("SVN",          &SVN);
 	tout->Branch("weight",       &weight);
@@ -556,6 +656,15 @@ bool MCJets::weightMC(jetType type, TH2D* effTrueHist, TH2D* effRecoHist) {
 			D0PT = 0.;
 			D0LogIPChi2 = 0.;
 		}
+		if(vDM ->size()>0) {
+			DM  = vDM->at(0);
+			DPT = vDPT->at(0);
+			DLogIPChi2 = TMath::Log(vDIPCHI2->at(0));
+		} else {
+			DM  = 0.;
+			DPT = 0.;
+			DLogIPChi2 = 0.;
+		}
 		if(vSVMCor ->size()>0) {
 			SVMCor = vSVMCor->at(0);
 			SVN = vSVN->at(0);
@@ -564,7 +673,13 @@ bool MCJets::weightMC(jetType type, TH2D* effTrueHist, TH2D* effRecoHist) {
 			SVN = 0.;
 		}
 
-		weight = _truePtWeights[type]->GetBinContent(_truePtWeights[type]->FindBin(JetTruePT));
+		if(_useInputPtWeights) weight = ptWeight;
+		else weight = _truePtWeights[type]->GetBinContent(_truePtWeights[type]->FindBin(JetTruePT));
+
+		//extra weights if we have them
+		if(_extraPtWeights.find(type)!=_extraPtWeights.end()) {
+			weight *= _extraPtWeights[type]->GetBinContent(_extraPtWeights[type]->FindBin(JetPT));
+		}
 
 		if(ZTRUEE>0.) ZTRUEY = 0.5*TMath::Log((ZTRUEE+ZTRUEPZ)/(ZTRUEE-ZTRUEPZ));
 		else ZTRUEY = 3.;//default value for datasets without Z
@@ -583,6 +698,16 @@ bool MCJets::weightMC(jetType type, TH2D* effTrueHist, TH2D* effRecoHist) {
 				if(!JetTrueD0) continue;
 				if(D0PT < _dptmin || (_dptmax!=-1 && D0PT > _dptmax) ) continue;
 				break;
+			case jetRecoDp4:
+				if(JetTrueDPT<5e3) continue;
+				if(!JetTrueDP) continue;
+				if(DPT < _dptmin || (_dptmax!=-1 && DPT > _dptmax) ) continue;
+				break;
+			case jetRecoDp5:
+				if(JetTrueBPT<5e3) continue;
+				if(!JetTrueDP) continue;
+				if(DPT < _dptmin || (_dptmax!=-1 && DPT > _dptmax) ) continue;
+				break;
 			case jetRecoSV4:
 				if(JetTrueDPT<5e3) continue;
 				if(!JetTrueDSV) continue;
@@ -592,6 +717,22 @@ bool MCJets::weightMC(jetType type, TH2D* effTrueHist, TH2D* effRecoHist) {
 				if(JetTrueBPT<5e3) continue;
 				if(!JetTrueBSV) continue;
 				if(SVMCor<0) continue;
+				break;
+			case jetTrueD04:
+				if(JetTrueDPT<5e3) continue;
+				if(!JetTrueD0) continue;
+				break;
+			case jetTrueD05:
+				if(JetTrueBPT<5e3) continue;
+				if(!JetTrueD0) continue;
+				break;
+			case jetTrueDp4:
+				if(JetTrueDPT<5e3) continue;
+				if(!JetTrueDP) continue;
+				break;
+			case jetTrueDp5:
+				if(JetTrueBPT<5e3) continue;
+				if(!JetTrueDP) continue;
 				break;
 			case jetAll0:
 			case jetAll4:
@@ -613,6 +754,14 @@ bool MCJets::weightMC(jetType type, TH2D* effTrueHist, TH2D* effRecoHist) {
 			//apply PID weights
 			weight *= vD0KWEIGHT->at(0);
 			weight *= vD0PIWEIGHT->at(0);
+		}
+		if(type==jetRecoDp4||type==jetRecoDp5) {
+			if(!_dpDataInput.IsNull()) weight *= fPtDWeights->GetBinContent(fPtDWeights->FindBin(DPT/JetPT));
+
+			//apply PID weights
+			weight *= vDKWEIGHT->at(0);
+			weight *= vDPI1WEIGHT->at(0);
+			weight *= vDPI2WEIGHT->at(0);
 		}
 
 		tout->Fill();
@@ -639,6 +788,11 @@ bool MCJets::weightMC(jetType type, TH2D* effTrueHist, TH2D* effRecoHist) {
 	histsFile->Close();
 
 	dm->reset();
+
+	TFile* fDWeights = TFile::Open(gSaveDir + "/dPtWeights_" + _name + "_" + nameStr + ".root","RECREATE"); 
+	fDWeights->cd();
+	fPtDWeights->Write();
+	fDWeights->Close();
 
 	TFile* fout = TFile::Open(fname,"RECREATE");
 	tout->SetDirectory(fout);
@@ -701,6 +855,7 @@ RooUnfoldResponse* MCJets::trainUnfold(TH1D* binning, jetType type, uint ybin) {
 	double ZY(3.);
 	double SVMCor;
 	double D0PT;
+	double DPT;
 	double weight(1.);
 
 	t->SetBranchAddress("JetPT",       &JetPT);
@@ -712,6 +867,7 @@ RooUnfoldResponse* MCJets::trainUnfold(TH1D* binning, jetType type, uint ybin) {
 
 	t->SetBranchAddress("SVMCor",      &SVMCor);
 	t->SetBranchAddress("D0PT",        &D0PT);
+	t->SetBranchAddress("DPT",         &DPT);
 	t->SetBranchAddress("weight",      &weight);
 
 	unsigned int nentries = t->GetEntries();
@@ -731,6 +887,11 @@ RooUnfoldResponse* MCJets::trainUnfold(TH1D* binning, jetType type, uint ybin) {
 			case jetRecoD05:
 				if(D0PT < _dptmin ||
 				   (_dptmax!=-1 && D0PT > _dptmax) ) continue;
+				break;
+			case jetRecoDp4:
+			case jetRecoDp5:
+				if(DPT < _dptmin ||
+				   (_dptmax!=-1 && DPT > _dptmax) ) continue;
 				break;
 			case jetRecoSV4:
 				if(SVMCor<0) continue;
@@ -862,21 +1023,11 @@ TH1D* MCJets::unfold(TH1D* input, jetType type, uint ybin) {
 	//RooUnfoldDagostini unfolded(response, input, 1);
 	TH1D* ret = dynamic_cast<TH1D*>(unfolded->Hreco());
 
-	mcTrue->Scale(input->Integral()/mcMeas->Integral());
-	mcMeas->Scale(input->Integral()/mcMeas->Integral());
+	//TODO scaling messes up the output file
+	//TODO//mcTrue->Scale(input->Integral()/mcMeas->Integral());
+	//TODO//mcMeas->Scale(input->Integral()/mcMeas->Integral());
 
-	std::cout << nameStr <<" "<<input->GetMaximum()<<" "<<ret->GetMaximum()<<" "<<mcMeas->GetMaximum()<<" "<<mcTrue->GetMaximum() << std::endl;//TODO
-	mcMeas->SetMaximum(1.1*TMath::Max(TMath::Max(input->GetMaximum(),ret->GetMaximum()),TMath::Max(mcMeas->GetMaximum(),mcTrue->GetMaximum())));
-	mcMeas->SetMinimum(0.);
-	mcMeas->GetXaxis()->SetTitle("#it{p}_{T}(jet) [MeV/#it{c}]");
-	mcMeas->GetYaxis()->SetTitle("Candidates");
-	mcMeas->SetTitle("");
-	mcMeas->Draw();
-	mcTrue->Draw("same");
-	input->Draw("same");
-	ret->Draw("same");
-	c.UseCurrentStyle();
-	mcMeas->GetYaxis()->SetTitleOffset(1.1);
+	//TODO//std::cout << nameStr <<" "<<input->GetMaximum()<<" "<<ret->GetMaximum()<<" "<<mcMeas->GetMaximum()<<" "<<mcTrue->GetMaximum() << std::endl;//TODO
 	mcTrue->SetMarkerStyle(22);
 	mcTrue->SetLineStyle(kDashed);
 	input->SetLineColor(kRed);
@@ -885,10 +1036,54 @@ TH1D* MCJets::unfold(TH1D* input, jetType type, uint ybin) {
 	ret->SetMarkerColor(kRed);
 	ret->SetMarkerStyle(22);
 	ret->SetLineStyle(kDashed);
+	input->SetMaximum(1.1*TMath::Max(TMath::Max(input->GetMaximum(),ret->GetMaximum()),TMath::Max(mcMeas->GetMaximum()*input->Integral()/mcMeas->Integral(),mcTrue->GetMaximum()*input->Integral()/mcMeas->Integral())));
+	input->SetMinimum(0.);
+	input->GetXaxis()->SetTitle("#it{p}_{T}(jet) [MeV/#it{c}]");
+	input->GetYaxis()->SetTitle("Candidates");
+	input->SetTitle("");
+	input->GetYaxis()->SetTitleOffset(1.1);
+	input->Draw();
+	mcMeas->DrawNormalized("same",input->Integral());
+	mcTrue->DrawNormalized("same",input->Integral());
+	input->Draw("same");
+	ret->Draw("same");
+
+	//TODO//mcMeas->SetMaximum(1.1*TMath::Max(TMath::Max(input->GetMaximum(),ret->GetMaximum()),TMath::Max(mcMeas->GetMaximum(),mcTrue->GetMaximum())));
+	//TODO//mcMeas->SetMinimum(0.);
+	//TODO//mcMeas->GetXaxis()->SetTitle("#it{p}_{T}(jet) [MeV/#it{c}]");
+	//TODO//mcMeas->GetYaxis()->SetTitle("Candidates");
+	//TODO//mcMeas->SetTitle("");
+	//TODO//mcMeas->Draw();
+	//TODO//mcTrue->Draw("same");
+	//TODO//input->Draw("same");
+	//TODO//ret->Draw("same");
+	//TODO//c.UseCurrentStyle();
+	//TODO//mcMeas->GetYaxis()->SetTitleOffset(1.1);
+	//TODO//mcTrue->SetMarkerStyle(22);
+	//TODO//mcTrue->SetLineStyle(kDashed);
+	//TODO//input->SetLineColor(kRed);
+	//TODO//input->SetMarkerColor(kRed);
+	//TODO//ret->SetLineColor(kRed);
+	//TODO//ret->SetMarkerColor(kRed);
+	//TODO//ret->SetMarkerStyle(22);
+	//TODO//ret->SetLineStyle(kDashed);
 	c.SetRightMargin(0.10);
 	c.SetTopMargin(0.07);
 	c.SetLeftMargin(0.16);
 	c.SaveAs(gSaveDir+"/unfoldingMC_"+nameStr+".pdf");
+
+	//input->SetName("input");
+	mcMeas->SetName("mcMeas");
+	mcTrue->SetName("mcTrue");
+	respMat->SetName("respMat");
+	ret->SetName("ret");
+	TFile* fsave = TFile::Open(gSaveDir+"/unfoldingMC_"+nameStr+".root","RECREATE");
+	fsave->cd();
+	input->Write();
+	mcMeas->Write();
+	mcTrue->Write();
+	ret->Write();
+	respMat->Write();
 
 	return ret;
 }
@@ -989,9 +1184,40 @@ TH2D* MCJets::unfold(TH2D* input, jetType type, bool useYBins) {
 //	return _resampledName;
 //}
 
+//for backwards compatibility
+//will put the histograms all into a map then pass them to the new version which is just going to unpack them again
 bool MCJets::getTruth(TString file, TH1D* true4, TH1D* true5, TH1D* trueD04, TH1D* trueD05, TH1D* trueD0Sel4, TH1D* trueD0Sel5, TH1D* trueSV4, TH1D* trueSV5, bool useTruePT) {
+	std::map<std::string, TH1D*> hists;
+	if(true4) hists["true4"] = true4;
+	if(true5) hists["true5"] = true5;
+	if(trueD04) hists["trueD04"] = trueD04;
+	if(trueD05) hists["trueD05"] = trueD05;
+	if(trueD0Sel4) hists["trueD0Sel4"] = trueD0Sel4;
+	if(trueD0Sel5) hists["trueD0Sel5"] = trueD0Sel5;
+	if(trueSV4) hists["trueSV4"] = trueSV4;
+	if(trueSV5) hists["trueSV5"] = trueSV5;
+
+	return getTruth(file, hists, useTruePT);
+}
+
+bool MCJets::getTruth(TString file, std::map<std::string,TH1D*> hMap, bool useTruePT) {
 	std::cout << "INFO in MCJets::getTruth: getting truth information" << std::endl;
 	//if(!true4 || !true5 || !trueD04 || !trueD05 || !trueD0Sel4 || !trueD0Sel5 || !trueSV4 || !trueSV5) return false;
+	//
+	TH1D *true4(0), *true5(0), *trueD04(0), *trueD05(0), *trueD0Sel4(0), *trueD0Sel5(0), *trueDp4(0), *trueDp5(0), *trueDpSel4(0), *trueDpSel5(0), *trueSV4(0), *trueSV5(0);
+
+	if(hMap.find("true4") != hMap.end()) true4 = hMap["true4"];
+	if(hMap.find("true5") != hMap.end()) true5 = hMap["true5"];
+	if(hMap.find("trueD04") != hMap.end()) trueD04 = hMap["trueD04"];
+	if(hMap.find("trueD05") != hMap.end()) trueD05 = hMap["trueD05"];
+	if(hMap.find("trueD0Sel4") != hMap.end()) trueD0Sel4 = hMap["trueD0Sel4"];
+	if(hMap.find("trueD0Sel5") != hMap.end()) trueD0Sel5 = hMap["trueD0Sel5"];
+	if(hMap.find("trueDp4") != hMap.end()) trueDp4 = hMap["trueDp4"];
+	if(hMap.find("trueDp5") != hMap.end()) trueDp5 = hMap["trueDp5"];
+	if(hMap.find("trueDpSel4") != hMap.end()) trueDpSel4 = hMap["trueDpSel4"];
+	if(hMap.find("trueDpSel5") != hMap.end()) trueDpSel5 = hMap["trueDpSel5"];
+	if(hMap.find("trueSV4") != hMap.end()) trueSV4 = hMap["trueSV4"];
+	if(hMap.find("trueSV5") != hMap.end()) trueSV5 = hMap["trueSV5"];
 
 	//check if we already calculated these
 	TString histsFileName = gSaveDir+"/truthHists_"+_name+"_"+file;
@@ -1000,7 +1226,7 @@ bool MCJets::getTruth(TString file, TH1D* true4, TH1D* true5, TH1D* trueD04, TH1
 	
 	TFile* histsFile = TFile::Open(histsFileName);
 	//container of all histograms to iterate
-	std::vector<TH1D*> hists {true4,true5,trueD04,trueD05,trueD0Sel4,trueD0Sel5,trueSV4,trueSV5};
+	std::vector<TH1D*> hists {true4,true5,trueD04,trueD05,trueD0Sel4,trueD0Sel5,trueDp4,trueDp5,trueDpSel4,trueDpSel5,trueSV4,trueSV5};
 	if(histsFile) {
 		//we need to load every histogram
 		//if one fails then we need to go through and recreate them
@@ -1047,6 +1273,7 @@ bool MCJets::getTruth(TString file, TH1D* true4, TH1D* true5, TH1D* trueD04, TH1
 	double JetPT;
 	double JetTruePT;
 	double JetTrueD0;
+	double JetTrueDP;
 	double JetTrueDSV;
 	double JetTrueBSV;
 	double JetTRUEc;
@@ -1079,12 +1306,40 @@ bool MCJets::getTruth(TString file, TH1D* true4, TH1D* true5, TH1D* trueD04, TH1
 	std::vector<double> *D0PIPY = new std::vector<double>();
 	std::vector<double> *D0PIPZ = new std::vector<double>();
 	std::vector<double> *D0KPNNK = new std::vector<double>();
-	std::vector<double> *D0PIPNNPI = new std::vector<double>();
+	//std::vector<double> *D0PIPNNPI = new std::vector<double>();
 	std::vector<double>* D0TRUEIDX = new std::vector<double>();
+	std::vector<double>* DM = new std::vector<double>();
+	std::vector<double> *DIPCHI2 = new std::vector<double>();
+	std::vector<double> *DPT = new std::vector<double>();
+	std::vector<double> *DPX = new std::vector<double>();
+	std::vector<double> *DPY = new std::vector<double>();
+	std::vector<double> *DPZ = new std::vector<double>();
+	std::vector<double> *DE = new std::vector<double>();
+	std::vector<double> *DX = new std::vector<double>();
+	std::vector<double> *DY = new std::vector<double>();
+	std::vector<double> *DZ = new std::vector<double>();
+	std::vector<double> *DKP = new std::vector<double>();
+	std::vector<double> *DKPT = new std::vector<double>();
+	std::vector<double> *DKPX = new std::vector<double>();
+	std::vector<double> *DKPY = new std::vector<double>();
+	std::vector<double> *DKPZ = new std::vector<double>();
+	std::vector<double> *DPI1P = new std::vector<double>();
+	std::vector<double> *DPI1PT = new std::vector<double>();
+	std::vector<double> *DPI1PX = new std::vector<double>();
+	std::vector<double> *DPI1PY = new std::vector<double>();
+	std::vector<double> *DPI1PZ = new std::vector<double>();
+	std::vector<double> *DPI2P = new std::vector<double>();
+	std::vector<double> *DPI2PT = new std::vector<double>();
+	std::vector<double> *DPI2PX = new std::vector<double>();
+	std::vector<double> *DPI2PY = new std::vector<double>();
+	std::vector<double> *DPI2PZ = new std::vector<double>();
+	std::vector<double> *DKPNNK = new std::vector<double>();
+	std::vector<double>* DTRUEIDX = new std::vector<double>();
 
 	dm->setBranchAddress("JetPT",      &JetPT);
 	dm->setBranchAddress("JetTruePT",  &JetTruePT);
 	dm->setBranchAddress("JetTRUED0",  &JetTrueD0);
+	dm->setBranchAddress("JetTRUEDP",  &JetTrueDP);
 	dm->setBranchAddress("JetTRUEDSV", &JetTrueDSV);
 	dm->setBranchAddress("JetTRUEBSV", &JetTrueBSV);
 	dm->setBranchAddress("JetTRUEc",   &JetTRUEc);
@@ -1117,8 +1372,35 @@ bool MCJets::getTruth(TString file, TH1D* true4, TH1D* true5, TH1D* trueD04, TH1
 	dm->setBranchAddress("D0PIPY",     &D0PIPY);
 	dm->setBranchAddress("D0PIPZ",     &D0PIPZ);
 	dm->setBranchAddress("D0KPNNK",    &D0KPNNK);
-	dm->setBranchAddress("D0PIPNNPI",  &D0PIPNNPI);
-	dm->setBranchAddress("D0TRUEIDX",  &D0TRUEIDX);
+	//dm->setBranchAddress("D0PIPNNPI",  &D0PIPNNPI);
+	dm->setBranchAddress("DTRUEIDX",  &DTRUEIDX);
+	dm->setBranchAddress("DM",        &DM);
+	dm->setBranchAddress("DIPCHI2",   &DIPCHI2);
+	dm->setBranchAddress("DPT",       &DPT);
+	dm->setBranchAddress("DPX",       &DPX);
+	dm->setBranchAddress("DPY",       &DPY);
+	dm->setBranchAddress("DPZ",       &DPZ);
+	dm->setBranchAddress("DE",        &DE);
+	dm->setBranchAddress("DX",        &DX);
+	dm->setBranchAddress("DY",        &DY);
+	dm->setBranchAddress("DZ",        &DZ);
+	dm->setBranchAddress("DKP",       &DKP);
+	dm->setBranchAddress("DKPT",      &DKPT);
+	dm->setBranchAddress("DKPX",      &DKPX);
+	dm->setBranchAddress("DKPY",      &DKPY);
+	dm->setBranchAddress("DKPZ",      &DKPZ);
+	dm->setBranchAddress("DPI1P",      &DPI1P);
+	dm->setBranchAddress("DPI1PT",     &DPI1PT);
+	dm->setBranchAddress("DPI1PX",     &DPI1PX);
+	dm->setBranchAddress("DPI1PY",     &DPI1PY);
+	dm->setBranchAddress("DPI1PZ",     &DPI1PZ);
+	dm->setBranchAddress("DPI2P",      &DPI2P);
+	dm->setBranchAddress("DPI2PT",     &DPI2PT);
+	dm->setBranchAddress("DPI2PX",     &DPI2PX);
+	dm->setBranchAddress("DPI2PY",     &DPI2PY);
+	dm->setBranchAddress("DPI2PZ",     &DPI2PZ);
+	dm->setBranchAddress("DKPNNK",    &DKPNNK);
+	dm->setBranchAddress("DTRUEIDX",  &DTRUEIDX);
 
 	boost::progress_display progress( dm->getEntries() );
 	//for(int i=0; i<t->GetEntries(); ++i)
@@ -1168,6 +1450,34 @@ bool MCJets::getTruth(TString file, TH1D* true4, TH1D* true5, TH1D* trueD04, TH1
 					}
 				}
 			}
+			//b->D+
+			if(JetTrueDP) {
+				for(unsigned int id=0; id<TRUEDID->size(); ++id) {
+					if(TMath::Abs(TRUEDID->at(id))!=411.) continue;
+					if(TRUEDFROMB->at(id)) {
+						if(trueDp5) trueDp5->Fill(JetPT,weight);
+						for(unsigned int irec=0; irec<DTRUEIDX->size(); ++irec) {
+							TVector3 DP (DPX->at(irec)   ,DPY->at(irec)   ,DPZ->at(irec));
+							TVector3 DP0(DKPX->at(irec)  ,DKPY->at(irec)  ,DKPZ->at(irec));
+							TVector3 DP1(DPI1PX->at(irec),DPI1PY->at(irec),DPI1PZ->at(irec));
+							TVector3 DP2(DPI2PX->at(irec),DPI2PY->at(irec),DPI2PZ->at(irec));
+
+							if(!(DP0.Eta()>2. && DP0.Eta()<4.5 && DP0.Pt()>500. && DP0.Mag()>5000.)) continue;
+							if(!(DP1.Eta()>2. && DP1.Eta()<4.5 && DP1.Pt()>500. && DP1.Mag()>5000.)) continue;
+							if(!(DP2.Eta()>2. && DP2.Eta()<4.5 && DP2.Pt()>500. && DP2.Mag()>5000.)) continue;
+							if(!(DP.Pt()>5e3)) continue;
+
+							if(DKPNNK->at(irec)<0.2 && DP0.Pt()<25000. && DP0.Mag()<500000.) continue; //kaon PID turned off for high p or pT
+
+							if(trueDpSel5 && DTRUEIDX->at(irec) == id) trueDpSel5->Fill(JetPT,weight);
+						}
+						//Note: the actual requirement in data is somewhere in between these last two options
+						// We only keep one D+ candidate but we apply some cuts before making that choice so 
+						// it's not always at index 0
+						break;
+					}
+				}
+			}
 			//b->SV
 			if(true) {
 			//if(JetTrueBSV) { //Note: turned off the requirement for the SV to be "real"
@@ -1204,6 +1514,34 @@ bool MCJets::getTruth(TString file, TH1D* true4, TH1D* true5, TH1D* trueD04, TH1
 					}
 				}
 			}
+			//c->D+
+			if(JetTrueDP) {
+				for(unsigned int id=0; id<TRUEDID->size(); ++id) {
+					if(TMath::Abs(TRUEDID->at(id))!=411.) continue;
+					if(!TRUEDFROMB->at(id)) {
+						if(trueDp4) trueDp4->Fill(JetPT,weight);
+						for(unsigned int irec=0; irec<DTRUEIDX->size(); ++irec) {
+							TVector3 DP (DPX->at(irec)   ,DPY->at(irec)   ,DPZ->at(irec));
+							TVector3 DP0(DKPX->at(irec)  ,DKPY->at(irec)  ,DKPZ->at(irec));
+							TVector3 DP1(DPI1PX->at(irec),DPI1PY->at(irec),DPI1PZ->at(irec));
+							TVector3 DP2(DPI2PX->at(irec),DPI2PY->at(irec),DPI2PZ->at(irec));
+
+							if(!(DP0.Eta()>2. && DP0.Eta()<4.5 && DP0.Pt()>500. && DP0.Mag()>5000.)) continue;
+							if(!(DP1.Eta()>2. && DP1.Eta()<4.5 && DP1.Pt()>500. && DP1.Mag()>5000.)) continue;
+							if(!(DP2.Eta()>2. && DP2.Eta()<4.5 && DP2.Pt()>500. && DP2.Mag()>5000.)) continue;
+							if(!(DP.Pt()>5e3)) continue;
+
+							if(DKPNNK->at(irec)<0.2 && DP0.Pt()<25000. && DP0.Mag()<500000.) continue; //kaon PID turned off for high p or pT
+
+							if(trueDpSel4 && DTRUEIDX->at(irec) == id) trueDpSel4->Fill(JetPT,weight);
+						}
+						//Note: the actual requirement in data is somewhere in between these last two options
+						// We only keep one D+ candidate but we apply some cuts before making that choice so 
+						// it's not always at index 0
+						break;
+					}
+				}
+			}
 			//c->SV
 			if(true) {
 			//if(JetTrueDSV) { //Note: turned off the requirement for the SV to be "real"
@@ -1220,6 +1558,10 @@ bool MCJets::getTruth(TString file, TH1D* true4, TH1D* true5, TH1D* trueD04, TH1
 	if(trueD05) trueD05->Write();
 	if(trueD0Sel4) trueD0Sel4->Write();
 	if(trueD0Sel5) trueD0Sel5->Write();
+	if(trueDp4) trueDp4->Write();
+	if(trueDp5) trueDp5->Write();
+	if(trueDpSel4) trueDpSel4->Write();
+	if(trueDpSel5) trueDpSel5->Write();
 	if(trueSV4) trueSV4->Write();
 	if(trueSV5) trueSV5->Write();
 	histsFile->Close();
@@ -1428,12 +1770,24 @@ const TString MCJets::typeName(jetType type) {
 			return "b2all";
 		case jetRecoD04:
 			return "c2D0";
+		case jetRecoDp4:
+			return "c2Dp";
 		case jetRecoSV4:
 			return "c2SV";
+		case jetTrueD04:
+			return "c2allD0";
+		case jetTrueDp4:
+			return "c2allDp";
 		case jetRecoD05:
 			return "b2D0";
+		case jetRecoDp5:
+			return "b2Dp";
 		case jetRecoSV5:
 			return "b2SV";
+		case jetTrueD05:
+			return "b2allD0";
+		case jetTrueDp5:
+			return "b2allDp";
 		default:
 			return "";
 	}

@@ -46,8 +46,15 @@ struct DFitterOptions {
 	double setPromptWidthScale{-999.};
 	double setDisplcMeanShift{-999.};
 	double setDisplcWidthScale{-999.};
+	double shiftFixedMassWidth{0.};
+	double shiftFixedPromptMean{0.};
+	double shiftFixedPromptWidth{0.};
+	double shiftFixedDisplcMean{0.};
+	double shiftFixedDisplcWidth{0.};
 	bool runToyFits{false};
 	bool useSimpleEffs{false};
+	bool usePtBinCorrections{false};
+	bool useJetPtBinnedEffs{false};
 };
 
 struct SimDFitter {
@@ -72,12 +79,13 @@ struct SimDFitter {
 		truthMatchDispl=5
 	};
 
-	SimDFitter(TString name, TH1D* ptBins, TH1D* yBins=0) 
-		: _name(name) { initJetBinning(ptBins, yBins);}
+	SimDFitter(TString name, TH1D* ptBins, TH1D* yBins=0, TString whichD="D0") 
+		: _name(name), _whichD(whichD) { setupMasses(); initJetBinning(ptBins, yBins);}
 
 	void setInputs(TString data, TString charm, TString beauty, TString eff, TString acc, bool isMC=false);
 	void setOptions(DFitterOptions& options);
 	void setDPtRange(double ptmin, double ptmax);
+	void setDPtBins(TH1D* ptBinsD);
 	TString const dFileName();
 
 	inline void setSampleType(fitSet sample) { _sample = sample; }
@@ -85,7 +93,9 @@ struct SimDFitter {
 
 	bool addEffs();
 	bool addEffs(int flavour);
+	bool addEffsPtBinned(int flavour);
 	bool testEffs(int flavour);
+	bool testEffsPtBinned(int flavour);
 	bool fitD(double& yield4, double& error4, double& yield5, double& error5, int binPT, int binY=0u, uint effType=4u);
 	double getAveWeight(double flavour);
 	double getAveWeightError(double flavour);
@@ -93,8 +103,11 @@ struct SimDFitter {
 	void setRerunEffs(bool rerun=true) {_recreateInputs = rerun;}
 	void skipSumW2Fits(bool skip=true) {_skipSumW2Fits = skip;}
 
+	void printYields();
+
 private:
 	void initJetBinning(TH1D* ptBins, TH1D* yBins);
+	void setupMasses();
 
 	bool init();
 	//bool makeInput(int flav);
@@ -140,6 +153,12 @@ private:
 	double _error4{0.};
 	double _yield5{0.};
 	double _error5{0.};
+	std::vector<TString> _names4;
+	std::vector<double> _yields4;
+	std::vector<double> _errors4;
+	std::vector<TString> _names5;
+	std::vector<double> _yields5;
+	std::vector<double> _errors5;
 
 	RooWorkspace* ws{0};
 
@@ -164,6 +183,7 @@ private:
 	bool _mcFitsDone{false};
 
 	TString _name;
+	TString _whichD;
 
 	double _dptmin{5000.};
 	double _dptmax{-1.};
@@ -203,9 +223,27 @@ private:
 	double _setPromptWidthScale{-999.};
 	double _setDisplcMeanShift{-999.};
 	double _setDisplcWidthScale{-999.};
+	double _shiftFixedMassWidth{0.};
+	double _shiftFixedPromptMean{0.};
+	double _shiftFixedPromptWidth{0.};
+	double _shiftFixedDisplcMean{0.};
+	double _shiftFixedDisplcWidth{0.};
 
 	bool _useSimpleEffs{false};
+	bool _usePtBinCorrections{false};
+	bool _useJetPtBinnedEffs{false};
+
+	bool _useFixedDBins{false};
 
 	//toy study
 	bool _runToyFits{false};
+
+	//values to determine mass ranges for each hadron
+	double _mCentre;
+	double _mLow, _mHigh;
+	double _mSBLow, _mSBHigh;
+	double _mSBLooseLow, _mSBLooseHigh;
+
+	//text to print for decay children in axis labels
+	TString _decayLabel;
 };
