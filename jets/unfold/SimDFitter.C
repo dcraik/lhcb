@@ -409,12 +409,19 @@ bool SimDFitter::addEffs(int flavour) {
 	std::vector<double> *vDh2PX = new std::vector<double>();
 	std::vector<double> *vDh2PY = new std::vector<double>();
 	std::vector<double> *vDh2PZ = new std::vector<double>();
+	std::vector<double> *vDh3P = new std::vector<double>();
+	std::vector<double> *vDh3PT = new std::vector<double>();
+	std::vector<double> *vDh3PX = new std::vector<double>();
+	std::vector<double> *vDh3PY = new std::vector<double>();
+	std::vector<double> *vDh3PZ = new std::vector<double>();
 	std::vector<double> *vDh0PNN = new std::vector<double>();
 	std::vector<double> *vDh1PNN = new std::vector<double>();
 	std::vector<double> *vDh2PNN = new std::vector<double>();
+	std::vector<double> *vDh3PNN = new std::vector<double>();
 	std::vector<double> *vDh0WEIGHT = new std::vector<double>();
 	std::vector<double> *vDh1WEIGHT = new std::vector<double>();
 	std::vector<double> *vDh2WEIGHT = new std::vector<double>();
+	std::vector<double> *vDh3WEIGHT = new std::vector<double>();
 	std::vector<double> *vDTRUEIDX = new std::vector<double>();
 	std::vector<double> *vDFROMB = new std::vector<double>();
 
@@ -472,6 +479,35 @@ bool SimDFitter::addEffs(int flavour) {
 		dm->setBranchAddress("DKWEIGHT",     &vDh0WEIGHT);
 		dm->setBranchAddress("DPI1WEIGHT",   &vDh1WEIGHT);
 		dm->setBranchAddress("DPI2WEIGHT",   &vDh2WEIGHT);
+	} else if(_whichD=="K3PI") {
+		dm->setBranchAddress("K3PIKP",          &vDh0P);
+		dm->setBranchAddress("K3PIKPT",         &vDh0PT);
+		dm->setBranchAddress("K3PIKPX",         &vDh0PX);
+		dm->setBranchAddress("K3PIKPY",         &vDh0PY);
+		dm->setBranchAddress("K3PIKPZ",         &vDh0PZ);
+		dm->setBranchAddress("K3PIPI1P",        &vDh1P);
+		dm->setBranchAddress("K3PIPI1PT",       &vDh1PT);
+		dm->setBranchAddress("K3PIPI1PX",       &vDh1PX);
+		dm->setBranchAddress("K3PIPI1PY",       &vDh1PY);
+		dm->setBranchAddress("K3PIPI1PZ",       &vDh1PZ);
+		dm->setBranchAddress("K3PIPI2P",        &vDh2P);
+		dm->setBranchAddress("K3PIPI2PT",       &vDh2PT);
+		dm->setBranchAddress("K3PIPI2PX",       &vDh2PX);
+		dm->setBranchAddress("K3PIPI2PY",       &vDh2PY);
+		dm->setBranchAddress("K3PIPI2PZ",       &vDh2PZ);
+		dm->setBranchAddress("K3PIPI3P",        &vDh3P);
+		dm->setBranchAddress("K3PIPI3PT",       &vDh3PT);
+		dm->setBranchAddress("K3PIPI3PX",       &vDh3PX);
+		dm->setBranchAddress("K3PIPI3PY",       &vDh3PY);
+		dm->setBranchAddress("K3PIPI3PZ",       &vDh3PZ);
+		dm->setBranchAddress("K3PIKPNNK",       &vDh0PNN);
+		dm->setBranchAddress("K3PIPI1PNNPI",    &vDh1PNN);
+		dm->setBranchAddress("K3PIPI2PNNPI",    &vDh2PNN);
+		dm->setBranchAddress("K3PIPI3PNNPI",    &vDh3PNN);
+		dm->setBranchAddress("K3PIKWEIGHT",     &vDh0WEIGHT);
+		dm->setBranchAddress("K3PIPI1WEIGHT",   &vDh1WEIGHT);
+		dm->setBranchAddress("K3PIPI2WEIGHT",   &vDh2WEIGHT);
+		dm->setBranchAddress("K3PIPI3WEIGHT",   &vDh3WEIGHT);
 	}
 
 	dm->setBranchAddress("JetPT",         &JetPT);
@@ -535,6 +571,14 @@ bool SimDFitter::addEffs(int flavour) {
 			TVector3 DP (vDPX->at(s)  ,vDPY->at(s)  ,vDPZ->at(s));
 			TVector3 DP0(vDh0PX->at(s) ,vDh0PY->at(s) ,vDh0PZ->at(s));
 			TVector3 DP1(vDh1PX->at(s),vDh1PY->at(s),vDh1PZ->at(s));
+			TVector3 DP2;//(vDh2PX->at(s),vDh2PY->at(s),vDh2PZ->at(s));
+			TVector3 DP3;//(vDh3PX->at(s),vDh3PY->at(s),vDh3PZ->at(s));
+			if(_whichD=="D" || _whichD=="K3PI") {
+				DP2.SetXYZ(vDh2PX->at(s),vDh2PY->at(s),vDh2PZ->at(s));
+				if(_whichD=="K3PI") {
+					DP3.SetXYZ(vDh3PX->at(s),vDh3PY->at(s),vDh3PZ->at(s));
+				}
+			}
 
 			if(flavour==7 && isMC && _truthMatchData!=truthMatchType::truthMatchOff) {
 				if(_truthMatchData==truthMatchType::truthMatchPrompt) {
@@ -547,6 +591,12 @@ bool SimDFitter::addEffs(int flavour) {
 
 			if(!(DP0.Eta()>2. && DP0.Eta()<4.5 && DP0.Pt()>500. && DP0.Mag()>5000.)) continue;
 			if(!(DP1.Eta()>2. && DP1.Eta()<4.5 && DP1.Pt()>500. && DP1.Mag()>5000.)) continue;
+			if(_whichD=="D" || _whichD=="K3PI") {
+				if(!(DP2.Eta()>2. && DP2.Eta()<4.5 && DP2.Pt()>500. && DP2.Mag()>5000.)) continue;
+				if(_whichD=="K3PI") {
+					if(!(DP3.Eta()>2. && DP3.Eta()<4.5 && DP3.Pt()>500. && DP3.Mag()>5000.)) continue;
+				}
+			}
 			if(!(DP.Pt()>_dptmin)) continue;
 			if(!(_dptmax==-1 || DP.Pt() < _dptmax) ) continue;
 			if((flavour==4 || flavour==5) && vDTRUEIDX->at(s)==-1) continue;
@@ -556,7 +606,7 @@ bool SimDFitter::addEffs(int flavour) {
 
 			//check PID cuts
 //TODO//20200420			if(!isMC && vDh0PNNK->at(s)<0.2 && D0P0.Pt()<25000. && D0P0.Mag()<500000.) continue; //kaon PID turned off for high p or pT
-			if(_whichD=="D0" || _whichD=="D") {
+			if(_whichD=="D0" || _whichD=="D" || _whichD=="K3PI") {
 				if(vDh0PNN->at(s)<0.2 && DP0.Pt()<25000. && DP0.Mag()<500000.) continue; //kaon PID turned off for high p or pT
 				//if(!dataIsMC && vDh1PNNPI->at(s)<0.1 && D0P0.Pt()<25000. && D0P0.Mag()<500000.) continue; //pion PID turned off
 			}
@@ -592,7 +642,7 @@ bool SimDFitter::addEffs(int flavour) {
 			effsel5=      hsel5->GetBinContent(hsel5->FindBin(DPT      ,DEta));
 			effpid =      hpid ->GetBinContent(hpid ->FindBin(DPT      ,DEta));
 //TODO//20200420			if(isMC || D0P0.Pt()>=25000. || D0P0.Mag()>=500000.) effpid=1.0; //no PID cut used in these cases
-			if((_whichD=="D0" || _whichD=="D") && (DP0.Pt()>=25000. || DP0.Mag()>=500000.)) effpid=1.0; //no PID cut used in these cases
+			if((_whichD=="D0" || _whichD=="D" || _whichD=="K3PI") && (DP0.Pt()>=25000. || DP0.Mag()>=500000.)) effpid=1.0; //no PID cut used in these cases
 
 			double eff4=effacc4*effrec4*effcor*effsel4*effpid;
 			double eff5=effacc5*effrec5*effcor*effsel5*effpid;
@@ -833,12 +883,19 @@ bool SimDFitter::addEffsPtBinned(int flavour) {
 	std::vector<double> *vDh2PX = new std::vector<double>();
 	std::vector<double> *vDh2PY = new std::vector<double>();
 	std::vector<double> *vDh2PZ = new std::vector<double>();
+	std::vector<double> *vDh3P = new std::vector<double>();
+	std::vector<double> *vDh3PT = new std::vector<double>();
+	std::vector<double> *vDh3PX = new std::vector<double>();
+	std::vector<double> *vDh3PY = new std::vector<double>();
+	std::vector<double> *vDh3PZ = new std::vector<double>();
 	std::vector<double> *vDh0PNN = new std::vector<double>();
 	std::vector<double> *vDh1PNN = new std::vector<double>();
 	std::vector<double> *vDh2PNN = new std::vector<double>();
+	std::vector<double> *vDh3PNN = new std::vector<double>();
 	std::vector<double> *vDh0WEIGHT = new std::vector<double>();
 	std::vector<double> *vDh1WEIGHT = new std::vector<double>();
 	std::vector<double> *vDh2WEIGHT = new std::vector<double>();
+	std::vector<double> *vDh3WEIGHT = new std::vector<double>();
 	std::vector<double> *vDTRUEIDX = new std::vector<double>();
 	std::vector<double> *vDFROMB = new std::vector<double>();
 
@@ -896,6 +953,35 @@ bool SimDFitter::addEffsPtBinned(int flavour) {
 		dm->setBranchAddress("DKWEIGHT",     &vDh0WEIGHT);
 		dm->setBranchAddress("DPI1WEIGHT",   &vDh1WEIGHT);
 		dm->setBranchAddress("DPI2WEIGHT",   &vDh2WEIGHT);
+	} else if(_whichD=="K3PI") {
+		dm->setBranchAddress("K3PIKP",          &vDh0P);
+		dm->setBranchAddress("K3PIKPT",         &vDh0PT);
+		dm->setBranchAddress("K3PIKPX",         &vDh0PX);
+		dm->setBranchAddress("K3PIKPY",         &vDh0PY);
+		dm->setBranchAddress("K3PIKPZ",         &vDh0PZ);
+		dm->setBranchAddress("K3PIPI1P",        &vDh1P);
+		dm->setBranchAddress("K3PIPI1PT",       &vDh1PT);
+		dm->setBranchAddress("K3PIPI1PX",       &vDh1PX);
+		dm->setBranchAddress("K3PIPI1PY",       &vDh1PY);
+		dm->setBranchAddress("K3PIPI1PZ",       &vDh1PZ);
+		dm->setBranchAddress("K3PIPI2P",        &vDh2P);
+		dm->setBranchAddress("K3PIPI2PT",       &vDh2PT);
+		dm->setBranchAddress("K3PIPI2PX",       &vDh2PX);
+		dm->setBranchAddress("K3PIPI2PY",       &vDh2PY);
+		dm->setBranchAddress("K3PIPI2PZ",       &vDh2PZ);
+		dm->setBranchAddress("K3PIPI3P",        &vDh3P);
+		dm->setBranchAddress("K3PIPI3PT",       &vDh3PT);
+		dm->setBranchAddress("K3PIPI3PX",       &vDh3PX);
+		dm->setBranchAddress("K3PIPI3PY",       &vDh3PY);
+		dm->setBranchAddress("K3PIPI3PZ",       &vDh3PZ);
+		dm->setBranchAddress("K3PIKPNNK",       &vDh0PNN);
+		dm->setBranchAddress("K3PIPI1PNNPI",    &vDh1PNN);
+		dm->setBranchAddress("K3PIPI2PNNPI",    &vDh2PNN);
+		dm->setBranchAddress("K3PIPI3PNNPI",    &vDh3PNN);
+		dm->setBranchAddress("K3PIKWEIGHT",     &vDh0WEIGHT);
+		dm->setBranchAddress("K3PIPI1WEIGHT",   &vDh1WEIGHT);
+		dm->setBranchAddress("K3PIPI2WEIGHT",   &vDh2WEIGHT);
+		dm->setBranchAddress("K3PIPI3WEIGHT",   &vDh3WEIGHT);
 	}
 
 	dm->setBranchAddress("JetPT",         &JetPT);

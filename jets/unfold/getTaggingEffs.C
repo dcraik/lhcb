@@ -51,14 +51,17 @@ TString dataFile      = "/data/dijets/dijets_2016.root";
 //TString simpleEffFile = "../efficiencies/SimpleEffs_2XX_16x8bins_up190216.root";
 TString oldEffFileD0 = "../efficiencies/D0Effs_2XX_16x8bins_up190213.root";
 //TString effFileD0 = "../efficiencies/D0Effs_45_16x8bins_up201129.root";
-TString effFileD0 = "../efficiencies/D0Effs_45_16x8bins_up210222.root";
+//TString effFileD0 = "../efficiencies/D0Effs_45_16x8bins_up210222.root";
 TString accFileD0 = "../efficiencies/D0AccEffNewUp200518.root";
 //TString accFileD0 = "../efficiencies/D0AccEffNewUp201118_fromD0.root";
 //TString accFileD0 = "../efficiencies/D0AccEffNewUp201118_fromC.root";
 //TString accFileD0 = "../efficiencies/D0AccEffNewUp201118_fromAll.root";
 //TString effFileDp = "../efficiencies/DpEffs_2XX_16x8bins_up200506.root";
-TString effFileDp = "../efficiencies/DpEffs_45_16x8bins_up210220.root";
+//TString effFileDp = "../efficiencies/DpEffs_45_16x8bins_up210220.root";
 TString accFileDp = "../efficiencies/DpAccEffNewUp210312.root";
+
+TString effFileD0 = "../efficiencies/D0Effs_45_16x8bins_3D_weight_up210614.root";
+TString effFileDp = "../efficiencies/DpEffs_45_16x8bins_3D_weight_up210614.root";
 
 //unfolding
 TString unfoldingMode("bayes");
@@ -544,8 +547,11 @@ int main(int argc, char** argv) {
 	MCJets mcj("jj");
 	mcj.setDPtRange(dfitOpts.minpt,dfitOpts.maxpt);
 	mcj.useInputPtWeightsFromTree(true);
-	mcj.setExtraPtWeights(MCJets::jetRecoD04,extraPtWeights4D0);
-	mcj.setExtraPtWeights(MCJets::jetRecoDp4,extraPtWeights4Dp);
+	//TODO//20210624 - when turned on these set the weight to zero for any entries with JetPT
+	// outwith 15-100 GeV. This yields the results in dijets_20210623_test. Turning these lines
+	// off gives the nominal results in dijets_20210608.
+	//TODO//mcj.setExtraPtWeights(MCJets::jetRecoD04,extraPtWeights4D0);
+	//TODO//mcj.setExtraPtWeights(MCJets::jetRecoDp4,extraPtWeights4Dp);
 
 	SimDFitter d0fit("jjD0Fit"+file, &trueD04);
 	SimDFitter dpfit("jjDpFit"+file, &trueD04, 0, "D");
