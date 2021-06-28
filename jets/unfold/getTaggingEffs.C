@@ -65,7 +65,7 @@ TString effFileDp = "../efficiencies/DpEffs_45_16x8bins_3D_weight_up210614.root"
 
 //unfolding
 TString unfoldingMode("bayes");
-double unfoldingReg(4.);
+double unfoldingReg(2.);
 double jetEnergyScale(0.95);
 double jetEnergySmear(0.14);
 
@@ -116,22 +116,22 @@ int main(int argc, char** argv) {
 	    ("weight-sim", po::value<int>(), "weight true jet pT spectrum of simulated samples to be continuous (-1: default, 0: off, 1: on). Default to off for simulated datasets and on for real datasets")
 	    ("scale-sim", po::value<bool>(&scaledSim)->default_value(false)->implicit_value(true), "used simulation scaled to match data in jet(pT) distribution")
 	    ("use-evt-by-evt-weighting", po::value<bool>(&evtByEvtWeighting)->default_value(false)->implicit_value(true), "calculate denominator form -event-by-event weighted D0 candidates instead of average-efficiency weighted")
-	    ("pt-corr-file",po::value<std::string>(&ptCorrFile)->default_value("")->implicit_value("ptCorrFactors.root"), "File to take hadron-pT correction factors from")
+	    ("pt-corr-file",po::value<std::string>(&ptCorrFile)->default_value("ptCorrFactors.root")->implicit_value("ptCorrFactors.root"), "File to take hadron-pT correction factors from")
 	;
 	po::options_description dfit_options("D fit options");
 	dfit_options.add_options()
 	    ("dfits", po::value<std::vector<std::string>>()->multitoken()->zero_tokens()->composing()->default_value(std::vector<std::string>{"D0","D+"}, "D0, D+"), "D fits to run [D0 D+]:\n  D0: D0 -> Kpi, D+: D+ -> Kpipi")
 	    ("dfit-minpt", po::value<double>(&dfitOpts.minpt)->default_value(5000.), "minimum D0 pT in MeV")
 	    ("dfit-maxpt", po::value<double>(&dfitOpts.maxpt)->default_value(-1.), "maximum D0 pT in MeV (-1 to turn off)")
-	    ("dfit-skip-sumw2-fits", po::value<bool>(&dfitOpts.skipSumw2Fits)->default_value(false)->implicit_value(true), "skip the second stage of D0 fits used to correctly scale uncertainties for fits to weighted datasets")
+	    ("dfit-skip-sumw2-fits", po::value<bool>(&dfitOpts.skipSumw2Fits)->default_value(true)->implicit_value(true), "skip the second stage of D0 fits used to correctly scale uncertainties for fits to weighted datasets")
 	    ("dfit-truth-match",po::value<uint>(&dfitOpts.truthMatch)->default_value(0), "truth match data (if simulated) 0: off, 4: prompt, 5: displaced")
 	    ("dfit-n-pt-bins",po::value<uint>(&dfitOpts.nDPtBins)->default_value(5u), "number of bins in pT(D0)")
-	    ("dfit-use-ptfrac-bins",po::value<bool>(&dfitOpts.usePtFracBins)->default_value(false)->implicit_value(true), "bin in pT(D0)/pT(j) instead of pT(D0)")
+	    ("dfit-use-ptfrac-bins",po::value<bool>(&dfitOpts.usePtFracBins)->default_value(true)->implicit_value(true), "bin in pT(D0)/pT(j) instead of pT(D0)")
 	    ("dfit-comb-shape-syst",po::value<bool>(&dfitOpts.combShapeSyst)->default_value(false)->implicit_value(true), "use a smaller region of the D sidebands to evaluate the background chi^2_IP shape")
-	    ("dfit-enhanced-fits",po::value<bool>(&dfitOpts.doEnhancedFits)->default_value(false)->implicit_value(true), "perform initial fits to datasets enhanced in beauty and charm to correct MC shape parameters")
+	    ("dfit-enhanced-fits",po::value<bool>(&dfitOpts.doEnhancedFits)->default_value(true)->implicit_value(true), "perform initial fits to datasets enhanced in beauty and charm to correct MC shape parameters")
 	    ("dfit-allowMassWidthScale",po::value<bool>(&dfitOpts.allowMassWidthScale)->default_value(true)->implicit_value(true), "Allow a scale factor in sigma(D) between data and simulation")
 	    ("dfit-allowPromptMeanShift",po::value<bool>(&dfitOpts.allowPromptMeanShift)->default_value(true)->implicit_value(true), "Allow a shift in mu_prompt between data and simulation")
-	    ("dfit-allowPromptWidthScale",po::value<bool>(&dfitOpts.allowPromptWidthScale)->default_value(false)->implicit_value(true), "Allow a scale factor in sigma_prompt between data and simulation")
+	    ("dfit-allowPromptWidthScale",po::value<bool>(&dfitOpts.allowPromptWidthScale)->default_value(true)->implicit_value(true), "Allow a scale factor in sigma_prompt between data and simulation")
 	    ("dfit-allowDisplcMeanShift",po::value<bool>(&dfitOpts.allowDisplcMeanShift)->default_value(false)->implicit_value(true), "Allow a shift in mu_displc between data and simulation")
 	    ("dfit-allowDisplcWidthScale",po::value<bool>(&dfitOpts.allowDisplcWidthScale)->default_value(false)->implicit_value(true), "Allow a scale factor in sigma_displc between data and simulation")
 	    ("dfit-enhanceMassWidthScale",po::value<bool>(&dfitOpts.enhanceMassWidthScale)->default_value(false)->implicit_value(true), "Allow scale factor in sigma(D) between data and simulation for enhanced data fits")
@@ -144,8 +144,8 @@ int main(int argc, char** argv) {
 	    ("dfit-splitPromptWidthScale",po::value<bool>(&dfitOpts.splitPromptWidthScale)->default_value(false)->implicit_value(true), "Allow a bin-by-bin scale factor in sigma_prompt between data and simulation")
 	    ("dfit-splitDisplcMeanShift",po::value<bool>(&dfitOpts.splitDisplcMeanShift)->default_value(false)->implicit_value(true), "Allow a bin-by-bin shift in mu_displc between data and simulation")
 	    ("dfit-splitDisplcWidthScale",po::value<bool>(&dfitOpts.splitDisplcWidthScale)->default_value(false)->implicit_value(true), "Allow a bin-by-bin scale factor in sigma_displc between data and simulation")
-	    ("dfit-splitBkgMassShape",po::value<bool>(&dfitOpts.splitBkgMassShape)->default_value(false)->implicit_value(true), "Allow a bin-by-bin gradient for the background mass shape")
-	    ("dfit-splitBkgIPShape",po::value<bool>(&dfitOpts.splitBkgIPShape)->default_value(false)->implicit_value(true), "Allow a bin-by-bin KDE for the background IP shape")
+	    ("dfit-splitBkgMassShape",po::value<bool>(&dfitOpts.splitBkgMassShape)->default_value(true)->implicit_value(true), "Allow a bin-by-bin gradient for the background mass shape")
+	    ("dfit-splitBkgIPShape",po::value<bool>(&dfitOpts.splitBkgIPShape)->default_value(true)->implicit_value(true), "Allow a bin-by-bin KDE for the background IP shape")
 	    ("dfit-allowLinearBkgMassShift",po::value<bool>(&dfitOpts.allowLinearBkgMassShift)->default_value(false)->implicit_value(true), "Allow a bin-by-bin gradient for the background mass shape but require the gradient to be a linear function of the average value of pT(D0) or pT(D0)/pT(j) in each bin")
 	    ("dfit-setMassWidthScale",po::value<double>(&dfitOpts.setMassWidthScale)->default_value(-999.), "Set a scale factor in sigma(D) between data and simulation")
 	    ("dfit-setPromptMeanShift",po::value<double>(&dfitOpts.setPromptMeanShift)->default_value(-999.), "Set a shift in mu_prompt between data and simulation")
@@ -157,7 +157,7 @@ int main(int argc, char** argv) {
 	    ("dfit-shiftFixedPromptWidth",po::value<double>(&dfitOpts.shiftFixedPromptWidth)->default_value(0.), "Shift sigma_prompt by N sigma after fixing")
 	    ("dfit-shiftFixedDisplcMean",po::value<double>(&dfitOpts.shiftFixedDisplcMean)->default_value(0.), "Shift mu_displc by N sigma after fixing")
 	    ("dfit-shiftFixedDisplcWidth",po::value<double>(&dfitOpts.shiftFixedDisplcWidth)->default_value(0.), "Shift sigma_displc by N sigma after fixing")
-	    ("dfit-simpleEffs",po::value<bool>(&dfitOpts.useSimpleEffs)->default_value(false)->implicit_value(true), "Use simplified model for D efficiencies")
+	    ("dfit-simpleEffs",po::value<bool>(&dfitOpts.useSimpleEffs)->default_value(true)->implicit_value(true), "Use simplified model for D efficiencies")
 	    ("dfit-jetPt-dep-effs",po::value<bool>(&dfitOpts.usePtBinCorrections)->default_value(false)->implicit_value(true), "Correct the D efficiency histograms for each jet reco pT bin")
 	    ("dfit-jetPt-binned-effs",po::value<bool>(&dfitOpts.useJetPtBinnedEffs)->default_value(false)->implicit_value(true), "Correct the D efficiency histograms for each jet reco pT bin")
 	    ("dfit-effCorrFile4",po::value<std::string>(), "File to take prompt D0 efficiency corrections from (based on simulation closure test)")
@@ -173,11 +173,11 @@ int main(int argc, char** argv) {
 	    ("sv-minmcor", po::value<double>(&svOpts.minMCor)->default_value(600), "minimum value of corrected mass to use in SV fits (in MeV)")
 	    ("sv-maxmcor", po::value<double>(&svOpts.maxMCor)->default_value(10000), "maximum value of corrected mass to use in SV fits (in MeV)")
 	    ("sv-nntrkbins", po::value<int>(&svOpts.nNTrkBins)->default_value(3), "number of bins to use for NTrk in SV fit")
-	    ("sv-binnedtemplates", po::value<bool>(&svOpts.useBinnedTemplates)->default_value(false)->implicit_value(true), "use SV templates binned in MCor")
+	    ("sv-binnedtemplates", po::value<bool>(&svOpts.useBinnedTemplates)->default_value(true)->implicit_value(true), "use SV templates binned in MCor")
 	    ("sv-smear-mcor", po::value<bool>(&svOpts.smearMCorShapes)->default_value(false)->implicit_value(true), "correct SV templates by smearing in MCor")
 	    ("sv-additive-mcor-corr", po::value<bool>(&svOpts.additiveMCorCorrectionFactor)->default_value(false)->implicit_value(true), "When correcting the mcor shapes, perform polynomial fits to the residual rather than the correction scale factor")
-	    ("sv-ptbintemplates", po::value<bool>(&svOpts.usePtBinnedTemplates)->default_value(false)->implicit_value(true), "bin simulated samples in jet pT to obtain SV fit templates")
-	    ("sv-mistag-shape-from-back", po::value<bool>(&useBackDataForLightShape)->default_value(false)->implicit_value(true), "use the back-tagged data file for the mis-tag SV shape (instead of simulation)")
+	    ("sv-ptbintemplates", po::value<bool>(&svOpts.usePtBinnedTemplates)->default_value(true)->implicit_value(true), "bin simulated samples in jet pT to obtain SV fit templates")
+	    ("sv-mistag-shape-from-back", po::value<bool>(&useBackDataForLightShape)->default_value(true)->implicit_value(true), "use the back-tagged data file for the mis-tag SV shape (instead of simulation)")
 	    ("sv-light-yield-float", po::value<bool>(&svOpts.lightYieldFloat)->default_value(false)->implicit_value(true), "float the mistag yields")
 	    ("sv-enhancement-passes", po::value<uint>(&svEnhancePasses)->default_value(2u), "number of times to run SV template enhancement")
 	    ("sv-toyStudy",po::value<bool>(&svOpts.runToyFits)->default_value(false)->implicit_value(true), "Run a toy study after each fit to data")
