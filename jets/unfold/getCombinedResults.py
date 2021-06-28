@@ -369,7 +369,7 @@ def printSystSummary(quants,systCats):
 
 ###Begin main###
 
-defaultDir="20210608"
+defaultDir="20210626"
 defaultUnfold="bayes2"
 svDir=None
 svUnfold=None
@@ -378,7 +378,7 @@ d0Unfold=None
 dpDir=None
 dpUnfold=None
 
-zjDir="20210609"
+zjDir="20210627"
 
 import sys
 
@@ -450,7 +450,7 @@ dFitSystNames = ["$\\pt(D)$ bins","comb. shape","mass width","prompt","displ. me
 
 (_,nd0,ndp) = addTagSystsFromMaxDiff(nsv,nd0,ndp,[svDir+syst for syst in dFitSysts], len(dFitSysts)*["bayes2"], ["None","D0fit","Dpfit"])
 (_,nd0,ndp) = addTagSystsFromMaxDiff(nsv,nd0,ndp,[svDir+"_evtByEvtWeights"], ["bayes2"], ["None","D0weights","Dpweights"])
-(_,nd0,ndp) = addTagSystsFromMaxDiff(nsv,nd0,ndp,[svDir+"_3DPIDCalib"], ["bayes2"], "PIDCalibBinning")
+(_,nd0,ndp) = addTagSystsFromMaxDiff(nsv,nd0,ndp,[svDir+"_2DPIDCalib"], ["bayes2"], "PIDCalibBinning")
 
 nd0 = addTagSystFromFile(nd0, "dijets_"+svDir+"/systMCStats.log", "D0MCstats")
 ndp = addTagSystFromFile(ndp, "dijets_"+svDir+"/systMCStats_Dp.log", "DpMCstats")
@@ -678,7 +678,7 @@ jeSysts=["_jetEnergyScaleUp","_jetEnergyScaleDown","_jetEnergySmearUp","_jetEner
                                                                [zjDir],
                                                                bfffd0,bfffdp,sdpsq,sd0sq,"D weights")#Note weights are sdpsq for D0 and sd0sq for D+
 (zQj,zQj_pt_int,zQj_y_int,zQj_int_int) = addSystsFromMaxInputs(zQj,zQj_pt_int,zQj_y_int,zQj_int_int,
-                                                               [svDir+"_3DPIDCalib"],["bayes2"],
+                                                               [svDir+"_2DPIDCalib"],["bayes2"],
                                                                [zjDir],
                                                                bfffd0,bfffdp,sdpsq,sd0sq,"PIDCalibBinning")#Note weights are sdpsq for D0 and sd0sq for D+
 
@@ -865,7 +865,7 @@ print("TABLE29")
 printNDSystHorizontal(nd0,ndp,[svDir+"_evtByEvtWeights"], ["bayes2"], "Average-efficiency weighted", ["Event-by-event weighted"])
 print("NEW TABLE 31")
 printZQjSystVertical(zQj,zQj_pt_int,zQj_y_int,zQj_int_int,
-                     [svDir+"_3DPIDCalib"],["bayes2"],
+                     [svDir+"_2DPIDCalib"],["bayes2"],
                      [zjDir],
                      bfffd0,bfffdp,sdpsq,sd0sq,["track mult. binned"],ptlabel,ylabel)#Note weights are sdpsq for D0 and sd0sq for D+
 print("TABLE31")
