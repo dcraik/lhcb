@@ -52,7 +52,7 @@ TString templateFilesPattern = "enhancedTemplates_%d_0.root";
 
 //unfolding
 TString unfoldingMode("bayes");
-double unfoldingReg(1.);
+double unfoldingReg(2.);
 double jetEnergyScale(0.95);
 double jetEnergySmear(0.14);
 double tagCorrFactor(0.985);
@@ -118,26 +118,26 @@ int main(int argc, char** argv) {
 	    ("data", po::value<std::string>(), "input dataset [201X]")
 	    ("dir", po::value<std::string>(), "save directory [output]")
 	    ("pt-bins", po::value<std::vector<double>>(&ptBinBoundaries)->multitoken()->zero_tokens()->composing()->default_value(std::vector<double>{15e3,20e3,30e3,50e3,100e3}, "15e3, 20e3, 30e3, 50e3, 100e3"), "boundaries for pT bins [MeV]")
-	    ("y-bins", po::value<std::vector<double>>(&yBinBoundaries)->multitoken()->zero_tokens()->composing()->default_value(std::vector<double>{2.,2.5,3.,3.5,4.5}, "2., 2.5, 3., 3.5, 4.5"), "boundaries for rapidity bins")
+	    ("y-bins", po::value<std::vector<double>>(&yBinBoundaries)->multitoken()->zero_tokens()->composing()->default_value(std::vector<double>{2.,2.75,3.5,4.5}, "2., 2.75, 3.5, 4.5"), "boundaries for rapidity bins")
 	    ("input-dir", po::value<std::string>(), "directory containing tagging efficiencies file and enhanced SV templates (defaults to dir)")
 	    ("tag-eff-file", po::value<std::string>(), "input tagging efficiencies")
 	    ("tag-eff-file-is-root", po::value<bool>(&tagEffFileROOT)->default_value(true), "whether the tagging efficiencies are in a ROOT histogram format")
 	    ("tag-corr-factor", po::value<double>(&tagCorrFactor)->default_value(0.985), "scale factor to correct tagging efficiencies by")
-	    ("pt-corr-file",po::value<std::string>(&ptCorrFile)->default_value("")->implicit_value("ptCorrFactorsZj.root"), "File to take hadron-pT correction factors from")
+	    ("pt-corr-file",po::value<std::string>(&ptCorrFile)->default_value("ptCorrFactorsZj.root")->implicit_value("ptCorrFactorsZj.root"), "File to take hadron-pT correction factors from")
 	;
 	po::options_description svfit_options("SV fit options");
 	svfit_options.add_options()
-	    ("sv-nmcorbins", po::value<int>(&svOpts.nMCorBins)->default_value(94), "number of bins to use for MCor in SV fit (for binned fits and plots)")
-	    ("sv-minmcor", po::value<double>(&svOpts.minMCor)->default_value(600), "minimum value of corrected mass to use in SV fits (in MeV)")
+	    ("sv-nmcorbins", po::value<int>(&svOpts.nMCorBins)->default_value(38), "number of bins to use for MCor in SV fit (for binned fits and plots)")
+	    ("sv-minmcor", po::value<double>(&svOpts.minMCor)->default_value(500), "minimum value of corrected mass to use in SV fits (in MeV)")
 	    ("sv-maxmcor", po::value<double>(&svOpts.maxMCor)->default_value(10000), "maximum value of corrected mass to use in SV fits (in MeV)")
 	    ("sv-nntrkbins", po::value<int>(&svOpts.nNTrkBins)->default_value(3), "number of bins to use for NTrk in SV fit")
-	    ("sv-binnedtemplates", po::value<bool>(&svOpts.useBinnedTemplates)->default_value(false)->implicit_value(true), "use SV templates binned in MCor")
+	    ("sv-binnedtemplates", po::value<bool>(&svOpts.useBinnedTemplates)->default_value(true)->implicit_value(true), "use SV templates binned in MCor")
 	    ("sv-ptbintemplates", po::value<bool>(&svOpts.usePtBinnedTemplates)->default_value(false)->implicit_value(true), "bin simulated samples in jet pT to obtain SV fit templates")
 	    ("sv-templates-files", po::value<std::string>(), "input enhanced SV templates")
-	    ("sv-mistag-shape-from-back", po::value<bool>(&useBackDataForLightShape)->default_value(false)->implicit_value(true), "use the back-tagged data file for the mis-tag SV shape (instead of simulation)")
+	    ("sv-mistag-shape-from-back", po::value<bool>(&useBackDataForLightShape)->default_value(true)->implicit_value(true), "use the back-tagged data file for the mis-tag SV shape (instead of simulation)")
 	    ("sv-light-yield-float", po::value<bool>(&svOpts.lightYieldFloat)->default_value(false)->implicit_value(true), "float the mistag yields")
 	    ("sv-light-yield-scale", po::value<double>(&svOpts.lightYieldScale)->default_value(1.), "scale the fixed mistag yields by a constant factor")
-	    ("sv-light-yield-correct", po::value<bool>(&svOpts.correctBackTagEff)->default_value(false)->implicit_value(true), "whether to correct the fixed mistag yield for backwards tagging efficiencies of light, charm and beauty jets")
+	    ("sv-light-yield-correct", po::value<bool>(&svOpts.correctBackTagEff)->default_value(true)->implicit_value(true), "whether to correct the fixed mistag yield for backwards tagging efficiencies of light, charm and beauty jets")
 	    ("sv-light-yield-from-file", po::value<std::string>(&svOpts.useBackTagEffFromFile)->default_value(""), "file to load mistag yield constraints from")
 	;
 	po::options_description unfold_options("Unfolding options");
