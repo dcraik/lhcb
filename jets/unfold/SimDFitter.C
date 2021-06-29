@@ -5027,22 +5027,6 @@ void SimDFitter::make2DPlots(RooAbsData* ds, TString name, int minPTBin, int max
 	displcHist->GetEntries();//TODO this fixes an issue where the histogram doesn't plot - I've given up trying to figure out why this works
 	bkgrndHist->GetEntries();//TODO this fixes an issue where the histogram doesn't plot - I've given up trying to figure out why this works
 	//END TODO
-	dataHist30->Draw("col");
-	//signalHist->Draw("cont2 same");
-	promptHist->Draw("cont2 same");
-	displcHist->Draw("cont2 same");
-	bkgrndHist->Draw("cont2 same");
-
-	TPaveText label(0.65,0.8,0.9,0.9,"BRNDC");
-	label.AddText(TString::Format(
-		"#it{p}_{T}(#it{j}) #in [%.0f,%.0f] GeV/#it{c}",
-		_jptmin/1e3,
-		_jptmax/1e3));
-	label.SetFillColor(0);
-	label.SetTextAlign(12);
-	label.SetBorderSize(0);
-	label.Draw();
-	can.SaveAs(gSaveDir+"/fig/data"+name+".pdf");
 
 	promptHist->Draw("col");
 	can.SaveAs(gSaveDir+"/fig/promptPDF"+name+".pdf");
@@ -5070,6 +5054,24 @@ void SimDFitter::make2DPlots(RooAbsData* ds, TString name, int minPTBin, int max
 	bkgrndHist->Draw("AXIS");
 	can.SaveAs(gSaveDir+"/fig/bkgrndPDF"+name+"_axis.pdf");
 	can.SetFillColor(kWhite);
+
+	can.SetRightMargin(0.14);
+	dataHist30->Draw("colz");
+	//signalHist->Draw("cont2 same");
+	promptHist->Draw("cont2 same");
+	displcHist->Draw("cont2 same");
+	bkgrndHist->Draw("cont2 same");
+
+	TPaveText label(0.53,0.8,0.82,0.9,"BRNDC");
+	label.AddText(TString::Format(
+		"#it{p}_{T}(#it{j}) #in [%.0f,%.0f] GeV/#it{c}",
+		_jptmin/1e3,
+		_jptmax/1e3));
+	label.SetFillColor(0);
+	label.SetTextAlign(12);
+	label.SetBorderSize(0);
+	label.Draw();
+	can.SaveAs(gSaveDir+"/fig/data"+name+".pdf");
 
 	can.SetRightMargin(0.10);
 	const Int_t NRGBs2 = 4;
