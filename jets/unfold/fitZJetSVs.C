@@ -137,7 +137,7 @@ int main(int argc, char** argv) {
 	    ("sv-mistag-shape-from-back", po::value<bool>(&useBackDataForLightShape)->default_value(true)->implicit_value(true), "use the back-tagged data file for the mis-tag SV shape (instead of simulation)")
 	    ("sv-light-yield-float", po::value<bool>(&svOpts.lightYieldFloat)->default_value(false)->implicit_value(true), "float the mistag yields")
 	    ("sv-light-yield-scale", po::value<double>(&svOpts.lightYieldScale)->default_value(1.), "scale the fixed mistag yields by a constant factor")
-	    ("sv-light-yield-correct", po::value<bool>(&svOpts.correctBackTagEff)->default_value(true)->implicit_value(true), "whether to correct the fixed mistag yield for backwards tagging efficiencies of light, charm and beauty jets")
+	    ("sv-light-yield-correct", po::value<bool>(&svOpts.correctBackTagEff)->default_value(false)->implicit_value(true), "whether to correct the fixed mistag yield for backwards tagging efficiencies of light, charm and beauty jets")
 	    ("sv-light-yield-from-file", po::value<std::string>(&svOpts.useBackTagEffFromFile)->default_value(""), "file to load mistag yield constraints from")
 	;
 	po::options_description unfold_options("Unfolding options");
