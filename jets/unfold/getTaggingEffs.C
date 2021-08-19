@@ -157,6 +157,8 @@ int main(int argc, char** argv) {
 	    ("dfit-shiftFixedPromptWidth",po::value<double>(&dfitOpts.shiftFixedPromptWidth)->default_value(0.), "Shift sigma_prompt by N sigma after fixing")
 	    ("dfit-shiftFixedDisplcMean",po::value<double>(&dfitOpts.shiftFixedDisplcMean)->default_value(0.), "Shift mu_displc by N sigma after fixing")
 	    ("dfit-shiftFixedDisplcWidth",po::value<double>(&dfitOpts.shiftFixedDisplcWidth)->default_value(0.), "Shift sigma_displc by N sigma after fixing")
+	    ("dfit-limitPromptYieldRange",po::value<double>(&dfitOpts.limitPromptYieldRange)->default_value(1.), "Reduce the maximum allowed value for the prompt yield to help fitter converge")
+	    ("dfit-limitDisplcYieldRange",po::value<double>(&dfitOpts.limitDisplcYieldRange)->default_value(1.), "Reduce the maximum allowed value for the displaced yield to help fitter converge")
 	    ("dfit-simpleEffs",po::value<bool>(&dfitOpts.useSimpleEffs)->default_value(true)->implicit_value(true), "Use simplified model for D efficiencies")
 	    ("dfit-jetPt-dep-effs",po::value<bool>(&dfitOpts.usePtBinCorrections)->default_value(false)->implicit_value(true), "Correct the D efficiency histograms for each jet reco pT bin")
 	    ("dfit-jetPt-binned-effs",po::value<bool>(&dfitOpts.useJetPtBinnedEffs)->default_value(false)->implicit_value(true), "Correct the D efficiency histograms for each jet reco pT bin")
@@ -428,6 +430,72 @@ int main(int argc, char** argv) {
 	unsigned int npt = ptBinBoundaries.size()-1;
 
 	//histograms for reconstructed yields
+	//D
+	//std::map<std::string,TH1D*> recoD4_evtByEvtWeight;
+	//std::map<std::string,TH1D*> recoD5_evtByEvtWeight;
+	//std::map<std::string,TH1D*> recoD4_aveWeight;
+	//std::map<std::string,TH1D*> recoD5_aveWeight;
+	//std::map<std::string,TH1D*> recoDSel4;
+	//std::map<std::string,TH1D*> recoDSel5;
+	//std::map<std::string,TH1D*> recoDWeight4;
+	//std::map<std::string,TH1D*> recoDWeight5;
+	//std::map<std::string,TH1D*> reco4_D;
+	//std::map<std::string,TH1D*> reco5_D;
+	//std::map<std::string,TH1D*> unfolded4_D;
+	//std::map<std::string,TH1D*> unfolded5_D;
+	//std::map<std::string,TH1D*> trueD4;
+	//std::map<std::string,TH1D*> trueD5;
+	//std::map<std::string,TH1D*> trueDSel4;
+	//std::map<std::string,TH1D*> trueDSel5;
+	//std::map<std::string,TH1D*> trueUnfldD4;
+	//std::map<std::string,TH1D*> trueUnfldD5;
+	//std::map<std::string,TH1D*> trueUnfldDSel4;
+	//std::map<std::string,TH1D*> trueUnfldDSel5;
+
+	//if(dfits.count("D0")) {
+	//	recoD4_evtByEvtWeight["D0"] = new TH1D("recoD04_evtByEvtWeight","",npt,ptBinBoundaries.data());
+	//	recoD5_evtByEvtWeight["D0"] = new TH1D("recoD05_evtByEvtWeight","",npt,ptBinBoundaries.data());
+	//	recoD4_aveWeight["D0"] = new TH1D("recoD04_aveWeight","",npt,ptBinBoundaries.data());
+	//	recoD5_aveWeight["D0"] = new TH1D("recoD05_aveWeight","",npt,ptBinBoundaries.data());
+	//	recoDSel4["D0"] = new TH1D("recoD0Sel4","",npt,ptBinBoundaries.data());
+	//	recoDSel5["D0"] = new TH1D("recoD0Sel5","",npt,ptBinBoundaries.data());
+	//	recoDWeight4["D0"] = new TH1D("recoD0Weight4","",npt,ptBinBoundaries.data());
+	//	recoDWeight5["D0"] = new TH1D("recoD0Weight5","",npt,ptBinBoundaries.data());
+	//	reco4_D["D0"] = new TH1D("reco4","",npt,ptBinBoundaries.data());
+	//	reco5_D["D0"] = new TH1D("reco5","",npt,ptBinBoundaries.data());
+	//	unfolded4_D["D0"] = new TH1D("unfolded4","",npt,ptBinBoundaries.data());
+	//	unfolded5_D["D0"] = new TH1D("unfolded5","",npt,ptBinBoundaries.data());
+	//	trueD4["D0"] = new TH1D("trueD04","",npt,ptBinBoundaries.data());
+	//	trueD5["D0"] = new TH1D("trueD05","",npt,ptBinBoundaries.data());
+	//	trueDSel4["D0"] = new TH1D("trueD0Sel4","",npt,ptBinBoundaries.data());
+	//	trueDSel5["D0"] = new TH1D("trueD0Sel5","",npt,ptBinBoundaries.data());
+	//	trueUnfldD4["D0"] = new TH1D("trueUnfldD04","",npt,ptBinBoundaries.data());
+	//	trueUnfldD5["D0"] = new TH1D("trueUnfldD05","",npt,ptBinBoundaries.data());
+	//	trueUnfldDSel4["D0"] = new TH1D("trueUnfldD0Sel4","",npt,ptBinBoundaries.data());
+	//	trueUnfldDSel5["D0"] = new TH1D("trueUnfldD0Sel5","",npt,ptBinBoundaries.data());
+	//}
+	//if(dfits.count("D+")) {
+	//	recoD4_evtByEvtWeight["D+"] = new TH1D("recoDp4_evtByEvtWeight","",npt,ptBinBoundaries.data());
+	//	recoD5_evtByEvtWeight["D+"] = new TH1D("recoDp5_evtByEvtWeight","",npt,ptBinBoundaries.data());
+	//	recoD4_aveWeight["D+"] = new TH1D("recoDp4_aveWeight","",npt,ptBinBoundaries.data());
+	//	recoD5_aveWeight["D+"] = new TH1D("recoDp5_aveWeight","",npt,ptBinBoundaries.data());
+	//	recoDSel4["D+"] = new TH1D("recoDpSel4","",npt,ptBinBoundaries.data());
+	//	recoDSel5["D+"] = new TH1D("recoDpSel5","",npt,ptBinBoundaries.data());
+	//	recoDWeight4["D+"] = new TH1D("recoDpWeight4","",npt,ptBinBoundaries.data());
+	//	recoDWeight5["D+"] = new TH1D("recoDpWeight5","",npt,ptBinBoundaries.data());
+	//	reco4_D["D+"] = new TH1D("reco4_Dp","",npt,ptBinBoundaries.data());
+	//	reco5_D["D+"] = new TH1D("reco5_Dp","",npt,ptBinBoundaries.data());
+	//	unfolded4_D["D+"] = new TH1D("unfolded4_Dp","",npt,ptBinBoundaries.data());
+	//	unfolded5_D["D+"] = new TH1D("unfolded5_Dp","",npt,ptBinBoundaries.data());
+	//	trueD4["D+"] = new TH1D("trueDp4","",npt,ptBinBoundaries.data());
+	//	trueD5["D+"] = new TH1D("trueDp5","",npt,ptBinBoundaries.data());
+	//	trueDSel4["D+"] = new TH1D("trueDpSel4","",npt,ptBinBoundaries.data());
+	//	trueDSel5["D+"] = new TH1D("trueDpSel5","",npt,ptBinBoundaries.data());
+	//	trueUnfldD4["D+"] = new TH1D("trueUnfldDp4","",npt,ptBinBoundaries.data());
+	//	trueUnfldD5["D+"] = new TH1D("trueUnfldDp5","",npt,ptBinBoundaries.data());
+	//	trueUnfldDSel4["D+"] = new TH1D("trueUnfldDpSel4","",npt,ptBinBoundaries.data());
+	//	trueUnfldDSel5["D+"] = new TH1D("trueUnfldDpSel5","",npt,ptBinBoundaries.data());
+	//}
 	//D0
 	TH1D recoD04_evtByEvtWeight("recoD04_evtByEvtWeight","",npt,ptBinBoundaries.data());
 	TH1D recoD05_evtByEvtWeight("recoD05_evtByEvtWeight","",npt,ptBinBoundaries.data());

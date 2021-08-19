@@ -24,7 +24,7 @@ cp -r dijets_${name} dijets_${name}_DSyst_mass
 cp -r dijets_${name} dijets_${name}_DSyst_noptbins
 
 #####Evt-by-evt weights
-./getTaggingEffs --dir dijets_${name}_evtByEvtWeights --dfit-skip-sumw2-fits 0 --use-evt-by-evt-weighting --force-stages 3 2>&1 | tee dijets_${name}_evtByEvtWeights.log
+./getTaggingEffs --dir dijets_${name}_evtByEvtWeights --dfit-skip-sumw2-fits 1 --use-evt-by-evt-weighting --force-stages 3 2>&1 | tee dijets_${name}_evtByEvtWeights.log
 
 #####SV fit systematics
 ./getTaggingEffs --dir dijets_${name}_svSyst_bkgrnd --sv-mistag-shape-from-back 0 --force-stages 2 4 2>&1 | tee dijets_${name}_svSyst_sig.log

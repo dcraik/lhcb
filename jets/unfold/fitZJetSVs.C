@@ -127,8 +127,8 @@ int main(int argc, char** argv) {
 	;
 	po::options_description svfit_options("SV fit options");
 	svfit_options.add_options()
-	    ("sv-nmcorbins", po::value<int>(&svOpts.nMCorBins)->default_value(38), "number of bins to use for MCor in SV fit (for binned fits and plots)")
-	    ("sv-minmcor", po::value<double>(&svOpts.minMCor)->default_value(500), "minimum value of corrected mass to use in SV fits (in MeV)")
+	    ("sv-nmcorbins", po::value<int>(&svOpts.nMCorBins)->default_value(40), "number of bins to use for MCor in SV fit (for binned fits and plots)")
+	    ("sv-minmcor", po::value<double>(&svOpts.minMCor)->default_value(600), "minimum value of corrected mass to use in SV fits (in MeV)")
 	    ("sv-maxmcor", po::value<double>(&svOpts.maxMCor)->default_value(10000), "maximum value of corrected mass to use in SV fits (in MeV)")
 	    ("sv-nntrkbins", po::value<int>(&svOpts.nNTrkBins)->default_value(3), "number of bins to use for NTrk in SV fit")
 	    ("sv-binnedtemplates", po::value<bool>(&svOpts.useBinnedTemplates)->default_value(true)->implicit_value(true), "use SV templates binned in MCor")
@@ -1047,6 +1047,31 @@ int main(int argc, char** argv) {
 	//inputs for python script
 	std::ofstream write;
 	write.open(savedir+"/resultsOutput.log");
+	for (unsigned int i=1; i<=npt; ++i)  for(uint j=1; j<=nzy; ++j) write << hUC->GetBinContent(i,j) << " ";
+	for (unsigned int i=1; i<=npt; ++i)  for(uint j=1; j<=nzy; ++j) write << hUB->GetBinContent(i,j) << " ";
+	write << std::endl;
+	for (unsigned int i=1; i<=npt; ++i)  for(uint j=1; j<=nzy; ++j) write << hUC->GetBinError(i,j) << " ";
+	for (unsigned int i=1; i<=npt; ++i)  for(uint j=1; j<=nzy; ++j) write << hUB->GetBinError(i,j) << " ";
+	write << std::endl;
+	for (unsigned int i=1; i<=npt; ++i)  for(uint j=1; j<=nzy; ++j) write << hUJ->GetBinContent(i,j) << " ";
+	for (unsigned int i=1; i<=npt; ++i)  for(uint j=1; j<=nzy; ++j) write << hUJ->GetBinContent(i,j) << " ";
+	write << std::endl;
+	for (unsigned int i=1; i<=npt; ++i)  for(uint j=1; j<=nzy; ++j) write << hUJ->GetBinError(i,j) << " ";
+	for (unsigned int i=1; i<=npt; ++i)  for(uint j=1; j<=nzy; ++j) write << hUJ->GetBinError(i,j) << " ";
+	write << std::endl;
+	for (unsigned int i=1; i<=npt; ++i)  /*for(uint j=1; j<=nzy; ++j)*/ write << hEc.GetBinContent(i,1/*j*/) << " ";//shared between y bins
+	for (unsigned int i=1; i<=npt; ++i)  /*for(uint j=1; j<=nzy; ++j)*/ write << hEb.GetBinContent(i,1/*j*/) << " ";//shared between y bins
+	write << std::endl;
+	for (unsigned int i=1; i<=npt; ++i)  /*for(uint j=1; j<=nzy; ++j)*/ write << hEc.GetBinError(i,1/*j*/) << " ";//shared between y bins
+	for (unsigned int i=1; i<=npt; ++i)  /*for(uint j=1; j<=nzy; ++j)*/ write << hEb.GetBinError(i,1/*j*/) << " ";//shared between y bins
+	write << std::endl;
+	///*for (unsigned int i=1; i<=npt; ++i)  for(uint j=1; j<=nzy; ++j)*/ write << hBFcErr.GetBinError(1,1/*i,j*/) << " ";//shared between pT and y bins
+	///*for (unsigned int i=1; i<=npt; ++i)  for(uint j=1; j<=nzy; ++j)*/ write << hBFbErr.GetBinError(1,1/*i,j*/) << " ";//shared between pT and y bins
+	for (unsigned int i=1; i<=npt; ++i)  /*for(uint j=1; j<=nzy; ++j)*/ write << hEc.GetBinContent(i,1/*j*/)*hBFcErr.GetBinError(i,1/*j*/) << " ";//shared between y bins
+	for (unsigned int i=1; i<=npt; ++i)  /*for(uint j=1; j<=nzy; ++j)*/ write << hEb.GetBinContent(i,1/*j*/)*hBFbErr.GetBinError(i,1/*j*/) << " ";//shared between y bins
+	write << std::endl;
+	write.close();
+	write.open(savedir+TString::Format("/resultsOutput_%s%.0f.log",unfoldingMode.Data(),unfoldingReg));
 	for (unsigned int i=1; i<=npt; ++i)  for(uint j=1; j<=nzy; ++j) write << hUC->GetBinContent(i,j) << " ";
 	for (unsigned int i=1; i<=npt; ++i)  for(uint j=1; j<=nzy; ++j) write << hUB->GetBinContent(i,j) << " ";
 	write << std::endl;

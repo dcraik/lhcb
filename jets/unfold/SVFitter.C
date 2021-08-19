@@ -7,9 +7,12 @@
 #include "TF1.h"
 #include "TFile.h"
 #include "TH2.h"
+#include "THStack.h"
+#include "TLegend.h"
 #include "TMath.h"
 #include "TPaveText.h"
 #include "TRandom.h"
+#include "TSpline.h"
 #include "TStyle.h"
 #include "TSystem.h"
 #include "TTree.h"
@@ -423,6 +426,7 @@ bool SVFitter::enhanceTemplatesAndFit(double& NB, double& eB, double& NC, double
 		NCtest = NC;
 		NBtest = NB;
 	}
+	//_fixEnhancements=true;
 
 	TFile* outFile = TFile::Open(gSaveDir+TString::Format("/enhancedTemplates_%d_%d.root",binPT,binY),"RECREATE");
 
@@ -469,6 +473,11 @@ bool SVFitter::enhanceTemplatesAndFit(double& NB, double& eB, double& NC, double
 	hC.Write();
 	hB.Write();
 	outFile->Close();
+
+	//TODO added for nice plots
+	fitSVSim(NB, eB, NC, eC, NQ, eQ, binPT, binY, 5);
+	fitSVSim(NB, eB, NC, eC, NQ, eQ, binPT, binY, 4);
+	//TODO
 
 	_finalRun=true;
 	return fitSVSim(NB, eB, NC, eC, NQ, eQ, binPT, binY);
@@ -712,11 +721,13 @@ bool SVFitter::fitSVSim(double& NB, double& eB, double& NC, double& eC, double& 
 	if(enhance==4) {
 		cutStrData += " && enhanced==4";
 		ptStr+="enhanceC";
+		//if(!_fixEnhancements) allowCShifts=true;
 		allowCShifts=true;
 		//_cShiftVals.push_back(std::vector<double>());
 	} else if(enhance==5) {
 		cutStrData += " && enhanced==5";
 		ptStr+="enhanceB";
+		//if(!_fixEnhancements) allowBShifts=true;
 		allowBShifts=true;
 		//_bShiftVals.push_back(std::vector<double>());
 	}
@@ -928,7 +939,7 @@ bool SVFitter::fitSVSim(double& NB, double& eB, double& NC, double& eC, double& 
 			pdfB = new RooKeysPdf(TString::Format("pdfB_%d",i+2),"",SVM,*d5slice);
 		}
 		//always use KDE for light shape
-		pdfQ = new RooKeysPdf(TString::Format("pdfQ_%d",i+2),"",SVM,*d0slice);
+		pdfQ = new RooKeysPdf(TString::Format("pdfQ_%d",i+2),"",SVM,*d0slice);//,RooKeysPdf::NoMirror,1.3);//TODO changing rho to get nicer plot
 
 		RooRealVar* shiftC(0);
 		if(allowCShifts && i<_ntbins-1) {
@@ -1129,7 +1140,7 @@ bool SVFitter::fitSVSim(double& NB, double& eB, double& NC, double& eC, double& 
 	hSVNF.Add(&hSVN5);
 
 	hSVN0.SetLineColor(kBlue);
-	hSVN4.SetLineColor(kGreen+2);
+	hSVN4.SetLineColor(kGreen+1);
 	hSVN5.SetLineColor(kRed);
 	hSVNF.SetLineColor(kBlack);
 	hSVND.SetMarkerStyle(kFullCircle);
@@ -1137,12 +1148,12 @@ bool SVFitter::fitSVSim(double& NB, double& eB, double& NC, double& eC, double& 
 	hSVN0.SetFillStyle(3245);
 	hSVN0.SetFillColor(kBlue);
 	hSVN4.SetFillStyle(3644);
-	hSVN4.SetFillColor(kGreen+2);
+	hSVN4.SetFillColor(kGreen+1);
 	hSVN5.SetFillStyle(3454);
 	hSVN5.SetFillColor(kRed);
 
 	hSVNF.SetMinimum(0.);
-	hSVNF.SetMaximum(1.1*TMath::Max(hSVNF.GetMaximum(),hSVND.GetMaximum()));
+	hSVNF.SetMaximum(1.2*TMath::Max(hSVNF.GetMaximum(),hSVND.GetMaximum()));
 	hSVNF.GetXaxis()->SetTitle("N_{trk}");
 	hSVNF.GetYaxis()->SetTitle("Candidates");
 	hSVNF.SetTitle("");
@@ -1150,6 +1161,7 @@ bool SVFitter::fitSVSim(double& NB, double& eB, double& NC, double& eC, double& 
 	hSVNF.GetXaxis()->SetTitleOffset(1.18);
 	hSVNF.GetYaxis()->SetTitleOffset(1.1);
 
+	hSVNF.GetXaxis()->SetLabelSize(.08);//TODO due to a ROOT oddity, this doesn't match other label sizes
 	hSVNF.GetXaxis()->SetBinLabel(1,"2");
 	hSVNF.GetXaxis()->SetBinLabel(2,"3");
 	hSVNF.GetXaxis()->SetBinLabel(3,"4");//4+
@@ -1158,13 +1170,28 @@ bool SVFitter::fitSVSim(double& NB, double& eB, double& NC, double& eC, double& 
 	c.SetLeftMargin(0.16);
 	c.SetBottomMargin(0.18);
 
-	hSVNF.Draw("HIST");
-	hSVN5.Draw("HIST SAME");
-	hSVN4.Draw("HIST SAME");
-	hSVN0.Draw("HIST SAME");
-	hSVND.Draw("SAME E1 X0 P");
+	hSVN0.SetFillStyle(1001);
+	hSVN4.SetFillStyle(1001);
+	hSVN5.SetFillStyle(1001);
 
-	TPaveText label(0.65,0.7,0.9,0.9,"BRNDC");
+	THStack hs("hs","");
+	hs.Add(&hSVN0);
+	hs.Add(&hSVN5);
+	hs.Add(&hSVN4);
+
+	hSVNF.Draw("HIST");
+	hs.Draw("HIST SAME");
+	//hSVN5.Draw("HIST SAME");
+	//hSVN4.Draw("HIST SAME");
+	//hSVN0.Draw("HIST SAME");
+	hSVNF.Draw("HIST SAME");
+	hSVND.Draw("SAME E1 X0 P");
+	c.RedrawAxis();
+
+	TPaveText label(0.65,0.6,0.9,0.7,"BRNDC");
+	TPaveText label2(0.65,0.75,0.9,0.9,"BRNDC");
+	label2.AddText("LHCb");
+	label2.AddText("5.7 fb^{-1}");
 	if(binPT>0) {
 		label.AddText(TString::Format(
 			"#it{p}_{T}(#it{j}) #in [%.0f,%.0f] GeV/#it{c}",
@@ -1173,7 +1200,7 @@ bool SVFitter::fitSVSim(double& NB, double& eB, double& NC, double& eC, double& 
 	}
 	if(binY>0) {
 		label.AddText(TString::Format(
-			"#it{y}(#it{Z}) #in [%.2f,%.2f]",
+			"#kern[0.2]{#it{y}(#it{Z})} #in [%.2f,%.2f]",
 			minY,
 			maxY));
 	}
@@ -1181,10 +1208,54 @@ bool SVFitter::fitSVSim(double& NB, double& eB, double& NC, double& eC, double& 
 	label.SetTextAlign(12);
 	label.SetBorderSize(0);
 	label.Draw();
+	label2.SetFillColor(0);
+	label2.SetTextAlign(32);
+	label2.SetBorderSize(0);
+	label2.Draw();
 
 	TString name = _name+"_"+ptStr;
 	name.ReplaceAll(".","");
 	c.SaveAs(gSaveDir+"/svfig/SVN_"+name+".pdf");
+
+	hSVNF.GetXaxis()->SetTitle("");
+	hSVNF.GetYaxis()->SetTitle("");
+	hSVNF.Draw("HIST");
+	hs.Draw("HIST SAME");
+	hSVNF.Draw("HIST SAME");
+	hSVND.Draw("SAME E1 X0 P");
+	c.RedrawAxis();
+	c.SaveAs(gSaveDir+"/svfig/SVN_"+name+"_noText.pdf");
+
+	//templates
+	hSVN0.SetFillStyle(0);
+	hSVN5.SetFillStyle(0);
+	hSVN4.SetFillStyle(0);
+	hSVN0.SetMarkerStyle(0);
+	hSVN5.SetMarkerStyle(0);
+	hSVN4.SetMarkerStyle(0);
+
+	hSVN0.GetXaxis()->SetLabelOffset(0.02);
+
+	hSVN0.GetXaxis()->SetLabelSize(.08);//TODO due to a ROOT oddity, this doesn't match other label sizes
+	hSVN0.GetXaxis()->SetBinLabel(1,"2");
+	hSVN0.GetXaxis()->SetBinLabel(2,"3");
+	hSVN0.GetXaxis()->SetBinLabel(3,"4");//4+
+	hSVN0.Scale(1./hSVN0.Integral());
+	hSVN5.Scale(1./hSVN5.Integral());
+	hSVN4.Scale(1./hSVN4.Integral());
+	hSVN0.SetMinimum(0.);
+	hSVN0.SetMaximum(1.);
+
+	for(int i=1; i<4; ++i) {
+		hSVN0.SetBinError(i,0.0001);
+		hSVN4.SetBinError(i,0.0001);
+		hSVN5.SetBinError(i,0.0001);
+	}
+
+	hSVN0.Draw("E");
+	hSVN5.Draw("E SAME");
+	hSVN4.Draw("E SAME");
+	c.SaveAs(gSaveDir+"/svfig/SVNTemplates"+name+"_noText.pdf");
 
 	if(_runToyFits && _finalRun) {
 		//do toy fits
@@ -1594,7 +1665,7 @@ double SVFitter::calcCorrection(RooRealVar* var, RooAbsData* ds, RooAbsPdf* pdf,
 	hData->Draw("EP");
 	hFit->SetLineColor(kRed);
 	hFit->Draw("hist same");
-	hComp->SetLineColor(kGreen+2);
+	hComp->SetLineColor(kGreen+1);
 	hComp->Draw("hist same");
 	if(foundStart) {
 		hNew->SetLineColor(kMagenta);
@@ -1808,14 +1879,14 @@ void SVFitter::makeMassPlots(RooAbsData* ds, RooAbsPdf* pdf, TString name, int b
 	dataHist->SetLineColor(kBlack);
 	dataHist->SetMarkerStyle(20);
 	modelHist->SetLineColor(kBlack);
-	charmHist->SetLineColor(kGreen+2);
+	charmHist->SetLineColor(kGreen+1);
 	beautyHist->SetLineColor(kRed);
 	bkgrndHist->SetLineColor(kBlue);
 
 	dataHist2D->SetLineColor(kBlack);
 	dataHist2D->SetMarkerStyle(20);
 	modelHist2D->SetLineColor(kBlack);
-	charmHist2D->SetLineColor(kGreen+2);
+	charmHist2D->SetLineColor(kGreen+1);
 	beautyHist2D->SetLineColor(kRed);
 	bkgrndHist2D->SetLineColor(kBlue);
 	charmHist2D->SetContour(5);
@@ -1883,7 +1954,7 @@ void SVFitter::makeMassPlots(RooAbsData* ds, RooAbsPdf* pdf, TString name, int b
 		dataSlice->SetLineColor(kBlack);
 		dataSlice->SetMarkerStyle(20);
 		modelSlice->SetLineColor(kBlack);
-		charmSlice->SetLineColor(kGreen+2);
+		charmSlice->SetLineColor(kGreen+1);
 		beautySlice->SetLineColor(kRed);
 		bkgrndSlice->SetLineColor(kBlue);
 
@@ -1938,21 +2009,43 @@ void SVFitter::makeMassPlots(RooAbsData* ds, RooAbsPdf* pdf, TString name, int b
 		bkgrndHistMass->Scale(nBins/nBins1D*dataHistMass->Integral()/modelHistMass->Integral());
 		modelHistMass ->Scale(nBins/nBins1D*dataHistMass->Integral()/modelHistMass->Integral());
 
-		dataHistMass->GetYaxis()->SetTitle(TString::Format("Candidates / (%.2f MeV/#it{c}^{2})", (_mmax-_mmin)/nBins1D));
+		dataHistMass->GetYaxis()->SetTitle(TString::Format("Candidates / (%.0f MeV/#it{c}^{2})", (_mmax-_mmin)/nBins1D));
 		bkgrndHistMass->SetFillStyle(3245);
-		charmHistMass->SetFillColor(kGreen+2);
+		charmHistMass->SetFillColor(kGreen+1);
 		charmHistMass->SetFillStyle(3644);
 		beautyHistMass->SetFillColor(kRed);
 		beautyHistMass->SetFillStyle(3454);
 
+		bkgrndHistMass->SetFillColor(kBlue);
+		beautyHistMass->SetFillStyle(1001);
+		bkgrndHistMass->SetFillStyle(1001);
+		charmHistMass ->SetFillStyle(1001);
+
+		THStack hs("hs","");
+		hs.Add(bkgrndHistMass);
+		hs.Add(beautyHistMass);
+		hs.Add(charmHistMass);
+
 		dataHistMass->Draw("E1 X0 P");
-		if(charmHistMass->Integral()>0) charmHistMass->Draw("HIST C SAME");
-		if(beautyHistMass->Integral()>0) beautyHistMass->Draw("HIST C SAME");
-		if(bkgrndHistMass->Integral()>0) bkgrndHistMass->Draw("HIST C SAME");
+		//if(charmHistMass->Integral()>0) charmHistMass->Draw("HIST C SAME");
+		//if(beautyHistMass->Integral()>0) beautyHistMass->Draw("HIST C SAME");
+		//if(bkgrndHistMass->Integral()>0) bkgrndHistMass->Draw("HIST C SAME");
+		hs.Draw( "HIST C SAME");
 		modelHistMass->Draw( "HIST C SAME");
 		dataHistMass->Draw("E1 X0 P SAME");
+		can.RedrawAxis();
 
-		TPaveText label(0.65,0.7,0.9,0.9,"BRNDC");
+		TLegend leg(0.65,0.25,0.9,0.55);
+		leg.AddEntry(dataHistMass,"data","P");
+		leg.AddEntry(modelHistMass,"fit model","L");
+		leg.AddEntry(charmHistMass,"charm","F");
+		leg.AddEntry(beautyHistMass,"beauty","F");
+		leg.AddEntry(bkgrndHistMass,"light mis-tag","F");
+
+		TPaveText label(0.65,0.6,0.9,0.70,"BRNDC");
+		TPaveText label2(0.65,0.75,0.9,0.9,"BRNDC");
+		label2.AddText("LHCb");
+		label2.AddText("5.7 fb^{-1}");
 		//if(i==0) {
 			if(binPT>0) {
 				double minPT = _ptBins->GetXaxis()->GetBinLowEdge(binPT);
@@ -1966,7 +2059,7 @@ void SVFitter::makeMassPlots(RooAbsData* ds, RooAbsPdf* pdf, TString name, int b
 				double minY = _yBins->GetXaxis()->GetBinLowEdge(binY);
 				double maxY = _yBins->GetXaxis()->GetBinUpEdge(binY);
 				label.AddText(TString::Format(
-					"#it{y}(#it{Z}) #in [%.2f,%.2f]",
+					"#kern[0.2]{#it{y}(#it{Z})} #in [%.2f,%.2f]",
 					minY,
 					maxY));
 			}
@@ -1980,8 +2073,108 @@ void SVFitter::makeMassPlots(RooAbsData* ds, RooAbsPdf* pdf, TString name, int b
 		label.SetTextAlign(12);
 		label.SetBorderSize(0);
 		label.Draw();
+		label2.SetFillColor(0);
+		label2.SetTextAlign(32);
+		label2.SetBorderSize(0);
+		label2.Draw();
+		leg.SetFillColor(0);
+		leg.SetTextAlign(12);
+		leg.SetBorderSize(0);
+		leg.Draw();
 		if(i==0) can.SaveAs(gSaveDir+"/svfig/fitSVM"+name+".pdf");
 		else can.SaveAs(gSaveDir+"/svfig/fitSVM"+name+"NTrkBin"+(i-1)+".pdf");
+
+		//PAPER version
+		if(i==0) {
+			TLegend leg2(0.65,0.25,0.9,0.55);
+			leg2.AddEntry(dataHistMass,"    ","P");
+			leg2.AddEntry(modelHistMass,"         ","L");
+			leg2.AddEntry(charmHistMass,"     ","F");
+			leg2.AddEntry(beautyHistMass,"      ","F");
+			leg2.AddEntry(bkgrndHistMass,"             ","F");
+			TH1D hD("hD","", dataHistMass  ->GetNbinsX(), _mmin/1e3, _mmax/1e3);
+			TH1D hM("hM","", modelHistMass ->GetNbinsX(), _mmin/1e3, _mmax/1e3);
+			TH1D hC("hC","", charmHistMass ->GetNbinsX(), _mmin/1e3, _mmax/1e3);
+			TH1D hB("hB","", beautyHistMass->GetNbinsX(), _mmin/1e3, _mmax/1e3);
+			TH1D hQ("hQ","", bkgrndHistMass->GetNbinsX(), _mmin/1e3, _mmax/1e3);
+			for(uint i=1; i<=hD.GetNbinsX(); ++i) {
+				hD.SetBinContent(i,   dataHistMass->GetBinContent(i));
+				hD.SetBinError(i,   dataHistMass->GetBinError(i));
+			}
+			for(uint i=1; i<=hM.GetNbinsX(); ++i) hM.SetBinContent(i,  modelHistMass->GetBinContent(i));
+			for(uint i=1; i<=hC.GetNbinsX(); ++i) hC.SetBinContent(i,  charmHistMass->GetBinContent(i));
+			for(uint i=1; i<=hB.GetNbinsX(); ++i) hB.SetBinContent(i, beautyHistMass->GetBinContent(i));
+			for(uint i=1; i<=hQ.GetNbinsX(); ++i) hQ.SetBinContent(i, bkgrndHistMass->GetBinContent(i));
+			hD.SetLineColor(kBlack);
+			hD.SetMarkerStyle(20);
+			hM.SetLineColor(kBlack);
+			hC.SetLineColor(kGreen+1);
+			hB.SetLineColor(kRed);
+			hQ.SetLineColor(kBlue);
+			hC.SetFillColor(kGreen+1);
+			hB.SetFillColor(kRed);
+			hQ.SetFillColor(kBlue);
+			hB.SetFillStyle(1001);
+			hQ.SetFillStyle(1001);
+			hC.SetFillStyle(1001);
+
+			THStack hs2("hs2","");
+			hs2.Add(&hQ);
+			hs2.Add(&hB);
+			hs2.Add(&hC);
+
+			hD.Draw("E1 X0 P");
+			hs2.Draw( "HIST C SAME");
+			hM.Draw( "HIST C SAME");
+			hD.Draw("E1 X0 P SAME");
+			can.RedrawAxis();
+
+			leg2.SetFillColor(0);
+			leg2.SetTextAlign(12);
+			leg2.SetBorderSize(0);
+			leg2.Draw();
+
+			can.SaveAs(gSaveDir+"/svfig/fitSVM"+name+"_noText.pdf");
+
+			//templates
+			hB.SetFillStyle(0);
+			hQ.SetFillStyle(0);
+			hC.SetFillStyle(0);
+			hC.SetMinimum(0.);
+			hC.SetMaximum(hC.Integral()/20.);
+			TH1D* hQ2 = static_cast<TH1D*>(hQ.Clone("hQ2"));
+			std::cout << hC.GetBinWidth(1) << std::endl;
+			std::cout << hQ.FindBin(2.) << " " << hQ.FindBin(6.) << std::endl;
+			int bin2 = hQ.FindBin(2.);
+			int bin4 = hQ.FindBin(4.);
+			int bin6 = hQ.FindBin(6.);
+			int bin8 = hQ.FindBin(8.);
+			double grad2 = (hQ.GetBinContent(bin2+5) + hQ.GetBinContent(bin2+3) - hQ.GetBinContent(bin2-3) - hQ.GetBinContent(bin2-5))/16.; 
+			double grad8 = (hQ.GetBinContent(bin8+5) + hQ.GetBinContent(bin8+3) - hQ.GetBinContent(bin8-3) - hQ.GetBinContent(bin8-5))/16.; 
+			double splinex[3] = {bin2,/*bin4,*/bin6,bin8};
+			double spliney[3] = {hQ.GetBinContent(bin2),/*hQ.GetBinContent(bin4),*/hQ.GetBinContent(bin6),hQ.GetBinContent(bin8)};
+			TSpline3 spline("spline",splinex,spliney,3,"b1e1",grad2,grad8);
+
+			for(int ibin = bin2; ibin<bin8; ++ibin) {
+				std::cout << hQ.GetBinContent(ibin) << " ";
+			}
+			std::cout << std::endl;
+			for(int ibin = bin2+1; ibin<bin8; ++ibin) {
+				//double frac = (ibin-bin2)/(double)(bin8-bin2);
+				//double grad = frac*grad8 + (1-frac)*grad2;
+				hQ.SetBinContent(ibin, spline.Eval(ibin));//TODO
+			}
+			for(int ibin = bin2; ibin<bin8; ++ibin) {
+				std::cout << hQ.GetBinContent(ibin) << " ";
+			}
+			std::cout << std::endl;
+
+			hC.DrawNormalized("HIST C", 20.);
+			hB.DrawNormalized("HIST C SAME", 20.);
+			hQ.DrawNormalized("HIST C SAME", 20.);
+			//hQ2->DrawNormalized("HIST C SAME", 20.);
+			can.SaveAs(gSaveDir+"/svfig/SVMTemplates"+name+"_noText.pdf");
+		}
 	}
 	
 	//2D plots
@@ -2092,7 +2285,7 @@ void SVFitter::makeMassPlots(RooAbsData* ds, RooAbsPdf* pdf, TString name, int b
 //	dataHist->SetMarkerStyle(20);
 //	modelHist->SetLineColor(kBlack);
 //	signalHist->SetLineColor(kRed);
-//	promptHist->SetLineColor(kGreen+2);
+//	promptHist->SetLineColor(kGreen+1);
 //	displcHist->SetLineColor(kMagenta);
 //	bkgrndHist->SetLineColor(kBlue);
 //	promptHist->SetContour(5);
@@ -2161,7 +2354,7 @@ void SVFitter::makeMassPlots(RooAbsData* ds, RooAbsPdf* pdf, TString name, int b
 //		dataSlice->SetMarkerStyle(20);
 //		modelSlice->SetLineColor(kBlack);
 //		signalSlice->SetLineColor(kRed);
-//		promptSlice->SetLineColor(kGreen+2);
+//		promptSlice->SetLineColor(kGreen+1);
 //		displcSlice->SetLineColor(kMagenta);
 //		bkgrndSlice->SetLineColor(kBlue);
 //
@@ -2244,7 +2437,7 @@ void SVFitter::makeMassPlots(RooAbsData* ds, RooAbsPdf* pdf, TString name, int b
 //		dataHistMass->GetYaxis()->SetTitle(TString::Format("Candidates / (%.2f MeV/#it{c}^{2})", (mmax-mmin)/nBins1D));
 //		bkgrndHistMass->SetLineStyle(kDashed);
 //		signalHistMass->SetLineStyle(kDotted);
-//		promptHistMass->SetFillColor(kGreen+2);
+//		promptHistMass->SetFillColor(kGreen+1);
 //		displcHistMass->SetFillColor(kMagenta);
 //		promptHistMass->SetFillStyle(3345);
 //		displcHistMass->SetFillStyle(3354);
@@ -2300,7 +2493,7 @@ void SVFitter::makeMassPlots(RooAbsData* ds, RooAbsPdf* pdf, TString name, int b
 //		dataHistIP->GetYaxis()->SetTitle(TString::Format("Candidates / (%.2f)", (ipmax-ipmin)/nBins1D));
 //		bkgrndHistIP->SetLineStyle(kDashed);
 //		signalHistIP->SetLineStyle(kDotted);
-//		promptHistIP->SetFillColor(kGreen+2);
+//		promptHistIP->SetFillColor(kGreen+1);
 //		displcHistIP->SetFillColor(kMagenta);
 //		promptHistIP->SetFillStyle(3345);
 //		displcHistIP->SetFillStyle(3354);

@@ -18,7 +18,7 @@ output=20210628_test #...7 #...09 #...0305 #...0227 #...17 #20210131_rerun2
 ##jetEnergySmearUp
 ./fitZJetSVs --dir zjets_${output}_jetEnergySmearUp --input-dir dijets_${input}_jetEnergySmearUp --sv-light-yield-correct 1 --jet-energy-smear 0.17 2>&1 | tee zjets_${output}_jetEnergySmearUp.log
 ##svSyst_bkgrnd
-./fitZJetSVs --dir zjets_${output}_svSyst_bkgrnd --sv-mistag-shape-from-back 0 --input-dir dijets_${input}_svSyst_bkgrnd --sv-light-yield-correct 1 2>&1 | tee zjets_${output}_svSyst_bkgrnd.log
+./fitZJetSVs --dir zjets_${output}_svSyst_bkgrnd --sv-mistag-shape-from-back 0 --input-dir dijets_${input}_svSyst_bkgrnd 2>&1 | tee zjets_${output}_svSyst_bkgrnd.log
 ##svSyst_sig
 ./fitZJetSVs --dir zjets_${output}_svSyst_sig --input-dir dijets_${input}_svSyst_sig 2>&1 | tee zjets_${output}_svSyst_sig.log
 ##unfoldYBins

@@ -9,6 +9,8 @@
 #include "TFile.h"
 #include "TH2.h"
 #include "TH3.h"
+#include "THStack.h"
+#include "TLegend.h"
 #include "TMath.h"
 #include "TPaveText.h"
 #include "TRandom3.h"
@@ -104,6 +106,8 @@ void SimDFitter::setOptions(DFitterOptions& options) {
 	_shiftFixedPromptWidth = options.shiftFixedPromptWidth;
 	_shiftFixedDisplcMean  = options.shiftFixedDisplcMean;
 	_shiftFixedDisplcWidth = options.shiftFixedDisplcWidth;
+	_limitPromptYieldRange = options.limitPromptYieldRange;
+	_limitDisplcYieldRange = options.limitDisplcYieldRange;
 	_runToyFits = options.runToyFits;
 	_useSimpleEffs = options.useSimpleEffs;
 	_usePtBinCorrections = options.usePtBinCorrections;
@@ -3533,8 +3537,8 @@ bool SimDFitter::setupModel() {
 
 	// -- yields
 	RooRealVar signalYield( "signalYield", "$N_{\\rm sig}$",   -2.,  nEntries);
-	RooRealVar promptYield( "promptYield", "$N_{\\rm prmpt}$", -2.,  nEntries);
-	RooRealVar displcYield( "displcYield", "$N_{\\rm displ}$", -2.,  nEntries);
+	RooRealVar promptYield( "promptYield", "$N_{\\rm prmpt}$", -2.,  nEntries*_limitPromptYieldRange);
+	RooRealVar displcYield( "displcYield", "$N_{\\rm displ}$", -2.,  nEntries*_limitDisplcYieldRange);
 	RooRealVar bkgrndYield( "bkgrndYield", "$N_{\\rm bkgnd}$", -2.,  nEntries);
 
 	RooAddPdf mass_pdf( "mass_pdf",  "mass_pdf", RooArgList(signalMass,bkgrndMass), RooArgList(signalYield,bkgrndYield) );
@@ -4052,11 +4056,17 @@ bool SimDFitter::fit(fitType whichFit, fitSet whichSet, uint ptBinMin, uint ptBi
 		if(binYield>=1) {
 			TString yieldNameStr="*Yield*PTbin";
 			yieldNameStr+=ibin;
+			//TString displcYieldNameStr = "*displcYield*PTbin";
+			//displcYieldNameStr+=ibin;
 			RooArgList* yields= static_cast<RooArgList*>(data_pdf->getParameters(*ds)->selectByName(yieldNameStr)->selectByAttrib("Constant",kFALSE));
 			for ( int i=0; i<yields->getSize(); ++i) {
 				dynamic_cast<RooRealVar*>(yields->at(i))->setVal(binYield/yields->getSize());
 				//std::cout << dynamic_cast<RooRealVar*>(yields->at(i))->getTitle() << " set to " << dynamic_cast<RooRealVar*>(yields->at(i))->getValV() << std::endl;
 			}
+			//RooArgList* displcYields= static_cast<RooArgList*>(data_pdf->getParameters(*ds)->selectByName(displcYieldNameStr)->selectByAttrib("Constant",kFALSE));//TODO
+			//for ( int i=0; i<displcYields->getSize(); ++i) {
+			//	dynamic_cast<RooRealVar*>(displcYields->at(i))->setVal(0.1*binYield);
+			//}
 		} else {
 			std::cout << "Bin " << ibin << " has yield of " << binYield << ". Fixing to 0..." << std::endl;
 			toFixStr+=",*PTbin";
@@ -4081,6 +4091,12 @@ bool SimDFitter::fit(fitType whichFit, fitSet whichSet, uint ptBinMin, uint ptBi
 				toFixStr+=",*Base_PTbin";
 			}
 		}
+	}
+
+	RooArgList* p0Pars = static_cast<RooArgList*>(data_pdf->getParameters(*ds)->selectByName("*p0_PTbin*")->selectByAttrib("Constant",kFALSE));
+	for ( int i=0; i<p0Pars->getSize(); ++i) {
+		dynamic_cast<RooRealVar*>(p0Pars->at(i))->setVal(-4e-4);
+		dynamic_cast<RooRealVar*>(p0Pars->at(i))->setError(1e-2);
 	}
 
 	RooArgList* fixPars2   = static_cast<RooArgList*>(data_pdf->getParameters(*ds)->selectByName(toFixStr));
@@ -4207,6 +4223,23 @@ bool SimDFitter::fit(fitType whichFit, fitSet whichSet, uint ptBinMin, uint ptBi
 	double minCovQual(3);
 	minCovQual=2;//allow not pos def//TODO
 	gSystem->RedirectOutput(gSaveDir+"/log/fitFull"+typeName+name+".log","w");
+	//Print final list of floated parameters before fitting
+	RooArgList* nonConstPars = static_cast<RooArgList*>(allPars->selectByAttrib("Constant",kFALSE));
+	std::cout << "Fit parameters:" << std::endl;
+	nonConstPars->printMultiline(std::cout, 0xFF);
+	for ( int i=0; i<nonConstPars->getSize(); ++i) {
+		RooRealVar* par = dynamic_cast<RooRealVar*>(nonConstPars->at(i));
+		if(!par->isConstant() && par->getError() < TMath::Abs(0.01*par->getVal())) {
+			std::cout << "Parameter initial guess error too small compared to central value:" << par->getVal() << "+/-" << par->getError() << std::endl;
+			par->setError(TMath::Abs(0.01*par->getVal()));
+			std::cout << par->getVal() << "+/-" << par->getError() << std::endl;
+		}
+		if(!par->isConstant() && par->getError() < 1e-5*(par->getMax()-par->getMin())) {
+			std::cout << "Parameter initial guess error too small compared to range:" << par->getVal() << "+/-" << par->getError() << std::endl;
+			par->setError(1e-5*(par->getMax()-par->getMin()));
+			std::cout << par->getVal() << "+/-" << par->getError() << std::endl;
+		}
+	}
 	RooAbsReal* nll = data_pdf->createNLL(*ds, RooFit::Extended(), RooFit::NumCPU(4), RooFit::Range("FIT"));
 	RooMinuit m(*nll);
 	m.setPrintEvalErrors(-1);
@@ -4982,6 +5015,52 @@ void SimDFitter::make2DPlots(RooAbsData* ds, TString name, int minPTBin, int max
 		if(i==0) can.SaveAs(gSaveDir+"/fig/fit2D_Mass"+name+".pdf");
 		else can.SaveAs(gSaveDir+"/fig/fit2D_Mass"+name+"PTbin"+(i-1)+".pdf");
 
+		if(i==0) {
+			dataHistMass->GetXaxis()->SetTitle("");
+			dataHistMass->GetYaxis()->SetTitle("");
+
+			dataHistMass->SetLineColor(kBlack);
+			dataHistMass->SetMarkerStyle(20);
+			modelHistMass->SetLineColor(kBlack);
+			promptHistMass->SetLineColor(kGreen+1);
+			displcHistMass->SetLineColor(kRed);
+			bkgrndHistMass->SetLineColor(kBlue);
+			promptHistMass->SetFillColor(kGreen+1);
+			displcHistMass->SetFillColor(kRed);
+			bkgrndHistMass->SetFillColor(kWhite);
+			bkgrndHistMass->SetLineStyle(kSolid);
+			displcHistMass->SetLineStyle(kSolid);
+			promptHistMass->SetLineStyle(kSolid);
+			bkgrndHistMass->SetFillStyle(1001);
+			displcHistMass->SetFillStyle(1001);
+			promptHistMass->SetFillStyle(1001);
+
+			TLegend leg(0.65,0.40,0.9,0.70);//old y 35,65
+			leg.AddEntry(dataHistMass,"    ","P");
+			leg.AddEntry(modelHistMass,"         ","L");
+			leg.AddEntry(promptHistMass,"             ","F");
+			leg.AddEntry(displcHistMass,"                ","F");
+			leg.AddEntry(bkgrndHistMass,"                ","F");
+
+			THStack hs("hs","");
+			hs.Add(bkgrndHistMass);
+			hs.Add(displcHistMass);
+			hs.Add(promptHistMass);
+
+			dataHistMass->Draw("E1 X0 P");
+			hs.Draw( "HIST C SAME");
+			modelHistMass->Draw( "HIST C SAME");
+			dataHistMass->Draw("E1 X0 P SAME");
+			can.RedrawAxis();
+
+			leg.SetFillColor(0);
+			leg.SetTextAlign(12);
+			leg.SetBorderSize(0);
+			leg.Draw();
+
+			can.SaveAs(gSaveDir+"/fig/fit2D_Mass"+name+"_noText.pdf");
+		}
+
 		//IP plots
 		TH1* dataHistIP   = dataHist50->ProjectionY("dataHistIP");
 		TH1* signalHistIP = signalHists[i]->ProjectionY("signalHistIP");
@@ -5014,6 +5093,52 @@ void SimDFitter::make2DPlots(RooAbsData* ds, TString name, int minPTBin, int max
 		label.Draw();
 		if(i==0) can.SaveAs(gSaveDir+"/fig/fit2D_IP"+name+".pdf");
 		else can.SaveAs(gSaveDir+"/fig/fit2D_IP"+name+"PTbin"+(i-1)+".pdf");
+
+		if(i==0) {
+			dataHistIP->GetXaxis()->SetTitle("");
+			dataHistIP->GetYaxis()->SetTitle("");
+
+			dataHistIP->SetLineColor(kBlack);
+			dataHistIP->SetMarkerStyle(20);
+			modelHistIP->SetLineColor(kBlack);
+			promptHistIP->SetLineColor(kGreen+1);
+			displcHistIP->SetLineColor(kRed);
+			bkgrndHistIP->SetLineColor(kBlue);
+			promptHistIP->SetFillColor(kGreen+1);
+			displcHistIP->SetFillColor(kRed);
+			bkgrndHistIP->SetFillColor(kWhite);
+			bkgrndHistIP->SetLineStyle(kSolid);
+			displcHistIP->SetLineStyle(kSolid);
+			promptHistIP->SetLineStyle(kSolid);
+			bkgrndHistIP->SetFillStyle(1001);
+			displcHistIP->SetFillStyle(1001);
+			promptHistIP->SetFillStyle(1001);
+
+			//TLegend leg(0.65,0.35,0.9,0.65);
+			//leg.AddEntry(dataHistIP,"    ","P");
+			//leg.AddEntry(modelHistIP,"         ","L");
+			//leg.AddEntry(promptHistIP,"             ","F");
+			//leg.AddEntry(displcHistIP,"                ","F");
+			//leg.AddEntry(bkgrndHistIP,"                ","F");
+
+			THStack hs("hs","");
+			hs.Add(bkgrndHistIP);
+			hs.Add(displcHistIP);
+			hs.Add(promptHistIP);
+
+			dataHistIP->Draw("E1 X0 P");
+			hs.Draw( "HIST C SAME");
+			modelHistIP->Draw( "HIST C SAME");
+			dataHistIP->Draw("E1 X0 P SAME");
+			can.RedrawAxis();
+
+			//leg.SetFillColor(0);
+			//leg.SetTextAlign(12);
+			//leg.SetBorderSize(0);
+			//leg.Draw();
+
+			can.SaveAs(gSaveDir+"/fig/fit2D_IP"+name+"_noText.pdf");
+		}
 	}
 	
 	//2D plots
@@ -5054,6 +5179,11 @@ void SimDFitter::make2DPlots(RooAbsData* ds, TString name, int minPTBin, int max
 	bkgrndHist->Draw("AXIS");
 	can.SaveAs(gSaveDir+"/fig/bkgrndPDF"+name+"_axis.pdf");
 	can.SetFillColor(kWhite);
+
+	dataHist30->GetEntries();//TODO this fixes an issue where the histogram doesn't plot - I've given up trying to figure out why this works
+	promptHist->GetEntries();//TODO this fixes an issue where the histogram doesn't plot - I've given up trying to figure out why this works
+	displcHist->GetEntries();//TODO this fixes an issue where the histogram doesn't plot - I've given up trying to figure out why this works
+	bkgrndHist->GetEntries();//TODO this fixes an issue where the histogram doesn't plot - I've given up trying to figure out why this works
 
 	can.SetRightMargin(0.14);
 	dataHist30->Draw("colz");

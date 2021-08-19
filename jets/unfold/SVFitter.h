@@ -117,5 +117,7 @@ class SVFitter {
 
 		TString loadedTemplateFile;
 
+		//bool _fixEnhancements{false};
+
 };
 #endif

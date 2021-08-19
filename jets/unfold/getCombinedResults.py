@@ -116,8 +116,11 @@ def addTagSystFromFile(data, filename, label):
     return data*syst
 
 ###Functions for the Z+c part###
-def loadZjFile(whichDir):
-    data = open("zjets_"+whichDir+"/resultsOutput.log")
+def loadZjFile(whichDir, whichUnfold=""):
+    if whichUnfold=="":
+        data = open("zjets_"+whichDir+"/resultsOutput.log")
+    else:
+        data = open("zjets_"+whichDir+"/resultsOutput_"+whichUnfold+".log")
 
     sv = unp.uarray(np.array([float(i) for i in data.readline().split(" ")[0:24]]),
                     np.array([float(i) for i in data.readline().split(" ")[0:24]]))
@@ -150,7 +153,16 @@ def calcRatios(nZsv,nZj,effsv):
     nZQ_int_int = nZQ[:,1:,:].sum(axis=(1,2))
     nZj_int_int = nZj[:,1:,:].sum(axis=(1,2))
 
-    return (nZQ/nZj, nZQ_pt_int/nZj_pt_int, nZQ_y_int/nZj_y_int, nZQ_int_int/nZj_int_int)
+    pt_int_ratio = unp.uarray(np.zeros((2,3)),np.zeros((2,3)))
+    pt_int = nZQ_pt_int/nZj_pt_int
+    pt_int_ratio[0,0] = pt_int[0,1]/pt_int[0,0]
+    pt_int_ratio[0,1] = pt_int[0,2]/pt_int[0,0]
+    pt_int_ratio[0,2] = pt_int[0,2]/pt_int[0,1]
+    pt_int_ratio[1,0] = pt_int[1,1]/pt_int[1,0]
+    pt_int_ratio[1,1] = pt_int[1,2]/pt_int[1,0]
+    pt_int_ratio[1,2] = pt_int[1,2]/pt_int[1,1]
+
+    return (nZQ/nZj, nZQ_pt_int/nZj_pt_int, nZQ_y_int/nZj_y_int, nZQ_int_int/nZj_int_int, pt_int_ratio)
 
 def addFlatZjSyst(dif_dif,pt_int,y_int,int_int,syst,tag):
     s = ufloat(1.,syst,tag=tag)
@@ -189,11 +201,12 @@ def addZjSystFromMaxDiff(dif_dif,pt_int,y_int,int_int,systDirs,tag):
 
     return (dif_dif*syst_dd,pt_int*syst_pti,y_int*syst_yi,int_int*syst_ii)
     
-def addSystsFromMaxInputs(dif_dif,pt_int,y_int,int_int,tagDirs,tagUnfolds,zjDirs,bfffd0,bfffdp,wd0,wdp,tag):
+def addSystsFromMaxInputs(dif_dif,pt_int,y_int,int_int,pt_int_ratio,tagDirs,tagUnfolds,zjDirs,bfffd0,bfffdp,wd0,wdp,tag):
     dif_dif_systs = []
     pt_int_systs = []
     y_int_systs = []
     int_int_systs = []
+    pt_int_ratio_systs = []
 
     for (tagDir,tagUnfold,zjDir) in zip(tagDirs,tagUnfolds,zjDirs):
         (sv,d0,dp) = loadTagFile(tagDir, tagUnfold)
@@ -201,11 +214,12 @@ def addSystsFromMaxInputs(dif_dif,pt_int,y_int,int_int,tagDirs,tagUnfolds,zjDirs
         eff = np.repeat(eff[:,:,np.newaxis], 3, axis=2)
 
         (nZsv,nZj,_) = loadZjFile(zjDir)
-        (s_dd,s_pti,s_yi,s_ii) = calcRatios(nZsv,nZj,eff)
+        (s_dd,s_pti,s_yi,s_ii,s_ptir) = calcRatios(nZsv,nZj,eff)
         dif_dif_systs.append(np.array([i.n for i in ((s_dd - dif_dif)/dif_dif).flat]).reshape(2,4,3))
         pt_int_systs.append(np.array([i.n for i in ((s_pti - pt_int)/pt_int).flat]).reshape(2,3))
         y_int_systs.append(np.array([i.n for i in ((s_yi - y_int)/y_int).flat]).reshape(2,4))
         int_int_systs.append(np.array([i.n for i in ((s_ii - int_int)/int_int).flat]).reshape(2))
+        pt_int_ratio_systs.append(np.array([i.n for i in ((s_ptir - pt_int_ratio)/pt_int_ratio).flat]).reshape(2,3))
 
     syst_dd = unp.uarray(np.ones((2,4,3)),
                          np.amax(np.stack(np.abs(dif_dif_systs)),0))
@@ -215,6 +229,8 @@ def addSystsFromMaxInputs(dif_dif,pt_int,y_int,int_int,tagDirs,tagUnfolds,zjDirs
                          np.amax(np.stack(np.abs(y_int_systs)),0))
     syst_ii = unp.uarray(np.ones((2)),
                          np.amax(np.stack(np.abs(int_int_systs)),0))
+    syst_ptir = unp.uarray(np.ones((2,3)),
+                         np.amax(np.stack(np.abs(pt_int_ratio_systs)),0))
 
     for i in syst_dd.flat:
         i.tag = tag
@@ -224,8 +240,10 @@ def addSystsFromMaxInputs(dif_dif,pt_int,y_int,int_int,tagDirs,tagUnfolds,zjDirs
         i.tag = tag
     for i in syst_ii.flat:
         i.tag = tag
+    for i in syst_ptir.flat:
+        i.tag = tag
 
-    return (dif_dif*syst_dd,pt_int*syst_pti,y_int*syst_yi,int_int*syst_ii)
+    return (dif_dif*syst_dd,pt_int*syst_pti,y_int*syst_yi,int_int*syst_ii,pt_int_ratio*syst_ptir)
 
 def printZQjSystVertical(dif_dif,pt_int,y_int,int_int,tagDirs,tagUnfolds,zjDirs,bfffd0,bfffdp,wd0,wdp,titles,pt_strings,y_strings):
     dif_dif_alts = []
@@ -243,7 +261,7 @@ def printZQjSystVertical(dif_dif,pt_int,y_int,int_int,tagDirs,tagUnfolds,zjDirs,
         eff = np.repeat(eff[:,:,np.newaxis], 3, axis=2)
 
         (nZsv,nZj,_) = loadZjFile(zjDir)
-        (s_dd,s_pti,s_yi,s_ii) = calcRatios(nZsv,nZj,eff)
+        (s_dd,s_pti,s_yi,s_ii,_) = calcRatios(nZsv,nZj,eff)
         dif_dif_alts.append(s_dd)
         pt_int_alts.append(s_pti)
         y_int_alts.append(s_yi)
@@ -369,7 +387,7 @@ def printSystSummary(quants,systCats):
 
 ###Begin main###
 
-defaultDir="20210626"
+defaultDir="20210628"
 defaultUnfold="bayes2"
 svDir=None
 svUnfold=None
@@ -378,7 +396,7 @@ d0Unfold=None
 dpDir=None
 dpUnfold=None
 
-zjDir="20210627"
+zjDir="20210628"
 
 import sys
 
@@ -459,8 +477,6 @@ ndp = addTagSystFromFile(ndp, "dijets_"+svDir+"/systMCStats_Dp.log", "DpMCstats"
 nc_d0 = nd0/(bfffd0)
 nc_dp = ndp/(bfffdp)
 
-#sd0sq = unp.uarray(np.array([x.s**2 for x in nc_d0]),np.zeros(8))
-#sdpsq = unp.uarray(np.array([x.s**2 for x in nc_dp]),np.zeros(8))
 sd0sq = np.array([x.s**2 for x in nc_d0])
 sdpsq = np.array([x.s**2 for x in nc_dp])
 ##TODO#D0 only
@@ -521,6 +537,10 @@ for i in (nsv/nc):
     print("& $%.3f \pm %.3f \pm %.3f \pm %.3f$" % (i.n, sum(error**2 for (var, error) in i.error_components().items() if var.tag in ["statd0","statdp"])**.5,
                                                         sum(error**2 for (var, error) in i.error_components().items() if var.tag in nonScaleErrorSources and var.tag not in ["statd0","statdp"])**.5,
                                                         sum(error**2 for (var, error) in i.error_components().items() if var.tag not in nonScaleErrorSources)**.5))
+print("comb")
+for i in (nsv/nc):
+    print("& $%.3f \pm %.3f \pm %.3f$" % (i.n, sum(error**2 for (var, error) in i.error_components().items() if var.tag in ["statSV","statd0","statdp"])**.5,
+                                               sum(error**2 for (var, error) in i.error_components().items() if var.tag not in ["statSV","statd0","statdp"])**.5))
 print("D+/D0")
 for i in (nc_dp/nc_d0):
     print("& $%.3f \pm %.3f \pm %.3f \pm %.3f$" % (i.n, sum(error**2 for (var, error) in i.error_components().items() if var.tag in ["statd0","statdp"])**.5,
@@ -558,6 +578,16 @@ fig, axs = plt.subplots(2)
 axs[0].set_ylabel("$\\epsilon_{\\rm tag}^{\\rm SV}(c)$")
 axs[1].set_ylabel("$N_c(D^+)/N_c(D^0)$")
 axs[1].set_xlabel("$p_{\\rm T}(j) [{\\rm GeV}/c]$")
+axs[0].tick_params(axis="both", which="both", direction="in", bottom=True, top=True, left=True, right=True)
+axs[0].tick_params(axis="both", which="major", length=7, labelsize=12, bottom=True, top=True, left=True, right=True)
+axs[0].tick_params(axis="both", which="minor", length=3, bottom=True, top=True, left=True, right=True)
+axs[0].xaxis.set_minor_locator(AutoMinorLocator())
+axs[0].yaxis.set_minor_locator(AutoMinorLocator())
+axs[1].tick_params(axis="both", which="both", direction="in", bottom=True, top=True, left=True, right=True)
+axs[1].tick_params(axis="both", which="major", length=7, labelsize=12, bottom=True, top=True, left=True, right=True)
+axs[1].tick_params(axis="both", which="minor", length=3, bottom=True, top=True, left=True, right=True)
+axs[1].xaxis.set_minor_locator(AutoMinorLocator())
+axs[1].yaxis.set_minor_locator(AutoMinorLocator())
 axs[0].errorbar(mids+offsets[0],[y.n for y in (nsv/nc_d0)[:4]],[y.s for y in (nsv/nc_d0)[:4]],(xerrs+offsets[0],xerrs-offsets[0]),'b.', capsize=2)
 axs[0].errorbar(mids+offsets[1],[y.n for y in (nsv/nc_dp)[:4]],[y.s for y in (nsv/nc_dp)[:4]],(xerrs+offsets[1],xerrs-offsets[1]),'r.', capsize=2)
 axs[0].errorbar(mids+offsets[2],[y.n for y in (nsv/nc)[:4]],   [y.s for y in (nsv/nc)[:4]],   (xerrs+offsets[2],xerrs-offsets[2]),'m.', capsize=2)
@@ -566,12 +596,47 @@ axs[1].errorbar(mids,[y.n for y in (nc_dp/nc_d0)[:4]],[y.s for y in (nc_dp/nc_d0
 axs[1].axhline(y=1.,linestyle="--")
 plt.savefig("jetTagD0DpCompWithComb.pdf")
 
+print("plot coords")
+print(mids+offsets[0])
+print([y.n for y in (nsv/nc_d0)[:4]])
+print([y.s for y in (nsv/nc_d0)[:4]])
+print(xerrs+offsets[0])
+print(xerrs-offsets[0])
+print("")
+print(mids+offsets[1])
+print([y.n for y in (nsv/nc_dp)[:4]])
+print([y.s for y in (nsv/nc_dp)[:4]])
+print(xerrs+offsets[1])
+print(xerrs-offsets[1])
+print("")
+print(mids+offsets[2])
+print([y.n for y in (nsv/nc)[:4]])
+print([y.s for y in (nsv/nc)[:4]])
+print(xerrs+offsets[2])
+print(xerrs-offsets[2])
+print("")
+print(mids)
+print([y.n for y in (nc_dp/nc_d0)[:4]])
+print([y.s for y in (nc_dp/nc_d0)[:4]])
+print(xerrs)
+print("end plot coords")
+
 fig, axs = plt.subplots(2)
 axs[0].set_ylabel("$\\epsilon_{\\rm tag}^{\\rm SV}(b)$")
 axs[1].set_ylabel("$N_b(D^+)/N_b(D^0)$")
 axs[1].set_xlabel("$p_{\\rm T}(j) [{\\rm GeV}/c]$")
 axs[0].set_ylim([0.3,1.0])
 axs[1].set_ylim([0.0,2.0])
+axs[0].tick_params(axis="both", which="both", direction="in", bottom=True, top=True, left=True, right=True)
+axs[0].tick_params(axis="both", which="major", length=7, labelsize=12, bottom=True, top=True, left=True, right=True)
+axs[0].tick_params(axis="both", which="minor", length=3, bottom=True, top=True, left=True, right=True)
+axs[0].xaxis.set_minor_locator(AutoMinorLocator())
+axs[0].yaxis.set_minor_locator(AutoMinorLocator())
+axs[1].tick_params(axis="both", which="both", direction="in", bottom=True, top=True, left=True, right=True)
+axs[1].tick_params(axis="both", which="major", length=7, labelsize=12, bottom=True, top=True, left=True, right=True)
+axs[1].tick_params(axis="both", which="minor", length=3, bottom=True, top=True, left=True, right=True)
+axs[1].xaxis.set_minor_locator(AutoMinorLocator())
+axs[1].yaxis.set_minor_locator(AutoMinorLocator())
 axs[0].errorbar(mids,[y.n for y in (nsv/nc_d0)[4:]],[y.s for y in (nsv/nc_d0)[4:]],xerrs,'b.', capsize=2)
 axs[0].errorbar(mids,[y.n for y in (nsv/nc_dp)[4:]],[y.s for y in (nsv/nc_dp)[4:]],xerrs,'r.', capsize=2)
 axs[0].errorbar(mids,[y.n for y in (nsv/nc)[4:]],   [y.s for y in (nsv/nc)[4:]],   xerrs,'m.', capsize=2)
@@ -582,6 +647,13 @@ plt.savefig("jetTagD0DpCompWithComb_beauty.pdf")
 
 ###Write out tagging results for use by Zj fits###
 write = open("jetTagComb.txt","w")
+for i in (nsv/nc):
+    write.write("%.8f %.8f %.8f\n" % (i.n,
+                                      sum(error**2 for (var, error) in i.error_components().items() if var.tag in ["statsv","statd0","statdp"])**.5,
+                                      sum(error**2 for (var, error) in i.error_components().items() if var.tag not in ["statsv","statd0","statdp"])**.5))
+write.close()
+
+write = open("jetTagComb_"+defaultUnfold+".txt","w")
 for i in (nsv/nc):
     write.write("%.8f %.8f %.8f\n" % (i.n,
                                       sum(error**2 for (var, error) in i.error_components().items() if var.tag in ["statsv","statd0","statdp"])**.5,
@@ -626,7 +698,7 @@ nc = ((sdpsq*nc_d0) + (sd0sq*nc_dp))/(sdpsq + sd0sq)
 ###Load baseline results and shape to (flav,pT,y) ###
 effsv = 0.985*(nsv/nc).reshape((2,4))
 effsv = np.repeat(effsv[:,:,np.newaxis], 3, axis=2)
-(nZsv,nZj,_) = loadZjFile(zjDir)
+(nZsv,nZj,_) = loadZjFile(zjDir, defaultUnfold) ##Unfolding method used for central values but not systematics as these have only been done using bayes2 (default)
 
 for i in nZsv.flat:
     i.tag = "ZSVstat"
@@ -650,7 +722,7 @@ for i in nZj.flat:
 #zQjSysts_y_int   = np.ones((2,4))
 #zQjSysts_int_int = np.ones((2))
 
-(zQj,zQj_pt_int,zQj_y_int,zQj_int_int) = calcRatios(nZsv,nZj,effsv)
+(zQj,zQj_pt_int,zQj_y_int,zQj_int_int,zQj_pt_int_ratio) = calcRatios(nZsv,nZj,effsv)
 #print((zQj,zQj_pt_int,zQj_y_int,zQj_int_int))
 
 ###Load systematic uncertainties on Z+j###
@@ -661,32 +733,32 @@ for i in nZj.flat:
 #(zQj,zQj_pt_int,zQj_y_int,zQj_int_int) = addZjSystFromMaxDiff(zQj,zQj_pt_int,zQj_y_int,zQj_int_int,[zjDir+"_svSyst_bkgrnd"],"SV fit (b)")
 #(zQj,zQj_pt_int,zQj_y_int,zQj_int_int) = addZjSystFromMaxDiff(zQj,zQj_pt_int,zQj_y_int,zQj_int_int,[zjDir+"_svSyst_sig"],"SV fit (s)")
 jeSysts=["_jetEnergyScaleUp","_jetEnergyScaleDown","_jetEnergySmearUp","_jetEnergySmearDown"]
-(zQj,zQj_pt_int,zQj_y_int,zQj_int_int) = addSystsFromMaxInputs(zQj,zQj_pt_int,zQj_y_int,zQj_int_int,
+(zQj,zQj_pt_int,zQj_y_int,zQj_int_int,zQj_pt_int_ratio) = addSystsFromMaxInputs(zQj,zQj_pt_int,zQj_y_int,zQj_int_int,zQj_pt_int_ratio,
                                                                [svDir+syst for syst in jeSysts],len(jeSysts)*["bayes2"],
                                                                [zjDir+syst for syst in jeSysts],
                                                                bfffd0,bfffdp,sdpsq,sd0sq,"jetEnergy")#Note weights are sdpsq for D0 and sd0sq for D+
-(zQj,zQj_pt_int,zQj_y_int,zQj_int_int) = addSystsFromMaxInputs(zQj,zQj_pt_int,zQj_y_int,zQj_int_int,
+(zQj,zQj_pt_int,zQj_y_int,zQj_int_int,zQj_pt_int_ratio) = addSystsFromMaxInputs(zQj,zQj_pt_int,zQj_y_int,zQj_int_int,zQj_pt_int_ratio,
                                                                [svDir+"_svSyst_bkgrnd",svDir+"_svSyst_sig"],2*["bayes2"],
                                                                [zjDir+"_svSyst_bkgrnd",zjDir+"_svSyst_sig"],
                                                                bfffd0,bfffdp,sdpsq,sd0sq,"SV fit")#Note weights are sdpsq for D0 and sd0sq for D+
-(zQj,zQj_pt_int,zQj_y_int,zQj_int_int) = addSystsFromMaxInputs(zQj,zQj_pt_int,zQj_y_int,zQj_int_int,
+(zQj,zQj_pt_int,zQj_y_int,zQj_int_int,zQj_pt_int_ratio) = addSystsFromMaxInputs(zQj,zQj_pt_int,zQj_y_int,zQj_int_int,zQj_pt_int_ratio,
                                                                [svDir+syst for syst in dFitSysts],len(dFitSysts)*["bayes2"],
                                                                len(dFitSysts)*[zjDir],
                                                                bfffd0,bfffdp,sdpsq,sd0sq,"D fits")#Note weights are sdpsq for D0 and sd0sq for D+
-(zQj,zQj_pt_int,zQj_y_int,zQj_int_int) = addSystsFromMaxInputs(zQj,zQj_pt_int,zQj_y_int,zQj_int_int,
+(zQj,zQj_pt_int,zQj_y_int,zQj_int_int,zQj_pt_int_ratio) = addSystsFromMaxInputs(zQj,zQj_pt_int,zQj_y_int,zQj_int_int,zQj_pt_int_ratio,
                                                                [svDir+"_evtByEvtWeights"],["bayes2"],
                                                                [zjDir],
                                                                bfffd0,bfffdp,sdpsq,sd0sq,"D weights")#Note weights are sdpsq for D0 and sd0sq for D+
-(zQj,zQj_pt_int,zQj_y_int,zQj_int_int) = addSystsFromMaxInputs(zQj,zQj_pt_int,zQj_y_int,zQj_int_int,
+(zQj,zQj_pt_int,zQj_y_int,zQj_int_int,zQj_pt_int_ratio) = addSystsFromMaxInputs(zQj,zQj_pt_int,zQj_y_int,zQj_int_int,zQj_pt_int_ratio,
                                                                [svDir+"_2DPIDCalib"],["bayes2"],
                                                                [zjDir],
                                                                bfffd0,bfffdp,sdpsq,sd0sq,"PIDCalibBinning")#Note weights are sdpsq for D0 and sd0sq for D+
 
-#(zQj,zQj_pt_int,zQj_y_int,zQj_int_int) = addSystsFromMaxInputs(zQj,zQj_pt_int,zQj_y_int,zQj_int_int,
+#(zQj,zQj_pt_int,zQj_y_int,zQj_int_int,zQj_pt_int_ratio) = addSystsFromMaxInputs(zQj,zQj_pt_int,zQj_y_int,zQj_int_int,zQj_pt_int_ratio,
 #                                                               [svDir+"_svSyst_sig"],["bayes2"],
 #                                                               [zjDir+"_svSyst_sig"],
 #                                                               bfffd0,bfffdp,sdpsq,sd0sq,"SV fit")#Note weights are sdpsq for D0 and sd0sq for D+
-#(zQj,zQj_pt_int,zQj_y_int,zQj_int_int) = addSystsFromMaxInputs(zQj,zQj_pt_int,zQj_y_int,zQj_int_int,
+#(zQj,zQj_pt_int,zQj_y_int,zQj_int_int,zQj_pt_int_ratio) = addSystsFromMaxInputs(zQj,zQj_pt_int,zQj_y_int,zQj_int_int,zQj_pt_int_ratio,
 #                                                               [svDir+"_svSyst_bkgrnd"],["bayes2"],
 #                                                               [zjDir+"_svSyst_bkgrnd"],
 #                                                               bfffd0,bfffdp,sdpsq,sd0sq,"SV fitb")#Note weights are sdpsq for D0 and sd0sq for D+
@@ -727,10 +799,23 @@ for item in zQj_pt_int.flat:
 output.write("\n")
 output.close()
 
+output = open("results_"+defaultUnfold+".txt","w")
+for item in zQj_pt_int.flat:
+    output.write("%f " % item.n)
+output.write("\n")
+for item in zQj_pt_int.flat:
+    output.write("%f " % (sum(error**2 for (var, error) in item.error_components().items() if var.tag in ["Zjstat","ZSVstat"]))**.5)
+output.write("\n")
+for item in zQj_pt_int.flat:
+    output.write("%f " % item.s)
+output.write("\n")
+output.close()
+
 tagsStat = ["Zjstat","ZSVstat"]
 tagsTagStat = ["statSV","statd0","statdp"]
 tagsTagSyst = ["D0MCstats","DpMCstats","D fits","D weights","data-sim & PIDCalib","VELO error param.","PIDCalibBinning"]
-tagsSyst = ["jetReco","jetEnergy","SV fit"]
+tagsOtherSyst = ["jetReco","jetEnergy","SV fit"]
+tagsSyst = tagsTagStat+tagsTagSyst+tagsOtherSyst
 
 ptlabel=["15-- 20","20-- 30","30-- 50","50--100"]
 ylabel=["2.00--2.75","2.75--3.50","3.50--4.50"]
@@ -748,7 +833,7 @@ for flav in [0,1]:
                                                                                        100.*sum(error**2 for (var, error) in zQj[flav,pt,y].error_components().items() if var.tag in tagsStat)**.5,
                                                                                        100.*sum(error**2 for (var, error) in zQj[flav,pt,y].error_components().items() if var.tag in tagsTagStat)**.5,
                                                                                        100.*sum(error**2 for (var, error) in zQj[flav,pt,y].error_components().items() if var.tag in tagsTagSyst)**.5,
-                                                                                       100.*sum(error**2 for (var, error) in zQj[flav,pt,y].error_components().items() if var.tag in tagsSyst)**.5,
+                                                                                       100.*sum(error**2 for (var, error) in zQj[flav,pt,y].error_components().items() if var.tag in tagsOtherSyst)**.5,
                                                                                        ))
   print("\\midrule")
   for y in range(0,3):
@@ -759,7 +844,7 @@ for flav in [0,1]:
                                                                                      100.*sum(error**2 for (var, error) in zQj_pt_int[flav,y].error_components().items() if var.tag in tagsStat)**.5,
                                                                                      100.*sum(error**2 for (var, error) in zQj_pt_int[flav,y].error_components().items() if var.tag in tagsTagStat)**.5,
                                                                                      100.*sum(error**2 for (var, error) in zQj_pt_int[flav,y].error_components().items() if var.tag in tagsTagSyst)**.5,
-                                                                                     100.*sum(error**2 for (var, error) in zQj_pt_int[flav,y].error_components().items() if var.tag in tagsSyst)**.5,
+                                                                                     100.*sum(error**2 for (var, error) in zQj_pt_int[flav,y].error_components().items() if var.tag in tagsOtherSyst)**.5,
                                                                                      ))
   print("\\midrule")
   for pt in range(0,4):
@@ -773,7 +858,7 @@ for flav in [0,1]:
                                                                                      100.*sum(error**2 for (var, error) in zQj_y_int[flav,pt].error_components().items() if var.tag in tagsStat)**.5,
                                                                                      100.*sum(error**2 for (var, error) in zQj_y_int[flav,pt].error_components().items() if var.tag in tagsTagStat)**.5,
                                                                                      100.*sum(error**2 for (var, error) in zQj_y_int[flav,pt].error_components().items() if var.tag in tagsTagSyst)**.5,
-                                                                                     100.*sum(error**2 for (var, error) in zQj_y_int[flav,pt].error_components().items() if var.tag in tagsSyst)**.5,
+                                                                                     100.*sum(error**2 for (var, error) in zQj_y_int[flav,pt].error_components().items() if var.tag in tagsOtherSyst)**.5,
                                                                                      ))
   print("\\midrule")
   print("%s & %s & $%6.0f\\pm%4.0f$ & $%4.0f\\pm%3.0f$ & --- & $%4.2f\\pm%4.2f\\pm%4.2f\\pm%4.2f\\pm%4.2f$ \\\\" % ("20--100","2.00--4.50",
@@ -783,7 +868,7 @@ for flav in [0,1]:
                                                                                    100.*sum(error**2 for (var, error) in zQj_int_int[flav].error_components().items() if var.tag in tagsStat)**.5,
                                                                                    100.*sum(error**2 for (var, error) in zQj_int_int[flav].error_components().items() if var.tag in tagsTagStat)**.5,
                                                                                    100.*sum(error**2 for (var, error) in zQj_int_int[flav].error_components().items() if var.tag in tagsTagSyst)**.5,
-                                                                                   100.*sum(error**2 for (var, error) in zQj_int_int[flav].error_components().items() if var.tag in tagsSyst)**.5,
+                                                                                   100.*sum(error**2 for (var, error) in zQj_int_int[flav].error_components().items() if var.tag in tagsOtherSyst)**.5,
                                                                                    ))
 
 ybins = np.array([2.00,2.75,3.50,4.50])
@@ -875,7 +960,7 @@ print("TABLE33")
 printZQjSystVertical(zQj,zQj_pt_int,zQj_y_int,zQj_int_int,
                      [svDir+"_svSyst_bkgrnd",svDir+"_svSyst_sig"],2*["bayes2"],
                      [zjDir+"_svSyst_bkgrnd",zjDir+"_svSyst_sig"],
-                     bfffd0,bfffdp,sdpsq,sd0sq,["c/b shapes", "mis-tag shape"],ptlabel,ylabel)#Note weights are sdpsq for D0 and sd0sq for D+
+                     bfffd0,bfffdp,sdpsq,sd0sq,["mis-tag shape", "c/b shapes"],ptlabel,ylabel)#Note weights are sdpsq for D0 and sd0sq for D+
 print("TABLE34")
 systCats = [
 ("", [
@@ -916,3 +1001,29 @@ print("\n")
 printSystSummary(zQj_y_int,systCats)
 print("\n")
 printSystSummary(zQj_int_int,systCats)
+
+for y in range(0,3):
+  print("%s & $%4.2f\\pm%4.2f\\pm%4.2f$ \\\\" % (ylabel[y],
+                                                 100.*zQj_pt_int[0,y].n,
+                                                 100.*sum(error**2 for (var, error) in zQj_pt_int[0,y].error_components().items() if var.tag in tagsStat)**.5,
+                                                 100.*sum(error**2 for (var, error) in zQj_pt_int[0,y].error_components().items() if var.tag in tagsSyst)**.5))
+
+#for (y1,y2) in [(0,1),(0,2),(1,2)]:
+for y in range(0,3):
+  print("& $%4.2f\\pm%4.2f\\pm%4.2f$ \\\\" % (
+                                                 zQj_pt_int_ratio[0,y].n,
+                                                 sum(error**2 for (var, error) in (zQj_pt_int_ratio[0,y]).error_components().items() if var.tag in tagsStat)**.5,
+                                                 sum(error**2 for (var, error) in (zQj_pt_int_ratio[0,y]).error_components().items() if var.tag in tagsSyst)**.5))
+
+for i in zQj_pt_int_ratio.flat:
+  print(i)
+  #for (cat,tags) in sCats:
+  tags = set()
+  for (var, error) in i.error_components().items():
+    tags.add(var.tag)
+  for tag in tags:
+    print("%s: %5.2f%%" % (tag, 100.*((sum(error**2 for (var, error) in i.error_components().items() if var.tag == tag))**.5)/i.n), end="; ")
+  print("%s: %5.2f%%" % ("other", 100.*((sum(error**2 for (var, error) in i.error_components().items() if var.tag not in tags))**.5)/i.n), end="; ")
+  print("%s: %5.2f%%" % ("total", 100.*((sum(error**2 for (var, error) in i.error_components().items() if var.tag in tags))**.5)/i.n))
+
+print((zQj_pt_int_ratio[0,2].n-(.0286/.04))/zQj_pt_int_ratio[0,2].s)

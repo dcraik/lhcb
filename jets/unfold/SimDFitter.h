@@ -51,6 +51,8 @@ struct DFitterOptions {
 	double shiftFixedPromptWidth{0.};
 	double shiftFixedDisplcMean{0.};
 	double shiftFixedDisplcWidth{0.};
+	double limitPromptYieldRange{1.};
+	double limitDisplcYieldRange{1.};
 	bool runToyFits{false};
 	bool useSimpleEffs{false};
 	bool usePtBinCorrections{false};
@@ -228,6 +230,9 @@ private:
 	double _shiftFixedPromptWidth{0.};
 	double _shiftFixedDisplcMean{0.};
 	double _shiftFixedDisplcWidth{0.};
+
+	double _limitPromptYieldRange{1.};
+	double _limitDisplcYieldRange{1.};
 
 	bool _useSimpleEffs{false};
 	bool _usePtBinCorrections{false};

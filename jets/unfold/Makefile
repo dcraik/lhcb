@@ -52,6 +52,12 @@ RooMultiKeysPdf.o : RooMultiKeysPdf.cxx
 RooModulatedHistPdf.o : RooModulatedHistPdf.cxx
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -c $< -o $@
 
+svTemplatePlots.o : svTemplatePlots.C
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCPATH) -c $< -o $@
+
+svTemplatePlots : svTemplatePlots.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS)
+
 unfoldJetPt.o : unfoldJetPt.C
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCPATH) -c $< -o $@
 
@@ -116,6 +122,12 @@ testUnfoldingMC_compare.o : testUnfoldingMC_compare.C
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCPATH) -c $< -o $@
 
 testUnfoldingMC_compare : testUnfoldingMC_compare.o RooUnfold/libRooUnfold.so outputFunctions.o cloneHists.o
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS) -lboost_program_options RooUnfold/libRooUnfold.so
+
+testUnfoldingMC4.o : testUnfoldingMC4.C
+	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) $(INCPATH) -c $< -o $@
+
+testUnfoldingMC4 : testUnfoldingMC4.o RooUnfold/libRooUnfold.so outputFunctions.o cloneHists.o MCJets.o DatasetManager.o AdaptBin.o
 	$(CXX) $(CXXFLAGS) $(ROOTFLAGS) -o $@ $^ $(ROOTLIBS) -lboost_program_options RooUnfold/libRooUnfold.so
 
 doDFits_DPtBins.o : doDFits_DPtBins.C

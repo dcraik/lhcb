@@ -992,6 +992,38 @@ TH1D* MCJets::unfold(TH1D* input, jetType type, uint ybin) {
 	c.SetRightMargin(0.10);
 	c.SetTopMargin(0.07);
 	c.SaveAs(gSaveDir+"/unfoldingResponse_"+nameStr+".pdf");
+	int nx = respMat->GetNbinsX();
+	const double* cbinsx = respMat->GetXaxis()->GetXbins()->GetArray();
+	double* binsx = new double[nx];
+	int ny = respMat->GetNbinsY();
+	const double* cbinsy = respMat->GetYaxis()->GetXbins()->GetArray();
+	double* binsy = new double[ny];
+	for(int i=0; i<nx+1; ++i) binsx[i] = cbinsx[i]/1e3;
+	for(int i=0; i<ny+1; ++i) binsy[i] = cbinsy[i]/1e3;
+	TH2D respMat2("respMat2","",nx,binsx,ny,binsy);
+	for(int j=1; j<=ny; ++j) {
+		double rowsum=0.;
+		for(int i=0; i<=nx+1; ++i) {
+			rowsum += respMat->GetBinContent(i,j);
+		}
+		for(int i=1; i<=nx; ++i) {
+			respMat2.SetBinContent(i,j,respMat->GetBinContent(i,j)/rowsum);
+		}
+	}
+	respMat2.GetXaxis()->SetTitle("");
+	respMat2.GetYaxis()->SetTitle("");
+	respMat2.SetMinimum(0.);
+	respMat2.SetMaximum(1.);
+	respMat2.SetTitle("");
+	respMat2.Draw("colz");
+	c.UseCurrentStyle();
+	c.SetRightMargin(0.16);
+	c.SetTopMargin(0.07);
+	c.SaveAs(gSaveDir+"/unfoldingResponse_"+nameStr+"_noText.pdf");
+	respMat2.GetXaxis()->SetTitle("#it{p}_{T}^{reco}(jet) [MeV/#it{c}]");
+	respMat2.GetYaxis()->SetTitle("#it{p}_{T}^{true}(jet) [MeV/#it{c}]");
+	respMat2.Draw("colz");
+	c.SaveAs(gSaveDir+"/unfoldingResponse_"+nameStr+"_withText.pdf");
 
 	//apply response
 	RooUnfold* unfolded(0);
